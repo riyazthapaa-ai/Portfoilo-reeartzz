@@ -35,7 +35,7 @@
   .hero { position: relative; width: 100%; height: 100vh; overflow: hidden; }
   .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
   .slide.active { opacity: 1; }
-  .slide-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.04); transition: transform 8s ease; filter: brightness(0.35); }
+  .slide-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.04); transition: transform 8s ease; filter: brightness(0.35) grayscale(1); }
   .slide.active .slide-bg { transform: scale(1); }
   .hero-name { position: absolute; bottom: 60px; left: 52px; z-index: 3; }
   .hero-name h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.5rem, 9vw, 8rem); font-weight: 300; line-height: 0.95; letter-spacing: -1px; color: var(--white); }
