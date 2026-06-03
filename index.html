@@ -577,14 +577,14 @@
   document.querySelectorAll('.reveal').forEach(r => observer.observe(r));
 
   // ── LIGHTBOX ──
-  const lbOverlay = document.getElementById('lb-overlay');
-  const lbMedia   = document.getElementById('lb-media');
-  const lbCat     = document.getElementById('lb-cat');
-  const lbTitleEl = document.getElementById('lb-title');
-  const lbDesc    = document.getElementById('lb-desc');
-  const lbAction  = document.getElementById('lb-action');
-
   function openLightbox(data) {
+    var lbOverlay = document.getElementById('lb-overlay');
+    var lbMedia   = document.getElementById('lb-media');
+    var lbCat     = document.getElementById('lb-cat');
+    var lbTitleEl = document.getElementById('lb-title');
+    var lbDesc    = document.getElementById('lb-desc');
+    var lbAction  = document.getElementById('lb-action');
+
     lbCat.textContent     = data.cat || '';
     lbTitleEl.textContent = data.title || '';
     lbDesc.textContent    = data.desc || '';
@@ -594,13 +594,13 @@
 
     lbMedia.innerHTML = '';
     if (data.embedUrl) {
-      const iframe = document.createElement('iframe');
+      var iframe = document.createElement('iframe');
       iframe.src = data.embedUrl;
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
       iframe.allowFullscreen = true;
       lbMedia.appendChild(iframe);
     } else if (data.thumbStyle) {
-      const img = document.createElement('div');
+      var img = document.createElement('div');
       img.style.cssText = 'width:100%;height:100%;' + data.thumbStyle;
       lbMedia.appendChild(img);
     }
@@ -610,13 +610,15 @@
   }
 
   function closeLightbox() {
+    var lbOverlay = document.getElementById('lb-overlay');
+    var lbMedia   = document.getElementById('lb-media');
     lbOverlay.classList.remove('open');
     document.body.style.overflow = '';
-    setTimeout(() => { lbMedia.innerHTML = ''; }, 350);
+    setTimeout(function() { lbMedia.innerHTML = ''; }, 350);
   }
 
   function lbClose(e) {
-    if (e.target === lbOverlay) closeLightbox();
+    if (e.target === document.getElementById('lb-overlay')) closeLightbox();
   }
 
   document.addEventListener('keydown', e => {
