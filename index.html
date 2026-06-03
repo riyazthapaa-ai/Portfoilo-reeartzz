@@ -239,6 +239,11 @@
     z-index: 2;
     pointer-events: none;
   }
+  .lb-thumb-preview { display: flex; align-items: center; justify-content: center; background: #000; }
+  .lb-thumb-wrap { position: relative; width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; display: flex; align-items: center; justify-content: center; }
+  .lb-play-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, opacity 0.2s; opacity: 0.9; }
+  .lb-play-btn:hover { transform: scale(1.08); opacity: 1; }
+  .lb-play-btn svg { width: 80px; height: 80px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
   .lb-body {
     padding: 28px 32px 32px;
     border-top: 1px solid var(--line);
@@ -453,7 +458,7 @@
 
     <!-- 8: TFSP Collection — Exhibit A — Instagram -->
     <div class="work-item">
-      <div class="work-thumb-bg" style="background-image: url('assets/thumb-tfsp-collection.png'); background-size: cover; background-position: center;"></div>
+      <div class="work-thumb-bg" style="background-image: url('assets/thumb-exhibit-a.png'); background-size: cover; background-position: center;"></div>
       <!-- Instagram icon -->
       <div class="platform-badge">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -465,12 +470,12 @@
         <span class="work-cat">Video / Brand</span>
         <div class="work-title">TFSP Collection — Exhibit A</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video / Brand',title:'TFSP Collection — Exhibit A',desc:'A brand video for the TFSP Collection, showcasing the Exhibit A line through cinematic visuals and strong identity.',embedUrl:'https://www.instagram.com/reel/DYB9DtmTUIU/embed/',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DYB9DtmTUIU/'})">Watch on Instagram</a></div>
+      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video / Brand',title:'TFSP Collection — Exhibit A',desc:'A brand video for the TFSP Collection, showcasing the Exhibit A line through cinematic visuals and strong identity.',embedUrl:'https://www.instagram.com/reel/DYB9DtmTUIU/embed/',thumbUrl:'assets/thumb-exhibit-a.png',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DYB9DtmTUIU/'})">Watch on Instagram</a></div>
     </div>
 
     <!-- 9: Life of Star — TFSP Collection — Instagram -->
     <div class="work-item">
-      <div class="work-thumb-bg" style="background-image: url('assets/thumb-life-of-star.png'); background-size: cover; background-position: center;"></div>
+      <div class="work-thumb-bg" style="background-image: url('assets/thumb-life-of-star-v2.png'); background-size: cover; background-position: center;"></div>
       <!-- Instagram icon -->
       <div class="platform-badge">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -482,7 +487,7 @@
         <span class="work-cat">Video / Brand</span>
         <div class="work-title">Life of Star — TFSP Collection</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video / Brand',title:'Life of Star — TFSP Collection',desc:'A brand film for the Life of Star series by TFSP Collection, merging aspirational storytelling with bold visual identity.',embedUrl:'https://www.instagram.com/reel/DYb9eWxAKAJ/embed/',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DYb9eWxAKAJ/'})">Watch on Instagram</a></div>
+      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video / Brand',title:'Life of Star — TFSP Collection',desc:'A brand film for the Life of Star series by TFSP Collection, merging aspirational storytelling with bold visual identity.',embedUrl:'https://www.instagram.com/reel/DYb9eWxAKAJ/embed/',thumbUrl:'assets/thumb-life-of-star-v2.png',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DYb9eWxAKAJ/'})">Watch on Instagram</a></div>
     </div>
 
   </div>
@@ -655,15 +660,25 @@
 
     lbMedia.innerHTML = '';
     lbMedia.className = 'lb-media'; // reset classes
-    if (data.embedUrl) {
-      var isIG = /instagram\.com/.test(data.embedUrl);
-      if (isIG) {
-        lbMedia.classList.add('lb-ig');
-        // dark mask strip to cover any residual IG top bar
-        var mask = document.createElement('div');
-        mask.className = 'lb-ig-mask';
-        lbMedia.appendChild(mask);
+    var isIG = data.embedUrl && /instagram\.com/.test(data.embedUrl);
+    if (isIG) {
+      // Show clean thumbnail + play button — no IG iframe/chrome
+      lbMedia.classList.add('lb-thumb-preview');
+      var thumbWrap = document.createElement('div');
+      thumbWrap.className = 'lb-thumb-wrap';
+      if (data.thumbUrl) {
+        thumbWrap.style.backgroundImage = 'url(' + data.thumbUrl + ')';
       }
+      var playBtn = document.createElement('a');
+      playBtn.className = 'lb-play-btn';
+      playBtn.href = data.actionUrl || '#';
+      playBtn.target = '_blank';
+      playBtn.rel = 'noopener';
+      playBtn.setAttribute('aria-label', 'Watch on Instagram');
+      playBtn.innerHTML = '<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="38" fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.7)" stroke-width="2"/><polygon points="32,24 60,40 32,56" fill="white"/></svg>';
+      thumbWrap.appendChild(playBtn);
+      lbMedia.appendChild(thumbWrap);
+    } else if (data.embedUrl) {
       var iframe = document.createElement('iframe');
       iframe.src = data.embedUrl;
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
