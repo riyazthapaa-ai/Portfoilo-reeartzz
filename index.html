@@ -202,6 +202,12 @@
     background: #111;
     overflow: hidden;
     flex-shrink: 0;
+    position: relative;
+  }
+  .lb-media.lb-portrait {
+    aspect-ratio: 9/16;
+    max-height: 72vh;
+    width: 100%;
   }
   .lb-media img {
     width: 100%; height: 100%;
@@ -213,6 +219,14 @@
     border: none;
     display: block;
   }
+  .lb-thumb-wrap {
+    width: 100%; height: 100%;
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .lb-play-btn svg { width: 80px; height: 80px; transition: transform .2s; }
+  .lb-play-btn:hover svg { transform: scale(1.1); }
   /* Instagram reel: vertical 9/16 with header clip */
   .lb-media.lb-ig {
     aspect-ratio: 9/16;
@@ -651,43 +665,32 @@
     var lbDesc    = document.getElementById('lb-desc');
     var lbAction  = document.getElementById('lb-action');
 
-    lbCat.textContent     = data.cat || '';
-    lbTitleEl.textContent = data.title || '';
-    lbDesc.textContent    = data.desc || '';
-    lbAction.textContent  = data.actionLabel || '';
-    lbAction.href         = data.actionUrl || '#';
+    lbCat.textContent      = data.cat || '';
+    lbTitleEl.textContent  = data.title || '';
+    lbDesc.textContent     = data.desc || '';
+    lbAction.textContent   = data.actionLabel || '';
+    lbAction.href          = data.actionUrl || '#';
     lbAction.style.display = data.actionLabel ? 'inline-flex' : 'none';
 
     lbMedia.innerHTML = '';
-    lbMedia.className = 'lb-media'; // reset classes
+    lbMedia.className = 'lb-media'; // reset
+
     var isIG = data.embedUrl && /instagram\.com/.test(data.embedUrl);
-    if (isIG) {
-      // Show clean thumbnail + play button — no IG iframe/chrome
-      lbMedia.classList.add('lb-thumb-preview');
-      var thumbWrap = document.createElement('div');
-      thumbWrap.className = 'lb-thumb-wrap';
-      if (data.thumbUrl) {
-        thumbWrap.style.backgroundImage = 'url(' + data.thumbUrl + ')';
-      }
-      var playBtn = document.createElement('a');
-      playBtn.className = 'lb-play-btn';
-      playBtn.href = data.actionUrl || '#';
-      playBtn.target = '_blank';
-      playBtn.rel = 'noopener';
-      playBtn.setAttribute('aria-label', 'Watch on Instagram');
-      playBtn.innerHTML = '<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="38" fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.7)" stroke-width="2"/><polygon points="32,24 60,40 32,56" fill="white"/></svg>';
-      thumbWrap.appendChild(playBtn);
-      lbMedia.appendChild(thumbWrap);
-    } else if (data.embedUrl) {
+
+    if (data.embedUrl) {
+      if (isIG) lbMedia.classList.add('lb-portrait');
       var iframe = document.createElement('iframe');
       iframe.src = data.embedUrl;
-      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('scrolling', isIG ? 'no' : 'auto');
+      iframe.allow = 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share';
       iframe.allowFullscreen = true;
+      iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
       lbMedia.appendChild(iframe);
     } else if (data.thumbStyle) {
-      var img = document.createElement('div');
-      img.style.cssText = 'width:100%;height:100%;' + data.thumbStyle;
-      lbMedia.appendChild(img);
+      var div = document.createElement('div');
+      div.style.cssText = 'width:100%;height:100%;' + data.thumbStyle;
+      lbMedia.appendChild(div);
     }
 
     lbOverlay.classList.add('open');
