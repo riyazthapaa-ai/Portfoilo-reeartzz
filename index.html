@@ -173,127 +173,6 @@
     .work-grid { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
   }
-
-  /* LIGHTBOX MODAL */
-  .lb-overlay {
-    position: fixed; inset: 0; z-index: 999;
-    background: rgba(0,0,0,0.92);
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; visibility: hidden;
-    transition: opacity .35s ease, visibility .35s ease;
-  }
-  .lb-overlay.open { opacity: 1; visibility: visible; }
-  .lb-box {
-    position: relative;
-    background: var(--black);
-    border: 1px solid var(--line);
-    width: min(92vw, 860px);
-    max-height: 95vh;
-    overflow-y: auto;
-    transform: scale(0.92);
-    transition: transform .35s ease;
-    display: flex;
-    flex-direction: column;
-  }
-  .lb-overlay.open .lb-box { transform: scale(1); }
-  .lb-media {
-    width: 100%;
-    aspect-ratio: 16/9;
-    background: #111;
-    overflow: hidden;
-    flex-shrink: 0;
-    position: relative;
-  }
-  .lb-media.lb-portrait {
-    aspect-ratio: 9/16;
-    max-height: 72vh;
-    width: 100%;
-  }
-  .lb-media img {
-    width: 100%; height: 100%;
-    object-fit: contain;
-    display: block;
-  }
-  .lb-media iframe {
-    width: 100%; height: 100%;
-    border: none;
-    display: block;
-  }
-  .lb-thumb-wrap {
-    width: 100%; height: 100%;
-    background-size: cover; background-position: center;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
-  .lb-play-btn svg { width: 80px; height: 80px; transition: transform .2s; }
-  .lb-play-btn:hover svg { transform: scale(1.1); }
-  /* Instagram reel: vertical 9/16 with header clip */
-  .lb-media.lb-ig {
-    aspect-ratio: 9/16;
-    max-height: 70vh;
-    width: auto;
-    margin: 0 auto;
-    position: relative;
-    overflow: hidden;
-  }
-  .lb-media.lb-ig iframe {
-    width: 100%;
-    /* Clip IG header (~120px) and footer (~80px) — negative margin pushes chrome out of overflow:hidden */
-    height: calc(100% + 200px);
-    margin-top: -120px;
-    border: none;
-    display: block;
-  }
-  /* Dark overlay to mask the IG header bar */
-  .lb-ig-mask {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 10px;
-    background: #111;
-    z-index: 2;
-    pointer-events: none;
-  }
-  .lb-thumb-preview { display: flex; align-items: center; justify-content: center; background: #000; }
-  .lb-thumb-wrap { position: relative; width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; display: flex; align-items: center; justify-content: center; }
-  .lb-play-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, opacity 0.2s; opacity: 0.9; }
-  .lb-play-btn:hover { transform: scale(1.08); opacity: 1; }
-  .lb-play-btn svg { width: 80px; height: 80px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
-  .lb-body {
-    padding: 28px 32px 32px;
-    border-top: 1px solid var(--line);
-  }
-  .lb-cat {
-    font-size: 0.55rem; letter-spacing: 3px; text-transform: uppercase;
-    color: var(--dim); margin-bottom: 8px; display: block;
-  }
-  .lb-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.4rem, 3vw, 2.2rem);
-    font-weight: 300; color: var(--white);
-    margin-bottom: 12px; line-height: 1.2;
-  }
-  .lb-desc {
-    font-size: 0.85rem; color: var(--dim);
-    line-height: 1.8; margin-bottom: 20px;
-  }
-  .lb-action {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-size: 0.6rem; letter-spacing: 4px; text-transform: uppercase;
-    color: var(--dim); text-decoration: none;
-    padding: 12px 0; border-bottom: 1px solid var(--line);
-    transition: color .3s, border-color .3s;
-  }
-  .lb-action:hover { color: var(--white); border-bottom-color: var(--dim); }
-  .lb-close {
-    position: absolute; top: 16px; right: 20px; z-index: 10;
-    background: none; border: none; cursor: pointer;
-    color: var(--dim); font-size: 1.6rem; line-height: 1;
-    transition: color .2s; padding: 4px;
-  }
-  .lb-close:hover { color: var(--white); }
-  @media (max-width: 560px) {
-    .lb-body { padding: 20px 20px 24px; }
-  }
 </style>
 </head>
 <body>
@@ -387,7 +266,7 @@
         <span class="work-cat">Video Editing · Kayakalpa Skin &amp; Hair</span>
         <div class="work-title">Narrative Cinematic Reel</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video Editing · Kayakalpa Skin & Hair',title:'Narrative Cinematic Reel',desc:'A cinematic narrative reel created for Kayakalpa Skin & Hair, blending storytelling with dynamic motion editing.',embedUrl:'https://www.instagram.com/reel/DU0eBLkDDnY/embed/',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DU0eBLkDDnY/'})">Watch on Instagram</a></div>
+      <div class="work-info"><a href="https://www.instagram.com/reel/DU0eBLkDDnY/" target="_blank" rel="noopener">Watch on Instagram</a></div>
     </div>
 
     <!-- 2: Podcast-style — Instagram -->
@@ -403,7 +282,7 @@
         <span class="work-cat">Short-Form Edit · Bihe Nepal</span>
         <div class="work-title">Podcast-Style Short-Form Edit</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Short-Form Edit · Bihe Nepal',title:'Podcast-Style Short-Form Edit',desc:'A podcast-style short-form edit produced for Bihe Nepal, optimized for social media engagement.',embedUrl:'https://www.instagram.com/reel/DSH6gB0gHSn/embed/',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reels/DSH6gB0gHSn/'})">Watch on Instagram</a></div>
+      <div class="work-info"><a href="https://www.instagram.com/reels/DSH6gB0gHSn/" target="_blank" rel="noopener">Watch on Instagram</a></div>
     </div>
 
     <!-- 3: Documentary — X/Twitter -->
@@ -420,7 +299,7 @@
         <span class="work-cat">Documentary · SuperteamSG</span>
         <div class="work-title">Documentary / Explainer Video</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Documentary · SuperteamSG',title:'Documentary / Explainer Video',desc:'A documentary and explainer video produced for SuperteamSG, communicating their mission with cinematic precision.',actionLabel:'Watch on X',actionUrl:'https://x.com/SuperteamSG/status/1921885400320413757'})">Watch on X</a></div>
+      <div class="work-info"><a href="https://x.com/SuperteamSG/status/1921885400320413757" target="_blank" rel="noopener">Watch on X</a></div>
     </div>
 
     <!-- 4: 3D Motion — X/Twitter -->
@@ -436,7 +315,7 @@
         <span class="work-cat">Motion Graphics · Superteam Nepal</span>
         <div class="work-title">3D Motion Graphic</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Motion Graphics · Superteam Nepal',title:'3D Motion Graphic',desc:'A 3D motion graphic created for Superteam Nepal, showcasing advanced motion design and visual storytelling.',actionLabel:'Watch on X',actionUrl:'https://x.com/SuperteamNPL/status/2030995483628544509'})">Watch on X</a></div>
+      <div class="work-info"><a href="https://x.com/SuperteamNPL/status/2030995483628544509" target="_blank" rel="noopener">Watch on X</a></div>
     </div>
 
     <!-- 5: Plutus Paradox — Behance (real thumbnail) -->
@@ -446,7 +325,7 @@
         <span class="work-cat">Brand Design · Plutos Paradox</span>
         <div class="work-title">Clothing Brand Designs</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Brand Design · Plutos Paradox',title:'Clothing Brand Designs',desc:'Full brand identity and clothing design collection for Plutus Paradox — bold typography, strong visuals, cohesive aesthetic.',thumbStyle:'background-image:url(https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/4704c2202694555.668ab071cca79.jpg);background-size:cover;background-position:center;',actionLabel:'View full project on Behance',actionUrl:'https://www.behance.net/gallery/202694555/PLUTUS-PARADOX'})">View on Behance</a></div>
+      <div class="work-info"><a href="https://www.behance.net/gallery/202694555/PLUTUS-PARADOX" target="_blank" rel="noopener">View on Behance</a></div>
     </div>
 
     <!-- 6: EWVL Sports — Behance (real thumbnail) -->
@@ -456,7 +335,7 @@
         <span class="work-cat">Graphic Design · Kathmandu Spikers · Madhesh United</span>
         <div class="work-title">Sports Poster Designs</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Graphic Design · Kathmandu Spikers · Madhesh United',title:'Sports Poster Designs',desc:'Dynamic sports poster designs for the EWVL League — Kathmandu Spikers & Madhesh United. High-impact visuals built for social media and print.',thumbStyle:'background-image:url(https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/50a7dd246957173.69cfc16e946e8.png);background-size:cover;background-position:center;',actionLabel:'View full project on Behance',actionUrl:'https://www.behance.net/gallery/246957173/EWVL-League-Visuals'})">View on Behance</a></div>
+      <div class="work-info"><a href="https://www.behance.net/gallery/246957173/EWVL-League-Visuals" target="_blank" rel="noopener">View on Behance</a></div>
     </div>
 
     <!-- 7: Digital Artwork -->
@@ -466,7 +345,7 @@
         <span class="work-cat">Digital Artwork · Illustration</span>
         <div class="work-title">Be Weird — Character Art</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();(function(el){var bg=el.closest('.work-item').querySelector('.work-thumb-bg');var bgImg=bg?bg.style.backgroundImage:'';openLightbox({cat:'Digital Artwork · Illustration',title:'Be Weird — Character Art',desc:'Original digital character illustration showcasing the Be Weird ethos through vibrant design and strong visual identity.',thumbStyle:'background-image:'+bgImg+';background-size:cover;background-position:center;',actionLabel:'',actionUrl:'#'})})(this)">View Artwork</a></div>
+      <div class="work-info"><a href="#" target="_blank" rel="noopener">View Artwork</a></div>
     </div>
 
 
@@ -484,7 +363,7 @@
         <span class="work-cat">Video / Brand</span>
         <div class="work-title">TFSP Collection — Exhibit A</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video / Brand',title:'TFSP Collection — Exhibit A',desc:'A brand video for the TFSP Collection, showcasing the Exhibit A line through cinematic visuals and strong identity.',embedUrl:'https://www.instagram.com/reel/DYB9DtmTUIU/embed/',thumbUrl:'assets/thumb-exhibit-a.png',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DYB9DtmTUIU/'})">Watch on Instagram</a></div>
+      <div class="work-info"><a href="https://www.instagram.com/reel/DYB9DtmTUIU/" target="_blank" rel="noopener">Watch on Instagram</a></div>
     </div>
 
     <!-- 9: Life of Star — TFSP Collection — Instagram -->
@@ -501,7 +380,7 @@
         <span class="work-cat">Video / Brand</span>
         <div class="work-title">Life of Star — TFSP Collection</div>
       </div>
-      <div class="work-info"><a href="#" onclick="event.preventDefault();openLightbox({cat:'Video / Brand',title:'Life of Star — TFSP Collection',desc:'A brand film for the Life of Star series by TFSP Collection, merging aspirational storytelling with bold visual identity.',embedUrl:'https://www.instagram.com/reel/DYb9eWxAKAJ/embed/',thumbUrl:'assets/thumb-life-of-star-v2.png',actionLabel:'Watch on Instagram',actionUrl:'https://www.instagram.com/reel/DYb9eWxAKAJ/'})">Watch on Instagram</a></div>
+      <div class="work-info"><a href="https://www.instagram.com/reel/DYb9eWxAKAJ/" target="_blank" rel="noopener">Watch on Instagram</a></div>
     </div>
 
   </div>
@@ -656,78 +535,8 @@
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(r => observer.observe(r));
 
-  // ── LIGHTBOX ──
-  function openLightbox(data) {
-    var lbOverlay = document.getElementById('lb-overlay');
-    var lbMedia   = document.getElementById('lb-media');
-    var lbCat     = document.getElementById('lb-cat');
-    var lbTitleEl = document.getElementById('lb-title');
-    var lbDesc    = document.getElementById('lb-desc');
-    var lbAction  = document.getElementById('lb-action');
-
-    lbCat.textContent      = data.cat || '';
-    lbTitleEl.textContent  = data.title || '';
-    lbDesc.textContent     = data.desc || '';
-    lbAction.textContent   = data.actionLabel || '';
-    lbAction.href          = data.actionUrl || '#';
-    lbAction.style.display = data.actionLabel ? 'inline-flex' : 'none';
-
-    lbMedia.innerHTML = '';
-    lbMedia.className = 'lb-media'; // reset
-
-    var isIG = data.embedUrl && /instagram\.com/.test(data.embedUrl);
-
-    if (data.embedUrl) {
-      if (isIG) lbMedia.classList.add('lb-ig');
-      var iframe = document.createElement('iframe');
-      iframe.src = data.embedUrl;
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('scrolling', isIG ? 'no' : 'auto');
-      iframe.allow = 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share';
-      iframe.allowFullscreen = true;
-      iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
-      lbMedia.appendChild(iframe);
-    } else if (data.thumbStyle) {
-      var div = document.createElement('div');
-      div.style.cssText = 'width:100%;height:100%;' + data.thumbStyle;
-      lbMedia.appendChild(div);
-    }
-
-    lbOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeLightbox() {
-    var lbOverlay = document.getElementById('lb-overlay');
-    var lbMedia   = document.getElementById('lb-media');
-    lbOverlay.classList.remove('open');
-    document.body.style.overflow = '';
-    setTimeout(function() { lbMedia.innerHTML = ''; }, 350);
-  }
-
-  function lbClose(e) {
-    if (e.target === document.getElementById('lb-overlay')) closeLightbox();
-  }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeLightbox();
-  });
-
 </script>
 
-<!-- LIGHTBOX OVERLAY -->
-<div class="lb-overlay" id="lb-overlay" onclick="lbClose(event)">
-  <div class="lb-box" id="lb-box">
-    <button class="lb-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
-    <div class="lb-media" id="lb-media"></div>
-    <div class="lb-body">
-      <span class="lb-cat" id="lb-cat"></span>
-      <div class="lb-title" id="lb-title"></div>
-      <p class="lb-desc" id="lb-desc"></p>
-      <a class="lb-action" id="lb-action" href="#" target="_blank" rel="noopener"></a>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
