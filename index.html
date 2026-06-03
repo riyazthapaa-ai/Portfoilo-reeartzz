@@ -238,9 +238,9 @@
   }
   .lb-media.lb-ig iframe {
     width: 100%;
-    /* Shift iframe up to hide IG profile header (~60px) and compensate height */
-    height: calc(100% + 70px);
-    margin-top: -70px;
+    /* Clip IG header (~120px) and footer (~80px) — negative margin pushes chrome out of overflow:hidden */
+    height: calc(100% + 200px);
+    margin-top: -120px;
     border: none;
     display: block;
   }
@@ -678,7 +678,7 @@
     var isIG = data.embedUrl && /instagram\.com/.test(data.embedUrl);
 
     if (data.embedUrl) {
-      if (isIG) lbMedia.classList.add('lb-portrait');
+      if (isIG) lbMedia.classList.add('lb-ig');
       var iframe = document.createElement('iframe');
       iframe.src = data.embedUrl;
       iframe.setAttribute('frameborder', '0');
