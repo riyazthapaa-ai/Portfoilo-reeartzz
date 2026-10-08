@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gamma 5 Hook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #020b2e;
+    --navy: #06206e;
+    --blue: #1d5bff;
+    --azure: #3fa2ff;
+    --cyan: #7fe0ff;
+    --ink: #ffffff;
+    --soft: rgba(255,255,255,.62);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+  body { display: grid; place-items: center; font-family: "Inter", "Inter Display", -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif; }
+
+  /* 1920x1080 stage, scaled to fit the window in live mode */
+  #stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    background: var(--deep); color: var(--ink);
+    transform-origin: center center;
+  }
+
+  /* ---------- animated blue gradient ---------- */
+  #bg { position: absolute; inset: -10%; filter: blur(90px) saturate(1.15); }
+  .blob { position: absolute; border-radius: 50%; will-change: transform; }
+  #b1 { width: 1300px; height: 1300px; background: radial-gradient(circle, #1d5bff 0%, rgba(29,91,255,0) 68%); }
+  #b2 { width: 1100px; height: 1100px; background: radial-gradient(circle, #00b4ff 0%, rgba(0,180,255,0) 66%); }
+  #b3 { width: 1200px; height: 1200px; background: radial-gradient(circle, #3b2bff 0%, rgba(59,43,255,0) 66%); }
+  #b4 { width: 900px;  height: 900px;  background: radial-gradient(circle, #8fe6ff 0%, rgba(143,230,255,0) 62%); }
+  #b5 { width: 1400px; height: 1400px; background: radial-gradient(circle, #04133f 0%, rgba(4,19,63,0) 70%); }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(1,6,28,.65) 100%); }
+  #grain { position: absolute; inset: 0; opacity: .07; mix-blend-mode: overlay; }
+
+  /* ---------- typography ---------- */
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; }
+  .h { font-weight: 700; letter-spacing: -0.045em; line-height: 1.02; }
+  .xl { font-size: 150px; }
+  .l  { font-size: 116px; }
+  .m  { font-size: 88px; }
+  .s  { font-size: 44px; font-weight: 500; letter-spacing: -0.02em; color: var(--soft); }
+  .w  { display: inline-block; white-space: pre; will-change: transform, opacity, filter; }
+  .grad {
+    background: linear-gradient(100deg, #ffffff 0%, #bfe6ff 40%, #7fd0ff 70%, #ffffff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .row { display: flex; align-items: baseline; justify-content: center; }
+
+  /* strike-through on "Gamma" */
+  .strike { position: relative; }
+  .strike::after { content: ""; position: absolute; left: -2%; top: 54%; height: 10px; width: calc(var(--k, 0) * 104%); background: #fff; border-radius: 6px; box-shadow: 0 0 24px rgba(127,224,255,.9); }
+
+  /* glass slide cards */
+  .card {
+    position: absolute; width: 520px; height: 300px; border-radius: 26px;
+    background: linear-gradient(160deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+    border: 1.5px solid rgba(255,255,255,.28);
+    box-shadow: 0 40px 80px rgba(0,8,40,.45), inset 0 1px 0 rgba(255,255,255,.35);
+    padding: 34px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .card i { display: block; height: 16px; border-radius: 8px; background: rgba(255,255,255,.45); }
+  .card i.t { height: 28px; width: 62%; background: rgba(255,255,255,.8); }
+  .card .tag { position: absolute; right: 26px; bottom: 22px; font-size: 22px; font-weight: 600; letter-spacing: .02em; color: rgba(255,255,255,.75); }
+
+  /* rolling word (S5) */
+  .roller { position: relative; display: inline-block; height: 1.32em; overflow: hidden; vertical-align: bottom; text-align: left; }
+  .roller span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+
+  /* Gamma 5 reveal */
+  #logo { position: relative; font-size: 230px; font-weight: 800; letter-spacing: -0.06em; }
+  #logo .five { background: linear-gradient(135deg, #ffffff 0%, #9fe1ff 45%, #3f8cff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #sheen { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.85) 50%, transparent 65%); mix-blend-mode: overlay; -webkit-mask: linear-gradient(#000,#000); pointer-events: none; }
+  #ring { position: absolute; width: 900px; height: 900px; border-radius: 50%; border: 2px solid rgba(160,225,255,.55); box-shadow: 0 0 80px rgba(80,170,255,.45), inset 0 0 80px rgba(80,170,255,.25); }
+  #halo { position: absolute; width: 1100px; height: 520px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120,200,255,.55), rgba(120,200,255,0) 65%); }
+
+  /* idea -> presentation */
+  #dot { position: absolute; left: 50%; top: 50%; background: #fff; box-shadow: 0 0 60px rgba(150,220,255,.9), 0 0 140px rgba(60,140,255,.6); overflow: hidden; }
+  #dot .inner { position: absolute; inset: 0; padding: 56px 60px; display: flex; flex-direction: column; gap: 22px; }
+  #dot .inner b { display: block; height: 22px; border-radius: 11px; background: #cfe0ff; transform-origin: left center; }
+  #dot .inner b.t { height: 46px; width: 58%; background: linear-gradient(90deg, #1d5bff, #3fa2ff); }
+  #dot .inner .cols { display: flex; gap: 22px; margin-top: 18px; }
+  #dot .inner .cols div { flex: 1; height: 150px; border-radius: 16px; background: linear-gradient(160deg, #e6efff, #c9dcff); transform-origin: bottom center; }
+
+  #hint { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); color: #8aa; font: 13px/1.4 system-ui, sans-serif; opacity: .7; }
+  body.render #hint { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg">
+    <div class="blob" id="b5"></div>
+    <div class="blob" id="b1"></div>
+    <div class="blob" id="b3"></div>
+    <div class="blob" id="b2"></div>
+    <div class="blob" id="b4"></div>
+  </div>
+  <div id="vignette"></div>
+  <canvas id="grain" width="480" height="270"></canvas>
+
+  <!-- S1 -->
+  <section class="scene" id="s1"><div class="h l" data-words>I have a confession.</div></section>
+
+  <!-- S2 -->
+  <section class="scene" id="s2">
+    <div class="h l"><span data-words>I actually stopped using </span><span class="w strike grad" id="gammaWord">Gamma.</span></div>
+  </section>
+
+  <!-- S3 -->
+  <section class="scene" id="s3">
+    <div class="h m" data-words>Not because I didn’t like it.</div>
+  </section>
+
+  <!-- S4 -->
+  <section class="scene" id="s4">
+    <div id="cards">
+      <div class="card" id="c1"><i class="t"></i><i style="width:88%"></i><i style="width:74%"></i><i style="width:80%"></i><span class="tag">Q3 Review.pptx</span></div>
+      <div class="card" id="c2"><i class="t"></i><i style="width:70%"></i><i style="width:90%"></i><i style="width:60%"></i><span class="tag">Pitch Deck.pptx</span></div>
+      <div class="card" id="c3"><i class="t"></i><i style="width:82%"></i><i style="width:66%"></i><i style="width:78%"></i><span class="tag">Roadmap.pptx</span></div>
+    </div>
+    <div style="position:relative">
+      <div class="s" id="s4a" data-words>The problem?</div>
+      <div class="h l" style="margin-top:22px"><span data-words>My work still lived in </span><span class="w grad" id="pptWord">PowerPoint.</span></div>
+    </div>
+  </section>
+
+  <!-- S5 -->
+  <section class="scene" id="s5">
+    <div class="s" data-words>Even with AI, I still had to think about</div>
+    <div class="h xl" style="margin-top:26px; display:flex; align-items:flex-start; gap:.28em; line-height:1.12">
+      <span class="w" id="s5my">My</span>
+      <span class="roller" id="roller">
+        <span class="grad">presentations.</span>
+        <span class="grad">formatting.</span>
+        <span class="grad">design.</span>
+        <span class="grad">everything.</span>
+      </span>
+    </div>
+  </section>
+
+  <!-- S6 -->
+  <section class="scene" id="s6"><div class="h l" data-words>But then I tried</div></section>
+
+  <!-- S7 -->
+  <section class="scene" id="s7">
+    <div id="halo"></div>
+    <div id="ring"></div>
+    <div id="logo"><span id="logoText">Gamma <span class="five">5</span></span><div id="sheen"></div></div>
+    <div class="s" id="s7sub" style="margin-top:18px" data-words>A very different product.</div>
+  </section>
+
+  <!-- S8 -->
+  <section class="scene" id="s8">
+    <div id="dot"><div class="inner">
+      <b class="t"></b><b style="width:86%"></b><b style="width:70%"></b>
+      <div class="cols"><div></div><div></div><div></div></div>
+    </div></div>
+    <div class="h m" id="s8a" style="position:absolute; top:230px" data-words>One idea.</div>
+    <div class="h m" id="s8b" style="position:absolute; bottom:150px"><span data-words>→ A finished </span><span class="w grad" id="presWord">presentation.</span></div>
+  </section>
+</div>
+<div id="hint">Click or press Space to replay</div>
+
+<script>
+const DURATION = 27;           // seconds
+const $ = s => document.querySelector(s);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const prog = (t, start, dur) => clamp((t - start) / dur);
+const outExpo = p => p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+const outCubic = p => 1 - Math.pow(1 - p, 3);
+const inOutCubic = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const outBack = p => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const lerp = (a, b, p) => a + (b - a) * p;
+
+// split [data-words] text into word spans
+document.querySelectorAll('[data-words]').forEach(el => {
+  const words = el.textContent.split(/(\s+)/).filter(Boolean);
+  el.textContent = '';
+  words.forEach(w => {
+    const s = document.createElement('span');
+    s.className = 'w'; s.textContent = w;
+    el.appendChild(s);
+  });
+});
+
+// Apple-style word reveal: rise + unblur + fade, staggered
+function words(el, t, start, stagger = 0.075, dur = 0.85) {
+  const list = el.matches('.w') ? [el] : el.querySelectorAll('.w');
+  list.forEach((w, i) => {
+    const p = outExpo(prog(t, start + i * stagger, dur));
+    w.style.opacity = p;
+    w.style.transform = `translateY(${(1 - p) * 60}px) scale(${lerp(.96, 1, p)})`;
+    w.style.filter = `blur(${(1 - p) * 14}px)`;
+  });
+}
+// scene envelope: fade in container, then blur/scale out
+function scene(el, t, inAt, outAt, outDur = 0.55) {
+  if (t < inAt - 0.05 || t > outAt + outDur + 0.05) { el.style.opacity = 0; el.style.visibility = 'hidden'; return false; }
+  el.style.visibility = 'visible';
+  const o = inOutCubic(prog(t, outAt, outDur));
+  el.style.opacity = 1 - o;
+  el.style.transform = `scale(${1 + o * 0.06})`;
+  el.style.filter = o > 0 ? `blur(${o * 16}px)` : 'none';
+  return true;
+}
+
+// ---------- background ----------
+const blobs = ['#b1', '#b2', '#b3', '#b4', '#b5'].map(s => $(s));
+const paths = [
+  { x: 200, y: -150, ax: 380, ay: 220, fx: .11, fy: .09, ph: 0 },
+  { x: 1150, y: 300, ax: 420, ay: 260, fx: .08, fy: .12, ph: 1.7 },
+  { x: -200, y: 450, ax: 300, ay: 300, fx: .13, fy: .07, ph: 3.1 },
+  { x: 900, y: -100, ax: 520, ay: 340, fx: .07, fy: .1, ph: 4.4 },
+  { x: 500, y: 600, ax: 260, ay: 180, fx: .09, fy: .11, ph: 2.2 },
+];
+function background(t) {
+  blobs.forEach((b, i) => {
+    const p = paths[i];
+    const x = p.x + Math.sin(t * p.fx * Math.PI * 2 * .6 + p.ph) * p.ax;
+    const y = p.y + Math.cos(t * p.fy * Math.PI * 2 * .6 + p.ph) * p.ay;
+    const s = 1 + Math.sin(t * .35 + p.ph) * .12;
+    b.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+  });
+  // brighten during the Gamma 5 reveal
+  const lift = Math.sin(Math.PI * prog(t, 17.0, 4.6));
+  $('#bg').style.filter = `blur(90px) saturate(${1.15 + lift * .35}) brightness(${1 + lift * .25})`;
+}
+
+// film grain, seeded per frame so renders are deterministic
+const g = $('#grain'), gx = g.getContext('2d'), gimg = gx.createImageData(g.width, g.height);
+function grain(t) {
+  let seed = (Math.floor(t * 24) * 2654435761) >>> 0;
+  const d = gimg.data;
+  for (let i = 0; i < d.length; i += 4) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const v = seed >>> 24;
+    d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+  }
+  gx.putImageData(gimg, 0, 0);
+}
+
+// ---------- timeline ----------
+function render(t) {
+  background(t);
+  grain(t);
+
+  // S1 — "I have a confession."
+  if (scene($('#s1'), t, 0.3, 2.5)) words($('#s1 [data-words]'), t, 0.3, 0.09);
+
+  // S2 — "I actually stopped using Gamma." + strike
+  if (scene($('#s2'), t, 2.75, 5.4)) {
+    words($('#s2 [data-words]'), t, 2.75, 0.08);
+    words($('#gammaWord'), t, 3.1);
+    $('#gammaWord').style.setProperty('--k', inOutCubic(prog(t, 3.95, 0.5)));
+    const dim = prog(t, 4.3, 0.4);
+    $('#gammaWord').style.opacity = lerp(1, .45, dim) * outExpo(prog(t, 3.1, .85));
+  }
+
+  // S3 — "Not because I didn't like it."
+  if (scene($('#s3'), t, 5.7, 7.75)) words($('#s3 [data-words]'), t, 5.7, 0.07);
+
+  // S4 — PowerPoint + floating slide stack
+  if (scene($('#s4'), t, 7.95, 11.5)) {
+    words($('#s4a'), t, 7.95, 0.08);
+    words($('#s4 .h [data-words]'), t, 8.45, 0.07);
+    words($('#pptWord'), t, 8.95);
+    const cards = [
+      { el: '#c1', x: -640, y: -250, r: -9, d: 8.2 },
+      { el: '#c2', x: 600, y: -220, r: 8, d: 8.35 },
+      { el: '#c3', x: 40, y: 300, r: -3, d: 8.5 },
+    ];
+    cards.forEach((c, i) => {
+      const p = outExpo(prog(t, c.d, 1.2));
+      const drift = Math.sin(t * 1.1 + i * 2) * 14;
+      const el = $(c.el);
+      el.style.opacity = p * .9;
+      el.style.left = `calc(50% - 260px)`; el.style.top = `calc(50% - 150px)`;
+      el.style.transform = `translate(${c.x}px, ${c.y + drift + (1 - p) * 160}px) rotate(${c.r + (1 - p) * 6}deg) scale(${lerp(.8, 1, p)})`;
+      el.style.filter = `blur(${(1 - p) * 12 + 1.5}px)`;
+    });
+  }
+
+  // S5 — rolling words
+  if (scene($('#s5'), t, 11.7, 15.5)) {
+    words($('#s5 [data-words]'), t, 11.7, 0.05);
+    words($('#s5my'), t, 12.0);
+    const items = $('#roller').querySelectorAll('span');
+    const starts = [12.15, 13.0, 13.75, 14.5];
+    // roller width eases between word widths so the line stays centered
+    const widths = [...items].map(it => it.offsetWidth);
+    let w = widths[0];
+    starts.forEach((s, i) => { if (i) w = lerp(w, widths[i], inOutCubic(prog(t, s, 0.7))); });
+    $('#roller').style.width = w + 'px';
+    items.forEach((it, i) => {
+      const pin = outExpo(prog(t, starts[i], 0.7));
+      const pout = i < items.length - 1 ? outExpo(prog(t, starts[i + 1], 0.7)) : 0;
+      const y = (1 - pin) * 110 - pout * 110;
+      it.style.transform = `translateY(${y}%)`;
+      it.style.opacity = pin * (1 - pout);
+      it.style.filter = `blur(${((1 - pin) + pout) * 10}px)`;
+    });
+  }
+
+  // S6 — "But then I tried"
+  if (scene($('#s6'), t, 15.75, 17.05, 0.4)) words($('#s6 [data-words]'), t, 15.75, 0.1);
+
+  // S7 — Gamma 5 reveal
+  if (scene($('#s7'), t, 17.1, 21.0, 0.6)) {
+    const p = outExpo(prog(t, 17.15, 1.6));
+    const logo = $('#logoText');
+    logo.style.display = 'inline-block';
+    logo.style.opacity = clamp(p * 1.4);
+    logo.style.letterSpacing = `${lerp(0.25, -0.06, p)}em`;
+    logo.style.transform = `scale(${lerp(1.25, 1, p)})`;
+    logo.style.filter = `blur(${(1 - p) * 30}px)`;
+    const zoom = prog(t, 18.6, 2.5);
+    $('#logo').style.transform = `scale(${1 + zoom * 0.04})`;
+    const sh = prog(t, 18.0, 1.1);
+    $('#sheen').style.transform = `translateX(${lerp(-120, 120, inOutCubic(sh))}%)`;
+    $('#sheen').style.opacity = sh > 0 && sh < 1 ? 1 : 0;
+    const r = outExpo(prog(t, 17.25, 2.2));
+    $('#ring').style.transform = `scale(${lerp(.2, 1.15, r)})`;
+    $('#ring').style.opacity = (1 - prog(t, 17.9, 1.6)) * clamp(r * 3);
+    $('#halo').style.opacity = outCubic(prog(t, 17.3, 1.2)) * (0.8 + Math.sin(t * 2) * .1);
+    words($('#s7sub'), t, 18.7, 0.08);
+  }
+
+  // S8 — one idea (dot) -> finished presentation (slide)
+  if (scene($('#s8'), t, 21.15, 26.2, 0.8)) {
+    words($('#s8a'), t, 21.3, 0.08);
+    const dot = $('#dot');
+    const pop = outBack(prog(t, 21.2, 0.6));
+    const grow = inOutCubic(prog(t, 22.6, 1.1));
+    const W = lerp(46, 980, grow), H = lerp(46, 551, grow);
+    const pulse = grow === 0 ? 1 + Math.sin((t - 21.2) * 6) * 0.06 : 1;
+    dot.style.width = W + 'px'; dot.style.height = H + 'px';
+    dot.style.borderRadius = lerp(23, 28, grow) + 'px';
+    dot.style.transform = `translate(-50%, -50%) scale(${pop * pulse})`;
+    dot.style.background = grow > 0 ? `rgba(255,255,255,${lerp(1, .97, grow)})` : '#fff';
+    // move headline up as the slide grows
+    $('#s8a').style.top = lerp(230, 110, grow) + 'px';
+    $('#s8a').style.opacity = 1;
+    // fill slide contents
+    const bars = dot.querySelectorAll('b');
+    bars.forEach((b, i) => {
+      const q = outExpo(prog(t, 23.4 + i * 0.12, 0.8));
+      b.style.transform = `scaleX(${q})`; b.style.opacity = q;
+    });
+    dot.querySelectorAll('.cols div').forEach((c, i) => {
+      const q = outExpo(prog(t, 23.8 + i * 0.12, 0.9));
+      c.style.transform = `scaleY(${q})`; c.style.opacity = q;
+    });
+    words($('#s8b [data-words]'), t, 23.5, 0.08);
+    words($('#presWord'), t, 23.85);
+  }
+}
+window.render = render;
+window.DURATION = DURATION;
+
+// ---------- playback ----------
+const params = new URLSearchParams(location.search);
+function fit() {
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  $('#stage').style.transform = `scale(${s})`;
+}
+if (params.has('render')) {
+  document.body.classList.add('render');
+  render(0);
+} else {
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  const replay = () => { t0 = performance.now(); };
+  addEventListener('click', replay);
+  addEventListener('keydown', e => { if (e.code === 'Space') replay(); });
+  (function loop(now) {
+    const t = Math.min((now - t0) / 1000, DURATION);
+    render(t);
+    requestAnimationFrame(loop);
+  })(performance.now());
+}
+</script>
+</body>
+</html>
