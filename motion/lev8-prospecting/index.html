@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lev8 Prospecting Motion</title>
+<meta name="viewport" content="width=1920">
+<style>
+@font-face{font-family:Inter;font-weight:400;src:url(fonts/inter-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:500;src:url(fonts/inter-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:600;src:url(fonts/inter-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:700;src:url(fonts/inter-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:800;src:url(fonts/inter-latin-800-normal.woff2) format("woff2")}
+@font-face{font-family:Mono;font-weight:400;src:url(fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:Mono;font-weight:500;src:url(fonts/jetbrains-mono-latin-500-normal.woff2) format("woff2")}
+:root{
+  --bg:#0B0C10; --panel:#14161D; --panel2:#1A1D26; --line:#272B36; --text:#F2F3F5; --muted:#8A8F9C;
+  --accent:#8B7CFF; --lime:#C8F560; --red:#FF6B5E; --claude:#D97757;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);overflow:hidden}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--bg);
+  font-family:Inter,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+.abs{position:absolute;left:0;top:0;will-change:transform,opacity}
+.c{transform-origin:50% 50%}
+.mono{font-family:Mono,monospace}
+
+/* background */
+#grid{inset:0;width:1920px;height:1080px;
+  background-image:radial-gradient(rgba(255,255,255,.07) 1.2px,transparent 1.4px);background-size:40px 40px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 65% at 50% 50%,#000 30%,transparent 100%)}
+.glow{width:900px;height:900px;border-radius:50%;filter:blur(120px);opacity:.35}
+#g1{background:radial-gradient(circle,#5B4BE0 0%,transparent 65%)}
+#g2{background:radial-gradient(circle,#6F9A1F 0%,transparent 65%)}
+
+/* type */
+.kicker{font-family:Mono;font-size:22px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.h1{font-size:104px;font-weight:800;letter-spacing:-.035em;line-height:1;white-space:nowrap}
+.h2{font-size:84px;font-weight:800;letter-spacing:-.03em;line-height:1;white-space:nowrap}
+.word{display:inline-block;will-change:transform,opacity}
+#s1h,#s1h2,#s1k{z-index:5;text-shadow:0 6px 30px rgba(11,12,16,.9)}
+#cursor{z-index:6}
+
+/* scene 1 windows */
+.win{width:330px;height:200px;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.win .bar{height:38px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.win .dot{width:10px;height:10px;border-radius:50%;background:#3A3E4A}
+.win .ttl{margin-left:8px;font-size:17px;font-weight:600;color:#C9CCD4}
+.win .ln{height:12px;border-radius:6px;background:#262A35;margin:16px 18px 0}
+
+/* stepper */
+.node{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-family:Mono;font-size:20px;font-weight:500;color:var(--muted)}
+.nlabel{font-size:20px;font-weight:600;color:var(--muted);white-space:nowrap;text-align:center;width:220px}
+.track{height:3px;background:var(--line);border-radius:2px}
+.fill{height:3px;background:var(--accent);border-radius:2px;transform-origin:0 50%}
+
+/* panel */
+#panel{width:1240px;height:620px;background:var(--panel);border:1px solid var(--line);border-radius:28px;
+  box-shadow:0 40px 120px rgba(0,0,0,.5)}
+.pv{left:0;top:0;width:1240px;height:620px;padding:56px 64px}
+.ptag{font-family:Mono;font-size:20px;letter-spacing:.18em;color:var(--accent);text-transform:uppercase}
+.search{margin-top:26px;height:84px;border-radius:18px;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;
+  padding:0 28px;gap:20px;font-size:32px;font-weight:500}
+.caret{display:inline-block;width:3px;height:36px;background:var(--accent);vertical-align:middle;margin-left:4px}
+.row{height:72px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;gap:20px;padding:0 24px;font-size:26px;font-weight:600;width:1112px}
+.logo{width:40px;height:40px;border-radius:10px;flex:none}
+.meta{margin-left:auto;font-family:Mono;font-size:19px;color:var(--muted);font-weight:400}
+.crit{display:flex;align-items:center;gap:22px;font-size:30px;font-weight:500;height:70px;border-bottom:1px solid var(--line);width:640px}
+.box{width:40px;height:40px;border-radius:10px;border:2px solid #3A3E4A;display:flex;align-items:center;justify-content:center;flex:none}
+.box svg{width:26px;height:26px}
+.stamp{border:5px solid var(--lime);color:var(--lime);font-weight:800;font-size:64px;letter-spacing:.06em;padding:8px 30px;border-radius:16px}
+.av{width:150px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.avc{width:118px;height:118px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);display:flex;align-items:center;justify-content:center}
+.avc svg{width:58px;height:58px}
+.avl{font-size:19px;font-weight:600;color:#C9CCD4;text-align:center;white-space:nowrap}
+.field{display:flex;align-items:center;gap:24px;height:88px;border-radius:18px;background:var(--bg);border:1px solid var(--line);padding:0 28px;width:760px;font-size:30px}
+.field .k{font-family:Mono;font-size:19px;color:var(--muted);width:100px;letter-spacing:.1em}
+.field .v{font-family:Mono;font-weight:500}
+.doc{width:340px;height:300px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);padding:26px}
+.doc .src{font-family:Mono;font-size:17px;color:var(--muted);letter-spacing:.12em}
+.doc .hl{margin-top:20px;font-size:30px;font-weight:700;line-height:1.2}
+.doc .ln{height:12px;border-radius:6px;background:#2B2F3B;margin-top:18px}
+.mark{position:absolute;left:0;top:0;height:100%;background:rgba(200,245,96,.25);border-radius:6px;transform-origin:0 50%}
+.chip{height:52px;border-radius:26px;background:var(--panel2);border:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:10px;
+  font-size:22px;font-weight:600;white-space:nowrap}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block}
+.mail{width:820px;height:400px;border-radius:20px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.mail .mh{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 26px;font-size:21px;color:var(--muted);gap:12px}
+.mail .mh b{color:var(--text);font-weight:600}
+.mail .mb{padding:26px 30px;font-size:29px;line-height:1.45;font-weight:500;white-space:pre-wrap}
+
+/* scene 3 */
+.blk{height:112px;border-radius:22px;background:var(--panel2);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:700;white-space:nowrap}
+.link{height:4px;background:var(--line);border-radius:2px}
+
+/* scene 4 chat */
+#chat{width:1080px;height:700px;border-radius:28px;background:var(--panel);border:1px solid var(--line);overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.55)}
+#chat .top{height:80px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 32px;gap:16px}
+#chat .name{font-size:30px;font-weight:700;color:var(--claude)}
+.conn{margin-left:auto;height:48px;border-radius:24px;border:1px solid rgba(200,245,96,.5);background:rgba(200,245,96,.1);color:var(--lime);
+  display:flex;align-items:center;gap:10px;padding:0 20px;font-size:21px;font-weight:600}
+.conn i{width:10px;height:10px;border-radius:50%;background:var(--lime);display:inline-block}
+.ubub{max-width:820px;margin-left:auto;background:var(--panel2);border:1px solid var(--line);border-radius:22px 22px 6px 22px;padding:22px 28px;font-size:27px;line-height:1.4;font-weight:500}
+.tool{height:58px;border-radius:14px;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;font-size:23px;font-weight:600;width:640px}
+.tool .src{font-family:Mono;font-size:17px;color:var(--lime);letter-spacing:.08em}
+.tool .ok{margin-left:auto;width:30px;height:30px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center}
+.tool .ok svg{width:18px;height:18px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="abs" id="grid"></div>
+  <div class="abs glow" id="g1"></div>
+  <div class="abs glow" id="g2"></div>
+
+  <!-- ============ SCENE 1 ============ -->
+  <div class="abs kicker c" id="s1k">B2B Prospecting</div>
+  <div class="abs h1 c" id="s1h"><span class="word" id="s1w1">Prospecting,</span> <span class="word" id="s1w2" style="color:var(--accent)">manually.</span></div>
+  <div class="abs h2 c" id="s1h2"><span class="word" id="s1m1">It</span> <span class="word" id="s1m2">gets</span> <span class="word" id="s1m3" style="color:var(--red)">messy.</span></div>
+  <div id="wins"></div>
+  <svg class="abs" id="cursor" width="56" height="56" viewBox="0 0 24 24"><path d="M5 3l14 7-6 2-2 6z" fill="#fff" stroke="#0B0C10" stroke-width="1.4" stroke-linejoin="round"/></svg>
+
+  <!-- ============ SCENE 2 ============ -->
+  <div id="stepper"></div>
+  <div class="abs c" id="panel">
+    <!-- 1 search -->
+    <div class="abs pv" id="v1">
+      <div class="ptag">01 · Search companies</div>
+      <div class="search"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#8A8F9C" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span id="q"></span><span class="caret" id="qc"></span></div>
+      <div id="rows"></div>
+    </div>
+    <!-- 2 qualify -->
+    <div class="abs pv" id="v2">
+      <div class="ptag">02 · Check the fit</div>
+      <div style="display:flex;align-items:center;gap:22px;margin-top:30px">
+        <div class="logo" style="width:64px;height:64px;border-radius:16px;background:#8B7CFF"></div>
+        <div><div style="font-size:40px;font-weight:800;letter-spacing:-.02em">Northwind Labs</div><div class="mono" style="font-size:19px;color:var(--muted);margin-top:4px">northwind · saas · 120 employees</div></div>
+      </div>
+      <div id="crits" style="margin-top:20px"></div>
+      <div class="abs stamp c" id="stamp">GOOD FIT</div>
+    </div>
+    <!-- 3 person -->
+    <div class="abs pv" id="v3">
+      <div class="ptag">03 · Find the right person</div>
+      <div id="avs"></div>
+      <div class="abs c" id="ring" style="width:136px;height:136px;border-radius:50%;border:4px solid var(--lime);box-shadow:0 0 40px rgba(200,245,96,.4)"></div>
+    </div>
+    <!-- 4 contact -->
+    <div class="abs pv" id="v4">
+      <div class="ptag">04 · Contact information</div>
+      <div style="display:flex;align-items:center;gap:26px;margin-top:34px">
+        <div class="avc" style="width:96px;height:96px;border-color:var(--lime)"><svg viewBox="0 0 24 24" fill="#C8F560"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.5 4.3-7 8.5-7s7.7 2.5 8.5 7z"/></svg></div>
+        <div><div style="font-size:40px;font-weight:800;letter-spacing:-.02em">Jordan Lee</div><div style="font-size:24px;color:var(--muted);margin-top:4px;font-weight:500">Head of Sales · Northwind Labs</div></div>
+      </div>
+      <div id="fields" style="margin-top:34px;display:flex;flex-direction:column;gap:18px"></div>
+    </div>
+    <!-- 5 research -->
+    <div class="abs pv" id="v5">
+      <div class="ptag">05 · Research the company</div>
+      <div id="docs"></div>
+      <svg class="abs" id="mag" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#F2F3F5" stroke-width="2"><circle cx="10" cy="10" r="6.5" fill="rgba(139,124,255,.18)"/><path d="M15 15l6 6" stroke-width="2.8" stroke-linecap="round"/></svg>
+    </div>
+    <!-- 6 message -->
+    <div class="abs pv" id="v6">
+      <div class="ptag">06 · Write the outreach</div>
+      <div class="abs mail c" id="mail">
+        <div class="mh">To <b>jordan@northwindlabs.io</b><span style="margin-left:auto">Subject: <b>Scaling your SDR team</b></span></div>
+        <div class="mb"><span id="mtxt"></span><span class="caret" id="mc" style="height:32px"></span></div>
+      </div>
+      <div id="chips"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCENE 3 ============ -->
+  <div class="abs h2 c" id="s3a"><span class="word" id="s3a1">Not</span> <span class="word" id="s3a2">one</span> <span class="word" id="s3a3">difficult</span> <span class="word" id="s3a4">task.</span></div>
+  <div class="abs h2 c" id="s3b"><span class="word" id="s3b1">A</span> <span class="word" id="s3b2" style="color:var(--accent)">chain</span> <span class="word" id="s3b3">of</span> <span class="word" id="s3b4">small</span> <span class="word" id="s3b5">tasks.</span></div>
+  <div class="abs blk c" id="big" style="width:620px;height:180px;font-size:44px;border-color:#3A3E4A">B2B Prospecting</div>
+  <div id="chain"></div>
+  <svg class="abs c" id="clock" width="150" height="150" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="44" fill="#14161D" stroke="#FF6B5E" stroke-width="5"/>
+    <g id="hm"><line x1="50" y1="50" x2="50" y2="18" stroke="#F2F3F5" stroke-width="5" stroke-linecap="round"/></g>
+    <g id="hh"><line x1="50" y1="50" x2="50" y2="30" stroke="#FF6B5E" stroke-width="6" stroke-linecap="round"/></g>
+    <circle cx="50" cy="50" r="5" fill="#F2F3F5"/>
+  </svg>
+  <div class="abs c" id="timecap" style="font-size:44px;font-weight:700;color:var(--muted);white-space:nowrap">…and it all takes <span style="color:var(--red)">time</span>.</div>
+
+  <!-- ============ SCENE 4 ============ -->
+  <div class="abs c kicker" id="s4k" style="font-size:24px">Each step · <span id="s4man" style="position:relative;color:var(--text)">manually<span class="abs" id="strike" style="top:50%;height:4px;width:100%;background:var(--red);transform-origin:0 50%"></span></span></div>
+  <div class="abs c" id="chat">
+    <div class="top"><span class="name">Claude</span><div class="conn" id="conn"><i></i>Lev8 connected</div></div>
+    <div style="padding:34px 40px">
+      <div class="ubub" id="ub"><span id="utxt"></span><span class="caret" id="uc" style="height:30px"></span></div>
+      <div id="tools" style="position:relative"></div>
+    </div>
+  </div>
+  <div class="abs c" id="lev" style="font-size:150px;font-weight:800;letter-spacing:-.05em;color:var(--lime);white-space:nowrap">Lev8</div>
+  <div class="abs c" id="end" style="font-size:54px;font-weight:800;letter-spacing:-.02em;white-space:nowrap"><span style="color:var(--lime)">Lev8</span>, directly inside <span style="color:var(--claude)">Claude</span>.</div>
+</div>
+
+<script>
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const clamp = (v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const P = (t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const oC=p=>1-Math.pow(1-p,3), iC=p=>p*p*p, ioC=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const oB=p=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)};
+const oE=p=>p===1?1:1-Math.pow(2,-10*p);
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+// place element by its centre (cx,cy) or top-left
+function S(el,{x=0,y=0,s=1,r=0,o=1,sx,sy,blur=0,center=true}={}){
+  el.style.opacity=o;
+  const sc = sx!==undefined ? `scale(${sx},${sy??1})` : `scale(${s})`;
+  el.style.transform=`translate(${x}px,${y}px)${center?' translate(-50%,-50%)':''} rotate(${r}deg) ${sc}`;
+  el.style.filter = blur>0.05?`blur(${blur}px)`:'none';
+  el.style.visibility = o<=0.001?'hidden':'visible';
+}
+// standard in/out envelope: rise in at a, fade out at b
+function inout(t,a,b,din=.5,dout=.35){return Math.min(oC(P(t,a,a+din)), 1-iC(P(t,b,b+dout)))}
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#0B0C10" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const CHECKL='<svg viewBox="0 0 24 24" fill="none" stroke="#C8F560" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const PERSON=c=>`<svg viewBox="0 0 24 24" fill="${c}"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.5 4.3-7 8.5-7s7.7 2.5 8.5 7z"/></svg>`;
+
+// ---------- build DOM ----------
+const W=1920,H=1080,CX=960;
+const winData=["Lead list.xlsx","Company website","People search","Notes.txt","Email draft","Tabs (23)"];
+const wins=winData.map((n,i)=>{const d=document.createElement('div');d.className='abs win';
+  d.innerHTML=`<div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="ttl">${n}</span></div><div class="ln" style="width:70%"></div><div class="ln" style="width:85%"></div><div class="ln" style="width:55%"></div>`;
+  $('stage').insertBefore(d,$('cursor'));return d});
+const R1=rng(7); const mess=wins.map(()=>({x:(R1()-.5)*900,y:(R1()-.5)*320,r:(R1()-.5)*40}));
+
+const steps=["Search","Qualify","Find person","Contact info","Research","Write message"];
+const stepT=[4.8,6.1,8.4,9.6,11.1,12.95];
+const SX0=CX-650, SDX=260, SY=150;
+const nodes=[],labels=[],fills=[];
+steps.forEach((n,i)=>{
+  if(i<5){const tr=document.createElement('div');tr.className='abs track';tr.style.width=(SDX-60)+'px';$('stage').appendChild(tr);
+    const f=document.createElement('div');f.className='abs fill';f.style.width=(SDX-60)+'px';$('stage').appendChild(f);fills.push([tr,f]);}
+});
+steps.forEach((n,i)=>{const d=document.createElement('div');d.className='abs node';d.textContent=i+1;$('stage').appendChild(d);nodes.push(d);
+  const l=document.createElement('div');l.className='abs nlabel';l.textContent=n;$('stage').appendChild(l);labels.push(l)});
+
+const rowsData=[["Northwind Labs","#8B7CFF","SaaS · 120 ppl · Austin"],["Brightpath","#C8F560","SaaS · 85 ppl · Denver"],["Corvid Data","#FF6B5E","SaaS · 190 ppl · Boston"],["Helio Systems","#5FC9F8","SaaS · 64 ppl · Seattle"]];
+const rows=rowsData.map(([n,c,m])=>{const d=document.createElement('div');d.className='abs row';d.innerHTML=`<span class="logo" style="background:${c}"></span>${n}<span class="meta">${m}</span>`;$('v1').appendChild(d);return d});
+
+const critData=["Industry: B2B SaaS","Size: 50–200 employees","Region: United States","Hiring sales reps"];
+const crits=critData.map(c=>{const d=document.createElement('div');d.className='crit';d.innerHTML=`<span class="box"></span><span>${c}</span>`;$('crits').appendChild(d);return d});
+
+const avData=["Founder","Marketing Lead","Head of Sales","Engineer","Recruiter","Designer"];
+const avs=avData.map((n,i)=>{const d=document.createElement('div');d.className='abs av';d.innerHTML=`<div class="avc">${PERSON(i===2?'#C8F560':'#4A4F5C')}</div><div class="avl">${n}</div>`;$('v3').appendChild(d);return d});
+
+const fieldData=[["EMAIL","jordan@northwindlabs.io"],["PHONE","+1 (415) 555-0142"],["PROFILE","in/jordan-lee-sales"]];
+const fields=fieldData.map(([k,v])=>{const d=document.createElement('div');d.className='field';d.innerHTML=`<span class="k">${k}</span><span class="v"></span>`;$('fields').appendChild(d);return d});
+
+const docData=[["NEWS","Raised a $24M Series B"],["CAREERS","Hiring 6 new SDRs"],["BLOG","Expanding into Europe"]];
+const docs=docData.map(([s,h])=>{const d=document.createElement('div');d.className='abs doc';
+  d.innerHTML=`<div class="src">${s}</div><div class="hl"><span style="position:relative;display:inline"><span class="mark"></span><span style="position:relative">${h}</span></span></div><div class="ln" style="width:90%"></div><div class="ln" style="width:75%"></div><div class="ln" style="width:82%"></div>`;
+  $('v5').appendChild(d);return d});
+
+const chipData=["Northwind Labs","Good fit ✓","Jordan Lee","Series B","Hiring SDRs","EU expansion"];
+const chips=chipData.map(c=>{const d=document.createElement('div');d.className='abs chip';d.innerHTML=`<i></i>${c}`;$('v6').appendChild(d);return d});
+const MSG="Hi Jordan — congrats on the Series B!\nSaw Northwind is hiring 6 SDRs. Happy to\nshare how teams like yours ramp new reps\nfaster…";
+
+const chainBlocks=steps.map((n,i)=>{const d=document.createElement('div');d.className='abs blk c';d.style.width='236px';d.textContent=n;$('stage').appendChild(d);return d});
+const links=[0,1,2,3,4].map(()=>{const d=document.createElement('div');d.className='abs link';d.style.width='40px';$('stage').appendChild(d);return d});
+
+const toolData=[["LEV8","Search companies"],["LEV8","Qualify against ICP"],["LEV8","Find decision-makers"],["LEV8","Get contact info"],["LEV8","Research each company"],["CLAUDE","Draft outreach"]];
+const tools=toolData.map(([s,n],i)=>{const d=document.createElement('div');d.className='abs tool';
+  d.innerHTML=`<span class="src" style="${s==='CLAUDE'?'color:var(--claude)':''}">${s}</span><span>${n}</span><span class="ok">${CHECK}</span>`;$('tools').appendChild(d);return d});
+const UMSG="Find SaaS companies that fit our ICP, the right contacts, and draft outreach.";
+
+// static layout inside panel
+// ---------- render ----------
+function render(t){
+  // background drift
+  S($('g1'),{x:500+Math.sin(t*.25)*120,y:300+Math.cos(t*.2)*80,o:1});
+  S($('g2'),{x:1500+Math.cos(t*.22)*120,y:850+Math.sin(t*.27)*80,o:lerp(.35,.9,P(t,26.2,27.2))});
+  S($('grid'),{x:0,y:0,center:false,o:oC(P(t,0,.8))});
+
+  // ===== SCENE 1 (0 – 4.8) =====
+  const s1out = 1-iC(P(t,4.25,4.75));
+  S($('s1k'),{x:CX,y:300,o:oC(P(t,.05,.5))*s1out,y:300-20*oC(P(t,2.4,3))});
+  const w1=oB(P(t,.55,1.05)), w2=oB(P(t,1.75,2.25));
+  S($('s1h'),{x:CX,y:lerp(420,380,oC(P(t,2.4,3))),o:s1out});
+  S($('s1w1'),{y:lerp(60,0,w1),o:clamp(w1),center:false,blur:(1-clamp(w1))*8});
+  S($('s1w2'),{y:lerp(60,0,w2),o:clamp(w2),center:false,blur:(1-clamp(w2))*8});
+  // messy line
+  const m=[3.55,3.7,3.85].map(a=>oB(P(t,a,a+.4)));
+  S($('s1h2'),{x:CX,y:500,o:(t>3.4?1:0)*s1out});
+  ['s1m1','s1m2','s1m3'].forEach((id,i)=>{const sh=i===2&&t>3.9?Math.sin(t*70)*4*(1-P(t,4.1,4.5)):0;
+    S($(id),{x:sh,y:lerp(50,0,m[i]),o:clamp(m[i]),center:false,r:i===2?sh*.8:0})});
+  // windows: neat grid then scatter into a mess
+  wins.forEach((w,i)=>{
+    const col=i%3,row=Math.floor(i/3);
+    const nx=CX+(col-1)*370, ny=lerp(700,720,0)+(row-.5)*230;
+    const a=oB(P(t,2.45+i*.08,2.95+i*.08));
+    const msp=ioC(P(t,3.55+i*.04,4.15+i*.04));
+    const jit=t>3.6?Math.sin(t*40+i)*3*(1-P(t,4.1,4.4)):0;
+    const x=nx+mess[i].x*msp+jit, y=ny+40*(1-a)+mess[i].y*msp*.6+(row?80:0)*msp;
+    S(w,{x,y:y+(t>3.2?80:80),s:lerp(.85,1,clamp(a)),r:mess[i].r*msp,o:clamp(a)*s1out});
+    w.style.borderColor = msp>.5?'rgba(255,107,94,.55)':'';
+  });
+  // cursor: appears on "manually", clicks windows frantically
+  {const a=P(t,1.9,2.2);let cx=lerp(1400,1250,oC(P(t,1.9,2.5))),cy=lerp(420,450,oC(P(t,1.9,2.5)));
+   if(t>2.6){const k=Math.floor((t-2.6)/.35),f=((t-2.6)/.35)%1;const ii=k%6,jj=(k+1)%6;
+     const p=(i)=>{const c=i%3,r=Math.floor(i/3);return[CX+(c-1)*370+60+mess[i].x*P(t,3.6,4.2),830+(r-.5)*230+mess[i].y*.6*P(t,3.6,4.2)-30]};
+     const A=k===0?[1250,450]:p(ii),B=p(jj);cx=lerp(A[0],B[0],ioC(f));cy=lerp(A[1],B[1],ioC(f));}
+   S($('cursor'),{x:cx,y:cy,center:false,o:clamp(a)*s1out,s:1});}
+
+  // ===== SCENE 2 (4.8 – 17.0) =====
+  const s2in=oC(P(t,4.75,5.35)), s2out=1-iC(P(t,16.75,17.15));
+  const s2o=s2in*s2out;
+  steps.forEach((n,i)=>{
+    const x=SX0+i*SDX, y=SY;
+    const appear=oB(P(t,4.8+i*.05,5.3+i*.05));
+    const act=t>=stepT[i], done=i<5?t>=stepT[i+1]:t>16.4;
+    const pop=oB(P(t,stepT[i],stepT[i]+.35));
+    const nd=nodes[i];
+    S(nd,{x,y,s:clamp(appear)*(act?lerp(.8,1.12,pop)-(done?.12:0):1),o:clamp(appear)*s2out});
+    nd.style.background=done?'var(--lime)':act?'var(--accent)':'var(--bg)';
+    nd.style.borderColor=done?'var(--lime)':act?'var(--accent)':'var(--line)';
+    nd.style.color=done||act?'#0B0C10':'var(--muted)';
+    nd.style.boxShadow=act&&!done?'0 0 0 10px rgba(139,124,255,.18),0 0 40px rgba(139,124,255,.6)':'none';
+    nd.innerHTML=done?CHECK.replace('<svg','<svg width="26" height="26"'):String(i+1);
+    S(labels[i],{x,y:y+52,o:clamp(appear)*s2out});
+    labels[i].style.color=act?'var(--text)':'var(--muted)';
+    if(i<5){const [tr,f]=fills[i];S(tr,{x:x+30,y:y-1.5,center:false,o:clamp(appear)*s2out});
+      S(f,{x:x+30,y:y-1.5,center:false,o:s2out,sx:ioC(P(t,stepT[i+1]-.35,stepT[i+1]))});}
+  });
+  S($('panel'),{x:CX,y:640,o:s2o,s:lerp(.94,1,s2in)});
+  // view switching
+  const vw=[[4.8,6.1],[6.1,8.4],[8.4,9.6],[9.6,11.1],[11.1,12.95],[12.95,99]];
+  vw.forEach(([a,b],i)=>{const o=Math.min(oC(P(t,a,a+.3)),1-P(t,b-.12,b+.08));
+    S($('v'+(i+1)),{x:0,y:lerp(24,0,oC(P(t,a,a+.35)))-lerp(0,24,P(t,b-.12,b+.08)),center:false,o})});
+  // v1 search typing
+  {const q="B2B SaaS · 50–200 employees · US";const n=Math.floor(q.length*P(t,5.0,5.9));$('q').textContent=q.slice(0,n);
+   $('qc').style.opacity=(Math.floor(t*3)%2||t<5.9)?1:0;
+   rows.forEach((r,i)=>{const a=oC(P(t,5.45+i*.12,5.85+i*.12));S(r,{x:64,y:254+i*84+30*(1-a),center:false,o:a})});
+   rows[0].style.borderColor=t>5.9?'var(--accent)':'';}
+  // v2 criteria
+  crits.forEach((c,i)=>{const tt=6.55+i*.38;const a=oB(P(t,tt,tt+.3));const b=c.firstChild;
+    b.innerHTML=t>tt?CHECK:'';b.style.background=t>tt?'var(--lime)':'transparent';b.style.borderColor=t>tt?'var(--lime)':'#3A3E4A';
+    b.style.transform=`scale(${t>tt?lerp(.6,1,a):1})`;c.style.color=t>tt?'var(--text)':'var(--muted)'});
+  {const a=P(t,8.0,8.25);S($('stamp'),{x:1000,y:360,s:lerp(2.2,1,oC(a)),r:-12,o:clamp(a*1.5)})}
+  // v3 people grid
+  avs.forEach((a,i)=>{const col=i%3,row=Math.floor(i/3);const k=oB(P(t,8.45+i*.06,8.85+i*.06));
+    S(a,{x:270+col*350,y:230+row*200,s:clamp(k)*1,o:clamp(k)})});
+  {const path=[[0,0],[1,0],[0,1],[2,0]];const tt=P(t,8.75,9.25);const idx=Math.min(3,Math.floor(tt*4));const f=(tt*4)%1;
+   const A=path[Math.max(0,idx-1)],B=path[idx];const px=lerp(A[0],B[0],ioC(idx===0?1:f)),py=lerp(A[1],B[1],ioC(idx===0?1:f));
+   const tgt=t>9.25?[2,0]:[px,py];
+   S($('ring'),{x:270+tgt[0]*350+0,y:230+tgt[1]*200-16,o:oC(P(t,8.75,8.95)),s:t>9.25?lerp(1.25,1,oB(P(t,9.25,9.5))):1});
+   avs.forEach((a,i)=>a.style.opacity=t>9.3&&i!==2?String(lerp(1,.35,P(t,9.3,9.5))):a.style.opacity);}
+  // v4 contact fields — scramble decode
+  fields.forEach((f,i)=>{const tt=9.95+i*.3;const a=oC(P(t,tt-.15,tt+.15));f.style.opacity=a;f.style.transform=`translateY(${(1-a)*20}px)`;
+    const v=fieldData[i][1];const p=P(t,tt,tt+.55);const R=rng(Math.floor(t*30)+i*99);const n=Math.floor(v.length*p);
+    let s=v.slice(0,n);for(let k=n;k<v.length;k++)s+=v[k]===' '?' ':"abcdefghijklmnopqrstuvwxyz0123456789@#$%"[Math.floor(R()*40)];
+    const el=f.querySelector('.v');el.textContent=s;el.style.color=p>=1?'var(--lime)':'var(--muted)'});
+  // v5 research docs + magnifier
+  docs.forEach((d,i)=>{const a=oB(P(t,11.2+i*.12,11.6+i*.12));S(d,{x:64+i*380,y:150+40*(1-clamp(a)),center:false,o:clamp(a)});
+    d.querySelector('.mark').style.transform=`scaleX(${oC(P(t,11.75+i*.35,12.1+i*.35))})`;d.querySelector('.mark').style.width='100%'});
+  {const k=P(t,11.6,12.8);S($('mag'),{x:lerp(140,1000,ioC(k)),y:280+Math.sin(k*Math.PI*3)*40,center:false,o:oC(P(t,11.5,11.7))})}
+  // v6 chips gather, then message types
+  chips.forEach((c,i)=>{const col=i%3,row=Math.floor(i/3);
+    const start=[200+col*400,200+row*140], end=[620,330];
+    const a=oB(P(t,13.0+i*.08,13.35+i*.08)), g=ioC(P(t,14.0+i*.05,14.55+i*.05));
+    S(c,{x:lerp(start[0],end[0],g),y:lerp(start[1]+30*(1-clamp(a)),end[1],g),s:clamp(a)*lerp(1,.4,g),o:clamp(a)*(1-P(t,14.4+i*.05,14.6+i*.05))})});
+  {const a=oC(P(t,14.25,14.7));S($('mail'),{x:620,y:350,s:lerp(.85,1,a),o:a});
+   const n=Math.floor(MSG.length*clamp((t-14.6)/2.0));$('mtxt').textContent=MSG.slice(0,n);$('mc').style.opacity=Math.floor(t*3)%2?1:0;}
+
+  // ===== SCENE 3 (17.0 – 22.2) =====
+  const s3w=[17.1,17.25,17.5,17.85].map(a=>oB(P(t,a,a+.35)));
+  const s3aOut=1-iC(P(t,18.85,19.15));
+  S($('s3a'),{x:CX,y:280,o:(t>17?1:0)*s3aOut,y:280-30*P(t,18.85,19.15)});
+  ['s3a1','s3a2','s3a3','s3a4'].forEach((id,i)=>S($(id),{y:lerp(50,0,s3w[i]),o:clamp(s3w[i]),center:false,blur:(1-clamp(s3w[i]))*8}));
+  // big block: weighs down on "difficult", then cracks
+  {const a=oB(P(t,17.4,17.9));const shake=t>18.6&&t<19.1?Math.sin(t*90)*6*P(t,18.6,19.05):0;
+   S($('big'),{x:CX+shake,y:590,s:clamp(a)*(1+.04*P(t,18.6,19.1)),o:clamp(a)*(t<19.15?1:0)});}
+  const s3bw=[19.1,19.3,19.45,19.75,20.0].map(a=>oB(P(t,a,a+.35)));
+  const s3out=1-iC(P(t,22.0,22.4));
+  S($('s3b'),{x:CX,y:lerp(280,250,oC(P(t,22.0,22.6))),o:(t>19?1:0)*s3out,s:lerp(1,.62,ioC(P(t,22.0,22.6)))});
+  ['s3b1','s3b2','s3b3','s3b4','s3b5'].forEach((id,i)=>S($(id),{y:lerp(50,0,s3bw[i]),o:clamp(s3bw[i]),center:false,blur:(1-clamp(s3bw[i]))*8}));
+  // chain blocks: burst from big block, then line up; reused in scene 4
+  const R3=rng(3);
+  chainBlocks.forEach((b,i)=>{
+    const lx=CX+(i-2.5)*276, ly=590;
+    const bx=CX+(i-2.5)*95, by=590+(R3()-.5)*40, br=(R3()-.5)*50;
+    const burst=oC(P(t,19.12,19.45)), line=ioC(P(t,19.4+i*.05,20.1+i*.05));
+    const sx=bx+(bx-CX)*1.6*burst, sy=by+(R3()-.5)*260*burst;
+    let x=lerp(sx,lx,line), y=lerp(sy,ly,line), r=br*(1-line);
+    // scene 4: chain lifts to top and fades as chat rises
+    const up=ioC(P(t,24.3,25.0));
+    y=lerp(y,200,up); const sc=lerp(1,.8,up);
+    const vis=(t>=19.12?1:0)*(1-iC(P(t,25.0,25.5)));
+    S(b,{x,y,r,s:sc*lerp(.4,1,burst),o:vis});
+    // a slow progress sweep "takes a lot of time" & manual cursor visits
+    const sweep=P(t,20.6,22.0)*6; const hot=sweep>i&&sweep<i+1.2;
+    const visit=t>22.3&&t<24.2&&Math.floor((t-22.3)/.3)===i;
+    const doneManual=t>22.3&&(t-22.3)/.3>i+1;
+    b.style.borderColor= visit?'var(--accent)':hot?'var(--red)':(doneManual&&t<24.3)?'#4A4F5C':'var(--line)';
+    b.style.color= hot?'var(--red)':'';
+  });
+  links.forEach((l,i)=>{const lx=CX+(i-2.5)*276+118, a=oC(P(t,20.0+i*.06,20.3+i*.06));
+    S(l,{x:lx,y:588,center:false,o:a*(1-iC(P(t,24.2,24.45)))});});
+  // clock / time
+  {const a=oB(P(t,20.75,21.15));const o=clamp(a)*(1-iC(P(t,22.0,22.3)));
+   S($('clock'),{x:CX-330,y:830,s:clamp(a),o});
+   $('hm').setAttribute('transform',`rotate(${(t-20.75)*720} 50 50)`);$('hh').setAttribute('transform',`rotate(${(t-20.75)*60} 50 50)`);
+   S($('timecap'),{x:CX+90,y:830,o:oC(P(t,20.9,21.3))*(1-iC(P(t,22.0,22.3))),y:830+20*(1-oC(P(t,20.9,21.3)))});}
+
+  // ===== SCENE 4 (22.2 – 28.6) =====
+  {const a=oC(P(t,22.3,22.7));S($('s4k'),{x:CX,y:lerp(470,450,a),o:a*(1-iC(P(t,24.25,24.55)))});
+   $('strike').style.transform=`scaleX(${ioC(P(t,23.85,24.15))})`;
+   $('s4man').style.color=t>24?'var(--muted)':'var(--text)';}
+  // cursor revisits during "each step manually"
+  if(t>22.3&&t<24.3){const k=(t-22.3)/.3,i=Math.min(5,Math.floor(k)),f=k%1;
+    const xA=CX+(Math.max(0,i-1)-2.5)*276, xB=CX+(i-2.5)*276;
+    S($('cursor'),{x:lerp(xA,xB,ioC(Math.min(1,f*2)))+30,y:605,center:false,o:oC(P(t,22.3,22.5))*(1-P(t,24.0,24.25))});}
+  else if(t>4.8) $('cursor').style.visibility='hidden';
+  // chat window rises: "how much of this work"
+  const ca=oC(P(t,24.5,25.2));
+  S($('chat'),{x:CX,y:lerp(740,620,ca)-lerp(0,40,ioC(P(t,27.9,28.4))),o:ca,s:lerp(.92,1,ca)*lerp(1,.94,ioC(P(t,27.9,28.4)))});
+  {const n=Math.floor(UMSG.length*P(t,24.9,26.2));$('utxt').textContent=UMSG.slice(0,n);$('uc').style.display=t<26.3?'inline-block':'none';$('uc').style.opacity=Math.floor(t*3)%2||t<26.2?1:0;}
+  // "Lev8" hit on the word, then flies into connector chip
+  {const a=oB(P(t,26.35,26.7)), fly=ioC(P(t,26.75,27.15));
+   S($('lev'),{x:lerp(CX,CX+390,fly),y:lerp(560,330,fly),s:clamp(a)*lerp(1,.15,fly),o:clamp(a)*(1-P(t,27.0,27.15))});
+   const c=oB(P(t,27.05,27.35));S($('conn'),{x:0,y:0,center:false,s:t<27.05?0:lerp(.6,1,c),o:clamp(c)});
+   $('conn').style.boxShadow=`0 0 ${lerp(50,0,P(t,27.1,27.9))}px rgba(200,245,96,.6)`;}
+  // tool results stream in
+  tools.forEach((d,i)=>{const tt=26.85+i*.2;const a=oC(P(t,tt,tt+.3));const ok=oB(P(t,tt+.18,tt+.4));
+    S(d,{x:0,y:22+i*64+20*(1-a),center:false,o:a});d.querySelector('.ok').style.transform=`scale(${clamp(ok)})`});
+  // end line on "inside Claude"
+  {const a=oC(P(t,27.7,28.2));S($('end'),{x:CX,y:lerp(1045,1028,a),o:a});
+   $('chat').querySelector('.name').style.textShadow=`0 0 ${30*P(t,27.7,28.0)}px rgba(217,119,87,.8)`;}
+}
+window.render=render;
+document.fonts.ready.then(()=>{window.__ready=true; if(!window.__capture){const t0=performance.now();(function loop(){render(((performance.now()-t0)/1000)%28.6);requestAnimationFrame(loop)})();}});
+</script>
+</body>
+</html>
