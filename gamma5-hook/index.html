@@ -9,12 +9,8 @@
 <style>
   :root {
     --deep: #020b2e;
-    --navy: #06206e;
-    --blue: #1d5bff;
-    --azure: #3fa2ff;
-    --cyan: #7fe0ff;
     --ink: #ffffff;
-    --soft: rgba(255,255,255,.62);
+    --soft: rgba(255,255,255,.66);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
@@ -40,7 +36,7 @@
 
   /* ---------- typography ---------- */
   .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; }
-  .h { font-weight: 700; letter-spacing: -0.045em; line-height: 1.02; }
+  .h { font-weight: 700; letter-spacing: -0.045em; line-height: 1.04; }
   .xl { font-size: 150px; }
   .l  { font-size: 116px; }
   .m  { font-size: 88px; }
@@ -50,11 +46,15 @@
     background: linear-gradient(100deg, #ffffff 0%, #bfe6ff 40%, #7fd0ff 70%, #ffffff 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .row { display: flex; align-items: baseline; justify-content: center; }
+  .abs { position: absolute; left: 0; right: 0; }
+
+  /* the Gamma wordmark, sized to the cap height of the surrounding text */
+  .logo { height: .73em; vertical-align: baseline; }
+  .logo img { height: 100%; display: block; filter: drop-shadow(0 0 .12em rgba(127,200,255,.35)); }
 
   /* strike-through on "Gamma" */
   .strike { position: relative; }
-  .strike::after { content: ""; position: absolute; left: -2%; top: 54%; height: 10px; width: calc(var(--k, 0) * 104%); background: #fff; border-radius: 6px; box-shadow: 0 0 24px rgba(127,224,255,.9); }
+  .strike::after { content: ""; position: absolute; left: -3%; top: 46%; height: .09em; width: calc(var(--k, 0) * 106%); background: #fff; border-radius: 6px; box-shadow: 0 0 24px rgba(127,224,255,.9); }
 
   /* glass slide cards */
   .card {
@@ -68,16 +68,20 @@
   .card i.t { height: 28px; width: 62%; background: rgba(255,255,255,.8); }
   .card .tag { position: absolute; right: 26px; bottom: 22px; font-size: 22px; font-weight: 600; letter-spacing: .02em; color: rgba(255,255,255,.75); }
 
-  /* rolling word (S5) */
-  .roller { position: relative; display: inline-block; height: 1.32em; overflow: hidden; vertical-align: bottom; text-align: left; }
+  /* rolling word */
+  .roller { position: relative; display: inline-block; height: 1.32em; overflow: hidden; text-align: left; }
   .roller span { position: absolute; left: 0; top: 0; white-space: nowrap; }
 
   /* Gamma 5 reveal */
-  #logo { position: relative; font-size: 230px; font-weight: 800; letter-spacing: -0.06em; }
-  #logo .five { background: linear-gradient(135deg, #ffffff 0%, #9fe1ff 45%, #3f8cff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  #sheen { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.85) 50%, transparent 65%); mix-blend-mode: overlay; -webkit-mask: linear-gradient(#000,#000); pointer-events: none; }
+  #logo { position: relative; display: flex; align-items: baseline; gap: 44px; }
+  #bigLogo { position: relative; height: 172px; }
+  #bigLogo img { height: 100%; display: block; }
+  #bigLogo .base { filter: drop-shadow(0 0 30px rgba(120,200,255,.45)); }
+  #bigLogo .glint { position: absolute; inset: 0; filter: drop-shadow(0 0 10px #bfeaff) drop-shadow(0 0 28px #5fb8ff); }
+  #five { font-size: 236px; font-weight: 800; letter-spacing: -0.04em; line-height: 1;
+    background: linear-gradient(135deg, #ffffff 0%, #9fe1ff 45%, #3f8cff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-block; }
   #ring { position: absolute; width: 900px; height: 900px; border-radius: 50%; border: 2px solid rgba(160,225,255,.55); box-shadow: 0 0 80px rgba(80,170,255,.45), inset 0 0 80px rgba(80,170,255,.25); }
-  #halo { position: absolute; width: 1100px; height: 520px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120,200,255,.55), rgba(120,200,255,0) 65%); }
+  #halo { position: absolute; width: 1300px; height: 560px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120,200,255,.5), rgba(120,200,255,0) 65%); }
 
   /* idea -> presentation */
   #dot { position: absolute; left: 50%; top: 50%; background: #fff; box-shadow: 0 0 60px rgba(150,220,255,.9), 0 0 140px rgba(60,140,255,.6); overflow: hidden; }
@@ -103,20 +107,18 @@
   <div id="vignette"></div>
   <canvas id="grain" width="480" height="270"></canvas>
 
-  <!-- S1 -->
+  <!-- 0.0  "I have a confession." -->
   <section class="scene" id="s1"><div class="h l" data-words>I have a confession.</div></section>
 
-  <!-- S2 -->
+  <!-- 1.3  "I actually stopped using Gamma." -->
   <section class="scene" id="s2">
-    <div class="h l"><span data-words>I actually stopped using </span><span class="w strike grad" id="gammaWord">Gamma.</span></div>
+    <div class="h l"><span data-words>I actually stopped using </span><span class="w logo strike" id="g2"><img src="gamma-logo.png" alt="Gamma"></span></div>
   </section>
 
-  <!-- S3 -->
-  <section class="scene" id="s3">
-    <div class="h m" data-words>Not because I didn’t like it.</div>
-  </section>
+  <!-- 3.2  "Not because I didn't like it." -->
+  <section class="scene" id="s3"><div class="h m" data-words>Not because I didn’t like it.</div></section>
 
-  <!-- S4 -->
+  <!-- 4.7  "The problem was that a lot of my existing work was still living in PowerPoint." -->
   <section class="scene" id="s4">
     <div id="cards">
       <div class="card" id="c1"><i class="t"></i><i style="width:88%"></i><i style="width:74%"></i><i style="width:80%"></i><span class="tag">Q3 Review.pptx</span></div>
@@ -124,50 +126,62 @@
       <div class="card" id="c3"><i class="t"></i><i style="width:82%"></i><i style="width:66%"></i><i style="width:78%"></i><span class="tag">Roadmap.pptx</span></div>
     </div>
     <div style="position:relative">
-      <div class="s" id="s4a" data-words>The problem?</div>
-      <div class="h l" style="margin-top:22px"><span data-words>My work still lived in </span><span class="w grad" id="pptWord">PowerPoint.</span></div>
+      <div class="s" id="s4a" data-words>The problem was that a lot of</div>
+      <div class="h l" id="s4b" style="margin-top:22px"><span data-words>my existing work was still</span><br><span data-words>living in </span><span class="w grad" id="pptWord">PowerPoint.</span></div>
     </div>
   </section>
 
-  <!-- S5 -->
+  <!-- 9.1  "So even if I wanted to use AI to create something new," -->
+  <section class="scene" id="s5a">
+    <div class="h m" id="s5a1"><span data-words>So even if I wanted to use </span><span class="w grad">AI</span></div>
+    <div class="h m" id="s5a2" style="margin-top:10px; color:var(--soft)" data-words>to create something new,</div>
+  </section>
+
+  <!-- 12.0 "I still had to think about my existing presentations, my formatting, my design, and all the work I'd already created." -->
   <section class="scene" id="s5">
-    <div class="s" data-words>Even with AI, I still had to think about</div>
+    <div class="s" id="s5lab" data-words>I still had to think about</div>
     <div class="h xl" style="margin-top:26px; display:flex; align-items:flex-start; gap:.28em; line-height:1.12">
       <span class="w" id="s5my">My</span>
       <span class="roller" id="roller">
         <span class="grad">presentations.</span>
         <span class="grad">formatting.</span>
         <span class="grad">design.</span>
-        <span class="grad">everything.</span>
+        <span class="grad">work.</span>
       </span>
     </div>
+    <div class="s" id="s5tail" data-words>All the work I’d already created.</div>
   </section>
 
-  <!-- S6 -->
-  <section class="scene" id="s6"><div class="h l" data-words>But then I tried</div></section>
-
-  <!-- S7 -->
+  <!-- 18.7 "But I just tried the new Gamma 5, and this is a very different product from the Gamma I remember." -->
   <section class="scene" id="s7">
     <div id="halo"></div>
     <div id="ring"></div>
-    <div id="logo"><span id="logoText">Gamma <span class="five">5</span></span><div id="sheen"></div></div>
-    <div class="s" id="s7sub" style="margin-top:18px" data-words>A very different product.</div>
+    <div class="h l abs" id="s7pre" style="top:470px" data-words>But I just tried the new</div>
+    <div id="logo">
+      <div id="bigLogo"><img class="base" src="gamma-logo.png" alt="Gamma"><img class="glint" id="glint" src="gamma-logo.png" alt=""></div>
+      <span id="five">5</span>
+    </div>
+    <div class="s" id="s7sub1" style="margin-top:30px" data-words>This is a very different product</div>
+    <div class="s" id="s7sub2" style="margin-top:8px"><span data-words>from the </span><span class="w logo"><img src="gamma-logo.png" alt="Gamma"></span><span data-words> I remember.</span></div>
   </section>
 
-  <!-- S8 -->
+  <!-- 24.4 "So today, I'm going to start with basically one idea and see if Gamma 5 can take me all the way to a finished presentation." -->
   <section class="scene" id="s8">
     <div id="dot"><div class="inner">
       <b class="t"></b><b style="width:86%"></b><b style="width:70%"></b>
       <div class="cols"><div></div><div></div><div></div></div>
     </div></div>
-    <div class="h m" id="s8a" style="position:absolute; top:230px" data-words>One idea.</div>
-    <div class="h m" id="s8b" style="position:absolute; bottom:150px"><span data-words>→ A finished </span><span class="w grad" id="presWord">presentation.</span></div>
+    <div class="s abs" id="s8lab" style="top:190px" data-words>So today, I’m going to start with basically</div>
+    <div class="h m abs" id="s8a" style="top:270px" data-words>One idea.</div>
+    <div class="s abs" id="s8lab2" style="bottom:170px"><span data-words>and see if </span><span class="w logo"><img src="gamma-logo.png" alt="Gamma"></span><span data-words> 5 can take me all the way</span></div>
+    <div class="h m abs" id="s8b" style="bottom:140px"><span data-words>→ A finished </span><span class="w grad" id="presWord">presentation.</span></div>
   </section>
 </div>
 <div id="hint">Click or press Space to replay</div>
 
 <script>
-const DURATION = 27;           // seconds
+const DURATION = 32.6;         // seconds (voiceover runs 31.3s)
+const LEAD = 0.08;             // words start animating slightly before they're spoken
 const $ = s => document.querySelector(s);
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const prog = (t, start, dur) => clamp((t - start) / dur);
@@ -177,30 +191,38 @@ const inOutCubic = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
 const outBack = p => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
 const lerp = (a, b, p) => a + (b - a) * p;
 
-// split [data-words] text into word spans
+// split [data-words] text into word spans (each keeps its surrounding spaces)
 document.querySelectorAll('[data-words]').forEach(el => {
-  const words = el.textContent.split(/(\s+)/).filter(Boolean);
+  const tokens = el.textContent.match(/\s*\S+\s*/g) || [];
   el.textContent = '';
-  words.forEach(w => {
+  tokens.forEach(w => {
     const s = document.createElement('span');
     s.className = 'w'; s.textContent = w;
     el.appendChild(s);
   });
 });
 
-// Apple-style word reveal: rise + unblur + fade, staggered
-function words(el, t, start, stagger = 0.075, dur = 0.85) {
+// Apple-style word reveal: rise + unblur + fade.
+// `times` = the moment each word is spoken (from the voiceover alignment).
+function words(el, t, times, dur = 0.85) {
   const list = el.matches('.w') ? [el] : el.querySelectorAll('.w');
   list.forEach((w, i) => {
-    const p = outExpo(prog(t, start + i * stagger, dur));
+    const at = times[Math.min(i, times.length - 1)] - LEAD;
+    const p = outExpo(prog(t, at, dur));
     w.style.opacity = p;
     w.style.transform = `translateY(${(1 - p) * 60}px) scale(${lerp(.96, 1, p)})`;
     w.style.filter = `blur(${(1 - p) * 14}px)`;
   });
 }
-// scene envelope: fade in container, then blur/scale out
-function scene(el, t, inAt, outAt, outDur = 0.55) {
-  if (t < inAt - 0.05 || t > outAt + outDur + 0.05) { el.style.opacity = 0; el.style.visibility = 'hidden'; return false; }
+// fade an element out with a blur
+function fadeOut(el, t, at, dur = 0.35) {
+  const o = inOutCubic(prog(t, at, dur));
+  el.style.opacity = 1 - o;
+  el.style.filter = o > 0 ? `blur(${o * 12}px)` : 'none';
+}
+// scene envelope: visible from inAt, then blur/scale out at outAt
+function scene(el, t, inAt, outAt, outDur = 0.35) {
+  if (t < inAt - 0.15 || t > outAt + outDur + 0.05) { el.style.opacity = 0; el.style.visibility = 'hidden'; return false; }
   el.style.visibility = 'visible';
   const o = inOutCubic(prog(t, outAt, outDur));
   el.style.opacity = 1 - o;
@@ -227,7 +249,7 @@ function background(t) {
     b.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
   });
   // brighten during the Gamma 5 reveal
-  const lift = Math.sin(Math.PI * prog(t, 17.0, 4.6));
+  const lift = Math.sin(Math.PI * prog(t, 19.6, 4.6));
   $('#bg').style.filter = `blur(90px) saturate(${1.15 + lift * .35}) brightness(${1 + lift * .25})`;
 }
 
@@ -244,35 +266,33 @@ function grain(t) {
   gx.putImageData(gimg, 0, 0);
 }
 
-// ---------- timeline ----------
+// ---------- timeline (synced to the voiceover) ----------
 function render(t) {
   background(t);
   grain(t);
 
-  // S1 — "I have a confession."
-  if (scene($('#s1'), t, 0.3, 2.5)) words($('#s1 [data-words]'), t, 0.3, 0.09);
+  // "I have a confession."
+  if (scene($('#s1'), t, 0, 1.1, 0.3)) words($('#s1 .h'), t, [0.06, 0.18, 0.36, 0.40]);
 
-  // S2 — "I actually stopped using Gamma." + strike
-  if (scene($('#s2'), t, 2.75, 5.4)) {
-    words($('#s2 [data-words]'), t, 2.75, 0.08);
-    words($('#gammaWord'), t, 3.1);
-    $('#gammaWord').style.setProperty('--k', inOutCubic(prog(t, 3.95, 0.5)));
-    const dim = prog(t, 4.3, 0.4);
-    $('#gammaWord').style.opacity = lerp(1, .45, dim) * outExpo(prog(t, 3.1, .85));
+  // "I actually stopped using Gamma." — logo lands on "Gamma", then gets struck out
+  if (scene($('#s2'), t, 1.25, 3.08, 0.3)) {
+    words($('#s2 .h'), t, [1.31, 1.45, 1.82, 2.18, 2.48]);
+    const g2 = $('#g2');
+    g2.style.setProperty('--k', inOutCubic(prog(t, 2.72, 0.3)));
+    g2.style.opacity = lerp(1, .45, prog(t, 2.85, 0.25)) * outExpo(prog(t, 2.40, .85));
   }
 
-  // S3 — "Not because I didn't like it."
-  if (scene($('#s3'), t, 5.7, 7.75)) words($('#s3 [data-words]'), t, 5.7, 0.07);
+  // "Not because I didn't like it."
+  if (scene($('#s3'), t, 3.1, 4.55)) words($('#s3 .h'), t, [3.18, 3.39, 3.71, 3.80, 4.07, 4.39]);
 
-  // S4 — PowerPoint + floating slide stack
-  if (scene($('#s4'), t, 7.95, 11.5)) {
-    words($('#s4a'), t, 7.95, 0.08);
-    words($('#s4 .h [data-words]'), t, 8.45, 0.07);
-    words($('#pptWord'), t, 8.95);
+  // "The problem was that a lot of my existing work was still living in PowerPoint."
+  if (scene($('#s4'), t, 4.62, 8.82)) {
+    words($('#s4a'), t, [4.70, 4.88, 5.33, 5.51, 5.64, 5.69, 5.96]);
+    words($('#s4b'), t, [6.08, 6.24, 6.78, 7.12, 7.28, 7.61, 7.93, 8.02]);
     const cards = [
-      { el: '#c1', x: -640, y: -250, r: -9, d: 8.2 },
-      { el: '#c2', x: 600, y: -220, r: 8, d: 8.35 },
-      { el: '#c3', x: 40, y: 300, r: -3, d: 8.5 },
+      { el: '#c1', x: -640, y: -270, r: -9, d: 6.2 },
+      { el: '#c2', x: 600, y: -250, r: 8, d: 6.4 },
+      { el: '#c3', x: 40, y: 330, r: -3, d: 6.75 },
     ];
     cards.forEach((c, i) => {
       const p = outExpo(prog(t, c.d, 1.2));
@@ -285,12 +305,18 @@ function render(t) {
     });
   }
 
-  // S5 — rolling words
-  if (scene($('#s5'), t, 11.7, 15.5)) {
-    words($('#s5 [data-words]'), t, 11.7, 0.05);
-    words($('#s5my'), t, 12.0);
+  // "So even if I wanted to use AI to create something new,"
+  if (scene($('#s5a'), t, 9.05, 11.92, 0.3)) {
+    words($('#s5a1'), t, [9.13, 9.29, 9.59, 9.74, 9.79, 10.12, 10.23, 10.53]);
+    words($('#s5a2'), t, [10.85, 10.99, 11.32, 11.69]);
+  }
+
+  // "I still had to think about my existing presentations, my formatting, my design, and all the work I'd already created."
+  if (scene($('#s5'), t, 11.95, 18.5)) {
+    words($('#s5lab'), t, [12.01, 12.18, 12.46, 12.63, 12.73, 13.00]);
+    words($('#s5my'), t, [13.26]);
     const items = $('#roller').querySelectorAll('span');
-    const starts = [12.15, 13.0, 13.75, 14.5];
+    const starts = [13.87, 15.18, 16.06, 17.15].map(s => s - LEAD - 0.1);
     // roller width eases between word widths so the line stays centered
     const widths = [...items].map(it => it.offsetWidth);
     let w = widths[0];
@@ -299,64 +325,83 @@ function render(t) {
     items.forEach((it, i) => {
       const pin = outExpo(prog(t, starts[i], 0.7));
       const pout = i < items.length - 1 ? outExpo(prog(t, starts[i + 1], 0.7)) : 0;
-      const y = (1 - pin) * 110 - pout * 110;
-      it.style.transform = `translateY(${y}%)`;
+      it.style.transform = `translateY(${(1 - pin) * 110 - pout * 110}%)`;
       it.style.opacity = pin * (1 - pout);
       it.style.filter = `blur(${((1 - pin) + pout) * 10}px)`;
     });
+    words($('#s5tail'), t, [16.81, 17.07, 17.15, 17.47, 17.64, 18.07]);
   }
 
-  // S6 — "But then I tried"
-  if (scene($('#s6'), t, 15.75, 17.05, 0.4)) words($('#s6 [data-words]'), t, 15.75, 0.1);
+  // "But I just tried the new Gamma 5, and this is a very different product from the Gamma I remember."
+  if (scene($('#s7'), t, 18.62, 24.02, 0.4)) {
+    // lead-in line, then it lifts away as the logo arrives
+    words($('#s7pre'), t, [18.70, 18.95, 19.05, 19.34, 19.65, 19.72]);
+    const lift = inOutCubic(prog(t, 19.72, 0.6));
+    const pre = $('#s7pre');
+    const gone = prog(t, 19.8, 0.3);
+    pre.style.transform = `translateY(${-lift * 380}px) scale(${lerp(1, .42, lift)})`;
+    pre.style.opacity = 1 - gone;
+    pre.style.filter = gone > 0 ? `blur(${gone * 10}px)` : 'none';
 
-  // S7 — Gamma 5 reveal
-  if (scene($('#s7'), t, 17.1, 21.0, 0.6)) {
-    const p = outExpo(prog(t, 17.15, 1.6));
-    const logo = $('#logoText');
-    logo.style.display = 'inline-block';
-    logo.style.opacity = clamp(p * 1.4);
-    logo.style.letterSpacing = `${lerp(0.25, -0.06, p)}em`;
-    logo.style.transform = `scale(${lerp(1.25, 1, p)})`;
-    logo.style.filter = `blur(${(1 - p) * 30}px)`;
-    const zoom = prog(t, 18.6, 2.5);
-    $('#logo').style.transform = `scale(${1 + zoom * 0.04})`;
-    const sh = prog(t, 18.0, 1.1);
-    $('#sheen').style.transform = `translateX(${lerp(-120, 120, inOutCubic(sh))}%)`;
-    $('#sheen').style.opacity = sh > 0 && sh < 1 ? 1 : 0;
-    const r = outExpo(prog(t, 17.25, 2.2));
-    $('#ring').style.transform = `scale(${lerp(.2, 1.15, r)})`;
-    $('#ring').style.opacity = (1 - prog(t, 17.9, 1.6)) * clamp(r * 3);
-    $('#halo').style.opacity = outCubic(prog(t, 17.3, 1.2)) * (0.8 + Math.sin(t * 2) * .1);
-    words($('#s7sub'), t, 18.7, 0.08);
+    // "Gamma" — logo resolves out of a blur
+    const p = outExpo(prog(t, 19.94 - LEAD, 1.4));
+    const big = $('#bigLogo');
+    big.style.opacity = clamp(p * 1.4);
+    big.style.transform = `scale(${lerp(1.3, 1, p)})`;
+    big.style.filter = `blur(${(1 - p) * 30}px)`;
+    // "5" pops in on the beat
+    const f = outBack(prog(t, 20.25 - LEAD, 0.7));
+    const fb = outExpo(prog(t, 20.25 - LEAD, 0.7));
+    const five = $('#five');
+    five.style.opacity = fb;
+    five.style.transform = `translateY(${(1 - fb) * 40}px) scale(${lerp(.6, 1, f)})`;
+    five.style.filter = `blur(${(1 - fb) * 16}px)`;
+    // gentle push-in, then a glint sweeps across the wordmark
+    const up = -lerp(0, 40, inOutCubic(prog(t, 20.9, 0.6)));
+    $('#logo').style.transform = `translateY(${up}px) scale(${1 + prog(t, 20.4, 3.6) * 0.04})`;
+    ['#s7sub1', '#s7sub2'].forEach(s => $(s).style.transform = `translateY(${up}px)`);
+    const sh = inOutCubic(prog(t, 20.55, 1.0));
+    const x = lerp(-25, 125, sh);
+    $('#glint').style.clipPath = `polygon(${x - 8}% 0, ${x + 4}% 0, ${x - 4}% 100%, ${x - 16}% 100%)`;
+    $('#glint').style.opacity = sh > 0 && sh < 1 ? 1 : 0;
+    const r = outExpo(prog(t, 19.95, 2.2));
+    $('#ring').style.transform = `scale(${lerp(.2, 1.2, r)})`;
+    $('#ring').style.opacity = (1 - prog(t, 20.6, 1.6)) * clamp(r * 3);
+    $('#halo').style.opacity = outCubic(prog(t, 19.9, 1.2)) * (0.8 + Math.sin(t * 2) * .1);
+
+    words($('#s7sub1'), t, [21.03, 21.21, 21.33, 21.40, 21.79, 22.20]);
+    words($('#s7sub2'), t, [22.63, 22.86, 22.94, 23.33, 23.44]);
   }
 
-  // S8 — one idea (dot) -> finished presentation (slide)
-  if (scene($('#s8'), t, 21.15, 26.2, 0.8)) {
-    words($('#s8a'), t, 21.3, 0.08);
+  // "So today, I'm going to start with basically one idea and see if Gamma 5 can take me all the way to a finished presentation."
+  if (scene($('#s8'), t, 24.35, 31.75, 0.8)) {
+    words($('#s8lab'), t, [24.44, 24.60, 25.00, 25.12, 25.30, 25.39, 25.82, 26.09]);
+    fadeOut($('#s8lab'), t, 27.2);
+    words($('#s8a'), t, [26.63, 26.92]);
+
+    // the idea: a glowing dot that grows into a finished slide
     const dot = $('#dot');
-    const pop = outBack(prog(t, 21.2, 0.6));
-    const grow = inOutCubic(prog(t, 22.6, 1.1));
+    const pop = outBack(prog(t, 26.92 - LEAD, 0.6));
+    const grow = inOutCubic(prog(t, 28.7, 1.3));
     const W = lerp(46, 980, grow), H = lerp(46, 551, grow);
-    const pulse = grow === 0 ? 1 + Math.sin((t - 21.2) * 6) * 0.06 : 1;
+    const pulse = grow === 0 ? 1 + Math.sin((t - 26.9) * 6) * 0.06 : 1;
     dot.style.width = W + 'px'; dot.style.height = H + 'px';
     dot.style.borderRadius = lerp(23, 28, grow) + 'px';
     dot.style.transform = `translate(-50%, -50%) scale(${pop * pulse})`;
-    dot.style.background = grow > 0 ? `rgba(255,255,255,${lerp(1, .97, grow)})` : '#fff';
-    // move headline up as the slide grows
-    $('#s8a').style.top = lerp(230, 110, grow) + 'px';
-    $('#s8a').style.opacity = 1;
-    // fill slide contents
-    const bars = dot.querySelectorAll('b');
-    bars.forEach((b, i) => {
-      const q = outExpo(prog(t, 23.4 + i * 0.12, 0.8));
+    $('#s8a').style.top = lerp(270, 120, grow) + 'px';
+
+    words($('#s8lab2'), t, [27.42, 27.57, 27.82, 27.91, 28.24, 28.64, 28.81, 29.05, 29.21, 29.47, 29.55]);
+    fadeOut($('#s8lab2'), t, 29.65, 0.3);
+
+    dot.querySelectorAll('b').forEach((b, i) => {
+      const q = outExpo(prog(t, 29.7 + i * 0.12, 0.8));
       b.style.transform = `scaleX(${q})`; b.style.opacity = q;
     });
     dot.querySelectorAll('.cols div').forEach((c, i) => {
-      const q = outExpo(prog(t, 23.8 + i * 0.12, 0.9));
+      const q = outExpo(prog(t, 30.1 + i * 0.12, 0.9));
       c.style.transform = `scaleY(${q})`; c.style.opacity = q;
     });
-    words($('#s8b [data-words]'), t, 23.5, 0.08);
-    words($('#presWord'), t, 23.85);
+    words($('#s8b'), t, [29.79, 29.95, 29.99, 30.44]);
   }
 }
 window.render = render;
@@ -373,8 +418,10 @@ if (params.has('render')) {
   render(0);
 } else {
   fit(); addEventListener('resize', fit);
+  // optional: ?audio=voiceover.m4a plays the VO in sync
+  const audio = params.get('audio') ? new Audio(params.get('audio')) : null;
   let t0 = performance.now();
-  const replay = () => { t0 = performance.now(); };
+  const replay = () => { t0 = performance.now(); if (audio) { audio.currentTime = 0; audio.play(); } };
   addEventListener('click', replay);
   addEventListener('keydown', e => { if (e.code === 'Space') replay(); });
   (function loop(now) {

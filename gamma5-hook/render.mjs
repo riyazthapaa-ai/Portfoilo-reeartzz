@@ -1,5 +1,5 @@
 // Renders index.html frame-by-frame to an MP4 (1920x1080).
-// Usage: node render.mjs [out.mp4] [fps]       (needs playwright + ffmpeg)
+// Usage: node render.mjs [out.mp4] [fps] [voiceover]   (needs playwright + ffmpeg)
 //        node render.mjs --stills t1,t2,...    (writes PNG previews)
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
@@ -25,7 +25,8 @@ if (args[0] === '--stills') {
   const out = args[0] || path.join(dir, 'gamma5-hook.mp4');
   const fps = Number(args[1] || 30);
   const duration = await page.evaluate(() => window.DURATION);
-  const ff = spawn('ffmpeg', ['-y', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-',
+  const audio = args[2] ? ['-i', args[2], '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '256k'] : [];
+  const ff = spawn('ffmpeg', ['-y', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-', ...audio,
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out],
     { stdio: ['pipe', 'ignore', 'inherit'] });
   const frames = Math.round(duration * fps);
