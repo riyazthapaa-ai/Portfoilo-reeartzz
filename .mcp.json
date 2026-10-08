@@ -4,7 +4,7 @@
       "type": "http",
       "url": "https://app.lev8.com/mcp",
       "headers": {
-        "Authorization": "Bearer ${LEV8_API_KEY}"
+        "Authorization": "Bearer ${LEV8_API_KEY:-}"
       }
     }
   }
