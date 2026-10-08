@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Prospecting Chain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* Layout: one 1920x1080 stage scaled to fit, six timed scenes, transport bar underneath. */
+:root{
+  /* page chrome (theme-aware) */
+  --page:#E9ECF0; --page-fg:#141A23; --page-muted:#5E6878; --page-line:#CBD1DA; --page-btn:#FFFFFF;
+  /* stage (fixed look, it is a video frame) */
+  --paper:#F4F6F8; --card:#FFFFFF; --ink:#0F1B2D; --muted:#6B7686; --line:#DDE2E9;
+  --signal:#FF5B2E; --signal-soft:#FFE6DD; --mint:#13A86E; --mint-soft:#DDF5EA; --sky:#2D6BFF; --sky-soft:#E3EBFF;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Geist", "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono:"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#0E1218; --page-fg:#E8ECF2; --page-muted:#8C96A6; --page-line:#262E3A; --page-btn:#18202B; color-scheme:dark }
+}
+:root[data-theme="dark"]{ --page:#0E1218; --page-fg:#E8ECF2; --page-muted:#8C96A6; --page-line:#262E3A; --page-btn:#18202B; color-scheme:dark }
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--page-fg);font-family:var(--body);padding-inline:16px;padding-block:24px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:14px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 20px}
+.head h1{font-family:var(--display);font-weight:700;font-size:1.35rem;margin:0;letter-spacing:-.01em}
+.head p{margin:0;color:var(--page-muted);font-size:.9rem}
+
+/* ---------- stage frame ---------- */
+.frame{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;border-radius:14px;background:var(--paper);box-shadow:0 1px 0 var(--page-line),0 20px 60px -30px rgba(0,0,0,.45)}
+.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:var(--paper);color:var(--ink);font-family:var(--body);overflow:hidden}
+.stage::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,#C9D0DA 1.4px,transparent 1.6px);background-size:36px 36px;opacity:.55;pointer-events:none}
+.stage.paused *, .stage.paused *::before, .stage.paused *::after{animation-play-state:paused!important}
+
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .45s}
+.scene.on{opacity:1;visibility:visible;transition:opacity .45s ease}
+
+/* brand bug + captions */
+.bug{position:absolute;left:72px;top:56px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:20px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;z-index:5}
+.bug i{width:12px;height:12px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 6px var(--signal-soft)}
+.cap{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);max-width:1400px;background:rgba(15,27,45,.92);color:#fff;font-size:30px;line-height:1.35;padding:14px 26px;border-radius:12px;text-align:center;z-index:6;transition:opacity .3s}
+.cap:empty,.stage.nocap .cap{opacity:0}
+
+/* shared type */
+.eyebrow{font-family:var(--mono);font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:var(--signal)}
+.h{font-family:var(--display);font-weight:800;letter-spacing:-.03em;line-height:.98;margin:0;text-wrap:balance}
+.hl{color:var(--signal)}
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:18px;padding:6px 12px;border-radius:999px;background:var(--line);color:var(--ink)}
+.pill.ok{background:var(--mint-soft);color:var(--mint)}
+.pill.warn{background:var(--signal-soft);color:var(--signal)}
+
+/* animation vocabulary */
+@keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.86)}70%{transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes blink{50%{opacity:0}}
+@keyframes jitter{0%,100%{translate:0 0}25%{translate:3px -2px}50%{translate:-2px 3px}75%{translate:2px 2px}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes strike{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.scene.on .a-rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.scene.on .a-pop{animation:pop .6s cubic-bezier(.2,.8,.2,1) both}
+.scene.on .a-fade{animation:fade .6s ease both}
+
+/* ---------- S1: messy ---------- */
+.s1 .copy{position:absolute;left:72px;top:190px;width:760px;display:grid;gap:28px}
+.s1 .h{font-size:104px}
+.s1 .counter{display:flex;align-items:center;gap:16px;font-family:var(--mono);font-size:26px;color:var(--muted)}
+.s1 .counter b{font-family:var(--display);font-size:64px;color:var(--ink);font-variant-numeric:tabular-nums;min-width:2ch}
+.pile{position:absolute;left:900px;top:120px;width:960px;height:820px}
+.win{position:absolute;width:560px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 60px -30px rgba(15,27,45,.35);overflow:hidden}
+.scene.on .win{animation:pop .55s cubic-bezier(.2,.8,.2,1) both, jitter 1.6s ease-in-out infinite}
+.win .bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:#F8FAFB}
+.win .bar s{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.win .bar span{margin-left:10px;font-size:19px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .body{padding:18px;display:grid;gap:12px}
+.ln{height:14px;border-radius:7px;background:#E9EDF2}
+.ln.s{width:45%}.ln.m{width:70%}.ln.l{width:92%}
+.grid-cells{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.grid-cells i{height:22px;background:#EEF1F5;border-radius:3px}
+.grid-cells i.h{background:var(--signal-soft)}
+.sticky{position:absolute;width:210px;padding:18px;background:#FFE58A;color:#4A3B00;font-family:var(--mono);font-size:20px;line-height:1.35;box-shadow:0 18px 30px -18px rgba(0,0,0,.35)}
+.scene.on .sticky{animation:pop .5s both}
+
+/* ---------- S2: the chain of steps ---------- */
+.s2 .top{position:absolute;left:72px;top:150px;right:72px;display:grid;gap:18px}
+.s2 .h{font-size:86px}
+.steps{position:absolute;left:72px;right:72px;top:420px;display:grid;grid-template-columns:repeat(6,1fr);gap:22px}
+.step{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;grid-template-rows:auto auto 1fr auto;gap:14px;min-height:400px;box-shadow:0 20px 40px -30px rgba(15,27,45,.35)}
+.step .n{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:18px;color:var(--muted)}
+.step .ico{width:46px;height:46px;border-radius:12px;background:var(--sky-soft);color:var(--sky);display:grid;place-items:center}
+.step .ico svg{width:26px;height:26px}
+.step h3{margin:0;font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;letter-spacing:-.01em}
+.step .mini{display:grid;gap:8px;align-content:start;font-size:17px}
+.step .t{font-family:var(--mono);font-size:18px;color:var(--signal)}
+.step + .step::before{content:"";position:absolute;left:-23px;top:72px;width:24px;height:3px;background:var(--line)}
+.q{font-family:var(--mono);font-size:16px;border:1px solid var(--line);border-radius:10px;padding:10px;white-space:nowrap;overflow:hidden}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border-bottom:0}
+.ok{color:var(--mint);font-weight:600}.no{color:var(--signal);font-weight:600}
+.person{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px}
+.person.sel{background:var(--sky-soft)}
+.av{width:34px;height:34px;border-radius:50%;background:#CFD6E0;display:grid;place-items:center;font-size:14px;font-weight:600;color:var(--ink);flex:none}
+.person small{display:block;color:var(--muted);font-size:14px}
+.news{font-size:15px;line-height:1.3}
+.news b{display:block;font-family:var(--mono);font-weight:400;font-size:13px;color:var(--muted)}
+.caret{display:inline-block;width:2px;height:1.1em;background:var(--ink);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+
+/* ---------- S3: not one difficult task ---------- */
+.s3 .center{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:56px;text-align:center}
+.s3 .h{font-size:150px;max-width:1500px}
+.s3 .h .strike{position:relative;display:inline-block}
+.s3 .h .strike::after{content:"";position:absolute;left:-6px;right:-6px;top:54%;height:12px;background:var(--signal);transform-origin:left;transform:scaleX(0)}
+.scene.on .s3x::after{animation:strike .5s cubic-bezier(.6,0,.2,1) 1.6s both}
+.mini-card{display:flex;align-items:center;gap:26px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 30px;font-size:28px}
+.meter{display:flex;gap:6px}
+.meter i{width:34px;height:12px;border-radius:6px;background:var(--line)}
+.meter i.f{background:var(--mint)}
+
+/* ---------- S4: time sink ---------- */
+.s4 .h{position:absolute;left:72px;top:150px;width:1300px;font-size:96px}
+.links{position:absolute;left:72px;right:72px;top:470px;display:flex;align-items:center}
+.link{flex:1;display:flex;align-items:center}
+.link .chip{flex:none;display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--ink);border-radius:999px;padding:14px 22px;font-size:24px;font-weight:600;white-space:nowrap}
+.link .chip em{font-style:normal;font-family:var(--mono);font-weight:400;color:var(--signal);font-size:20px}
+.link .wire{flex:1;height:4px;background:var(--ink);transform-origin:left;margin:0 4px}
+.link:last-child{flex:none}
+.scene.on .link .wire{animation:grow .4s ease both}
+.clock{position:absolute;left:72px;bottom:210px;display:flex;align-items:flex-end;gap:80px}
+.clock .big{font-family:var(--display);font-weight:800;font-size:220px;line-height:.8;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.clock .big small{font-size:60px;letter-spacing:0;margin-left:10px;color:var(--muted)}
+.clock .lab{font-family:var(--mono);font-size:22px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:18px}
+.clock .mult{font-family:var(--display);font-weight:700;font-size:76px;line-height:1;padding-bottom:6px}
+.clock .mult span{color:var(--signal)}
+
+/* ---------- S5: inside Claude ---------- */
+.s5 .copy{position:absolute;left:72px;top:190px;width:620px;display:grid;gap:26px}
+.s5 .h{font-size:92px}
+.s5 .sub{font-size:28px;line-height:1.4;color:var(--muted);max-width:560px}
+.chat{position:absolute;left:760px;top:80px;width:1088px;height:780px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 40px 80px -40px rgba(15,27,45,.45);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+.chat .top{display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid var(--line);font-weight:600;font-size:22px}
+.chat .top .dot{width:30px;height:30px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--display);font-size:17px}
+.chat .top small{margin-left:auto;font-family:var(--mono);font-weight:400;font-size:17px;color:var(--muted)}
+.thread{padding:22px 24px;display:grid;gap:14px;align-content:start;overflow:hidden}
+.bubble{justify-self:end;max-width:760px;background:var(--ink);color:#fff;border-radius:18px 18px 4px 18px;padding:16px 20px;font-size:21px;line-height:1.4;opacity:0;transform:translateY(16px);transition:.4s cubic-bezier(.2,.8,.2,1)}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool{display:flex;align-items:center;gap:12px;font-size:19px;padding:9px 12px;white-space:nowrap;border:1px solid var(--line);border-radius:12px;opacity:0;transform:translateY(12px);transition:.35s cubic-bezier(.2,.8,.2,1)}
+.tool .st{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--sky);flex:none}
+.tool.run .st{animation:spin .7s linear infinite}
+.tool.done .st{border:0;background:var(--mint);position:relative;animation:none}
+.tool.done .st::after{content:"";position:absolute;left:9px;top:5px;width:6px;height:12px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.tool .res{margin-left:auto;font-family:var(--mono);font-size:16px;color:var(--muted)}
+.tool.done .res{color:var(--mint)}
+.result{display:grid;grid-template-columns:1fr 1.25fr;gap:16px;opacity:0;transform:translateY(16px);transition:.5s cubic-bezier(.2,.8,.2,1)}
+.rcard{border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:8px;font-size:18px;align-content:start}
+.rcard h4{margin:0;font-family:var(--display);font-size:26px;font-weight:700}
+.rcard .k{font-family:var(--mono);font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.rcard.mail{background:#FBFCFD}
+.rcard.mail p{margin:0;font-size:17px;line-height:1.45}
+.show{opacity:1!important;transform:none!important}
+.input{margin:0 22px 20px;border:1.5px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;align-items:flex-end;gap:14px;min-height:80px}
+.input .txt{flex:1;font-size:21px;line-height:1.4;color:var(--ink)}
+.input .ph{color:var(--muted)}
+.input .send{width:46px;height:46px;border-radius:12px;background:var(--line);display:grid;place-items:center;flex:none;transition:background .2s}
+.input .send.hot{background:var(--signal)}
+.input .send svg{width:22px;height:22px;color:#fff}
+
+/* ---------- S6: the question ---------- */
+.s6 .h{position:absolute;left:72px;top:170px;width:1500px;font-size:118px}
+.versus{position:absolute;left:72px;right:72px;bottom:150px;display:grid;grid-template-columns:1fr auto 1fr;gap:40px;align-items:stretch}
+.vs-col{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px 34px;display:grid;gap:16px;align-content:start}
+.vs-col.claude{border:2px solid var(--ink)}
+.vs-col .k{font-family:var(--mono);font-size:20px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.vs-col .v{font-family:var(--display);font-weight:800;font-size:64px;letter-spacing:-.02em;line-height:1}
+.vs-col .tags{display:flex;flex-wrap:wrap;gap:10px}
+.arrow{align-self:center;font-family:var(--display);font-size:80px;color:var(--signal)}
+.tag-line{display:flex;align-items:center;gap:18px;font-family:var(--mono);font-size:24px;color:var(--muted)}
+
+/* ---------- transport ---------- */
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.btn{font:inherit;font-size:.9rem;font-weight:500;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:1px solid var(--page-line);background:var(--page-btn);color:var(--page-fg);cursor:pointer}
+.btn:hover{border-color:var(--page-muted)}
+.btn:focus-visible,.chipbtn:focus-visible{outline:2px solid #FF5B2E;outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--page-fg);color:var(--page)}
+.time{font-family:var(--mono);font-size:.85rem;color:var(--page-muted);font-variant-numeric:tabular-nums;margin-left:auto}
+.track{position:relative;display:flex;gap:4px;width:100%}
+.chipbtn{flex:var(--d) 1 0;min-width:0;text-align:left;font:inherit;font-size:.78rem;color:var(--page-muted);background:none;border:0;padding:8px 0 0;cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chipbtn::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;border-radius:2px;background:var(--page-line)}
+.chipbtn .fill{position:absolute;left:0;top:0;height:4px;border-radius:2px;background:#FF5B2E;width:0}
+.chipbtn.cur{color:var(--page-fg)}
+.hint{font-size:.82rem;color:var(--page-muted);margin:0}
+.frame:fullscreen{border-radius:0;background:#000}
+
+@media (prefers-reduced-motion: reduce){
+  .stage *, .stage *::before, .stage *::after{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01s!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>Prospecting Chain</h1>
+    <p>16:9 motion graphic · 1920×1080 · loops · press <b>F</b> for fullscreen to record</p>
+  </div>
+
+  <div class="frame" id="frame">
+    <div class="stage" id="stage">
+      <div class="bug"><i></i>Prospecting, inside Claude</div>
+
+      <!-- S1 -->
+      <section class="scene s1" data-i="0">
+        <div class="copy">
+          <div class="eyebrow a-rise">B2B prospecting · manual mode</div>
+          <h2 class="h a-rise" style="animation-delay:.15s">If you've done it by hand, you know how fast it gets <span class="hl">messy.</span></h2>
+          <div class="counter a-rise" style="animation-delay:.5s"><b id="tabs">3</b> tabs open and counting</div>
+        </div>
+        <div class="pile">
+          <div class="win" style="left:0;top:40px;rotate:-4deg;animation-delay:.2s,.2s">
+            <div class="bar"><s></s><s></s><s></s><span>Company search · 1,284 results</span></div>
+            <div class="body"><div class="ln l"></div><div class="ln m"></div><div class="ln l"></div><div class="ln s"></div></div>
+          </div>
+          <div class="win" style="left:330px;top:0;rotate:3deg;animation-delay:.6s,.3s">
+            <div class="bar"><s></s><s></s><s></s><span>Leads_FINAL_v7 (2).xlsx</span></div>
+            <div class="body"><div class="grid-cells"><i></i><i class="h"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="h"></i><i></i><i></i><i></i><i class="h"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="h"></i></div></div>
+          </div>
+          <div class="win" style="left:90px;top:300px;rotate:2deg;animation-delay:1s,.5s">
+            <div class="bar"><s></s><s></s><s></s><span>Email finder · 0 credits left</span></div>
+            <div class="body"><div class="ln m"></div><div class="ln s"></div><span class="pill warn">not found</span></div>
+          </div>
+          <div class="win" style="left:400px;top:330px;rotate:-3deg;animation-delay:1.4s,.1s">
+            <div class="bar"><s></s><s></s><s></s><span>"ledgerline funding 2026" · Search</span></div>
+            <div class="body"><div class="ln l"></div><div class="ln l"></div><div class="ln m"></div></div>
+          </div>
+          <div class="win" style="left:200px;top:560px;rotate:-1deg;animation-delay:1.8s,.4s">
+            <div class="bar"><s></s><s></s><s></s><span>Draft · Untitled message</span></div>
+            <div class="body"><div class="ln s"></div><div class="ln m"></div></div>
+          </div>
+          <div class="sticky" style="left:700px;top:560px;rotate:6deg;animation-delay:2.2s">who's the VP Sales again??</div>
+          <div class="sticky" style="left:-60px;top:640px;rotate:-7deg;animation-delay:2.6s">check if they raised</div>
+        </div>
+      </section>
+
+      <!-- S2 -->
+      <section class="scene s2" data-i="1">
+        <div class="top">
+          <div class="eyebrow a-rise">Every single lead</div>
+          <h2 class="h a-rise" style="animation-delay:.1s">Six steps before you write one line.</h2>
+        </div>
+        <div class="steps">
+          <div class="step a-rise" style="animation-delay:.5s">
+            <div class="n"><span>01</span><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div></div>
+            <h3>Search companies</h3>
+            <div class="mini"><div class="q">fintech · 50–200 · Series A</div><div class="row"><span>Results</span><b>1,284</b></div></div>
+            <div class="t">~6 min</div>
+          </div>
+          <div class="step a-rise" style="animation-delay:1.6s">
+            <div class="n"><span>02</span><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12l5 5L20 6"/></svg></div></div>
+            <h3>Check the fit</h3>
+            <div class="mini"><div class="row"><span>Headcount 84</span><span class="ok">✓</span></div><div class="row"><span>Raised Series A</span><span class="ok">✓</span></div><div class="row"><span>Hiring SDRs</span><span class="no">?</span></div></div>
+            <div class="t">~8 min</div>
+          </div>
+          <div class="step a-rise" style="animation-delay:2.7s">
+            <div class="n"><span>03</span><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div></div>
+            <h3>Find the right person</h3>
+            <div class="mini"><div class="person"><div class="av">JR</div><div>CEO<small>too senior</small></div></div><div class="person sel"><div class="av">MC</div><div>VP Sales<small>owns pipeline</small></div></div></div>
+            <div class="t">~7 min</div>
+          </div>
+          <div class="step a-rise" style="animation-delay:3.8s">
+            <div class="n"><span>04</span><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div></div>
+            <h3>Find contact info</h3>
+            <div class="mini"><div class="q">m•••@ledgerline.io</div><span class="pill ok">verified</span></div>
+            <div class="t">~6 min</div>
+          </div>
+          <div class="step a-rise" style="animation-delay:4.9s">
+            <div class="n"><span>05</span><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg></div></div>
+            <h3>Research the company</h3>
+            <div class="mini"><div class="news"><b>Sep 30</b>Raised $14M Series A</div><div class="news"><b>Aug 12</b>Hired first CRO</div><div class="news"><b>Jul 03</b>Launched in the EU</div></div>
+            <div class="t">~10 min</div>
+          </div>
+          <div class="step a-rise" style="animation-delay:6s">
+            <div class="n"><span>06</span><div class="ico" style="background:var(--signal-soft);color:var(--signal)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg></div></div>
+            <h3>Write the outreach</h3>
+            <div class="mini"><div style="font-size:18px">Hi Maya,<span class="caret"></span></div><div class="ln m"></div><div class="ln s"></div></div>
+            <div class="t">~8 min</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S3 -->
+      <section class="scene s3" data-i="2">
+        <div class="center">
+          <h2 class="h a-rise">It's <span class="strike s3x">not one</span> difficult task.</h2>
+          <div class="mini-card a-pop" style="animation-delay:.7s">
+            <span>Find an email address</span>
+            <div class="meter"><i class="f"></i><i></i><i></i><i></i><i></i></div>
+            <span class="pill ok">easy</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- S4 -->
+      <section class="scene s4" data-i="3">
+        <h2 class="h a-rise">It's a chain of small tasks that eats your <span class="hl">time.</span></h2>
+        <div class="links">
+          <div class="link a-pop" style="animation-delay:.4s"><div class="chip">Search <em>6m</em></div><div class="wire" style="animation-delay:.7s"></div></div>
+          <div class="link a-pop" style="animation-delay:.8s"><div class="chip">Qualify <em>8m</em></div><div class="wire" style="animation-delay:1.1s"></div></div>
+          <div class="link a-pop" style="animation-delay:1.2s"><div class="chip">Person <em>7m</em></div><div class="wire" style="animation-delay:1.5s"></div></div>
+          <div class="link a-pop" style="animation-delay:1.6s"><div class="chip">Contact <em>6m</em></div><div class="wire" style="animation-delay:1.9s"></div></div>
+          <div class="link a-pop" style="animation-delay:2s"><div class="chip">Research <em>10m</em></div><div class="wire" style="animation-delay:2.3s"></div></div>
+          <div class="link a-pop" style="animation-delay:2.4s"><div class="chip">Write <em>8m</em></div></div>
+        </div>
+        <div class="clock">
+          <div class="a-rise" style="animation-delay:.6s"><div class="big"><span id="mins">0</span><small>min</small></div><div class="lab">per lead</div></div>
+          <div class="mult a-rise" style="animation-delay:3.8s">× 50 leads a week = <span>37.5 hours</span></div>
+        </div>
+      </section>
+
+      <!-- S5 -->
+      <section class="scene s5" data-i="4">
+        <div class="copy">
+          <div class="eyebrow a-rise">The experiment</div>
+          <h2 class="h a-rise" style="animation-delay:.1s">Skip the tabs. Do it in one chat.</h2>
+          <p class="sub a-rise" style="animation-delay:.3s">Instead of doing each step by hand, hand the whole chain to Claude.</p>
+        </div>
+        <div class="chat a-pop" style="animation-delay:.2s">
+          <div class="top"><div class="dot">C</div>Claude<small>new chat</small></div>
+          <div class="thread">
+            <div class="bubble" id="bubble"></div>
+            <div class="tools" id="tools">
+              <div class="tool"><div class="st"></div>Searching companies<span class="res">1,284 → 38</span></div>
+              <div class="tool"><div class="st"></div>Checking fit<span class="res">10 match</span></div>
+              <div class="tool"><div class="st"></div>Finding decision makers<span class="res">10 VPs Sales</span></div>
+              <div class="tool"><div class="st"></div>Verifying contact info<span class="res">9 verified</span></div>
+              <div class="tool"><div class="st"></div>Researching recent news<span class="res">31 signals</span></div>
+              <div class="tool"><div class="st"></div>Drafting outreach<span class="res">10 drafts</span></div>
+            </div>
+            <div class="result" id="result">
+              <div class="rcard">
+                <span class="k">Lead 1 of 10 · sample</span>
+                <h4>Ledgerline</h4>
+                <div>Fintech · Series A · 84 people</div>
+                <div><span class="pill ok">fit 92%</span></div>
+                <div style="margin-top:6px"><b>Maya Chen</b>, VP Sales</div>
+                <div style="font-family:var(--mono);font-size:15px;color:var(--muted)">maya@ledgerline.io ✓</div>
+              </div>
+              <div class="rcard mail">
+                <span class="k">Draft email</span>
+                <p><b>Subject:</b> Ramping SDRs after the Series A</p>
+                <p>Hi Maya, congrats on the $14M raise and the EU launch. With three SDR roles open, I'd guess ramp time is on your mind…</p>
+              </div>
+            </div>
+          </div>
+          <div class="input">
+            <div class="txt"><span id="typed"></span><span class="caret" id="icaret"></span></div>
+            <div class="send" id="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S6 -->
+      <section class="scene s6" data-i="5">
+        <h2 class="h a-rise">How much of this can I handle directly inside <span class="hl">Claude?</span></h2>
+        <div class="versus">
+          <div class="vs-col a-rise" style="animation-delay:.6s">
+            <span class="k">Manual</span>
+            <span class="v">6 tools · 6 steps</span>
+            <div class="tags"><span class="pill">search</span><span class="pill">spreadsheet</span><span class="pill">email finder</span><span class="pill">news</span><span class="pill">notes</span><span class="pill">inbox</span></div>
+          </div>
+          <div class="arrow a-pop" style="animation-delay:1.1s">→</div>
+          <div class="vs-col claude a-rise" style="animation-delay:1.4s">
+            <span class="k">Inside Claude</span>
+            <span class="v">1 conversation</span>
+            <div class="tag-line"><span class="pill ok">let's find out</span></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="cap" id="cap"></div>
+    </div>
+  </div>
+
+  <div class="transport">
+    <button class="btn" id="play" type="button" aria-label="Pause">❚❚ Pause</button>
+    <button class="btn" id="restart" type="button">↺ Restart</button>
+    <button class="btn" id="cc" type="button" aria-pressed="true">Captions</button>
+    <button class="btn" id="fs" type="button">Fullscreen</button>
+    <span class="time" id="time">0:00 / 0:46</span>
+  </div>
+  <div class="track" id="track"></div>
+  <p class="hint">Space plays or pauses · ← → jump between scenes · C toggles captions · F goes fullscreen. Turn captions off for a clean recording and lay your voiceover on top.</p>
+</div>
+
+<script>
+(function(){
+  const scenes = [
+    {name:"Messy",        d:7,   cap:"If you've done B2B prospecting manually, you know how quickly this gets messy."},
+    {name:"Six steps",    d:9.5, cap:"You search for companies, check the fit, find the right person, find their contact info, research the company, then turn it all into an outreach message."},
+    {name:"Not hard",     d:4,   cap:"It's not one difficult task."},
+    {name:"Time sink",    d:7,   cap:"It's a chain of small tasks that takes a lot of time."},
+    {name:"Inside Claude",d:14,  cap:"So instead of doing each step manually, I want to see how much of this workflow I can handle directly inside Claude."},
+    {name:"The question", d:5.5, cap:""}
+  ];
+  let acc = 0; scenes.forEach(s => { s.start = acc; acc += s.d; });
+  const total = acc;
+
+  const stage = document.getElementById('stage'), frame = document.getElementById('frame');
+  const els = [...stage.querySelectorAll('.scene')];
+  const cap = document.getElementById('cap');
+  const track = document.getElementById('track');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // transport chips
+  const chips = scenes.map((s, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chipbtn'; b.style.setProperty('--d', s.d);
+    b.innerHTML = '<span class="fill"></span>' + s.name;
+    b.addEventListener('click', () => jump(i));
+    track.appendChild(b); return b;
+  });
+
+  // fit the stage to the frame
+  const fit = () => { stage.style.transform = 'scale(' + frame.clientWidth / 1920 + ')'; };
+  new ResizeObserver(fit).observe(frame); fit();
+
+  let t = 0, playing = true, cur = -1, last = performance.now();
+
+  function activate(i){
+    els.forEach(e => e.classList.remove('on'));
+    void stage.offsetWidth; // restart CSS animations
+    els[i].classList.add('on');
+    cap.textContent = scenes[i].cap;
+    chips.forEach((c, k) => c.classList.toggle('cur', k === i));
+    resetScene(i);
+    cur = i;
+  }
+
+  // ----- scene-specific timed behaviour -----
+  const tabs = document.getElementById('tabs');
+  const mins = document.getElementById('mins');
+  const typed = document.getElementById('typed'), icaret = document.getElementById('icaret');
+  const send = document.getElementById('send'), bubble = document.getElementById('bubble');
+  const tools = [...document.querySelectorAll('#tools .tool')], result = document.getElementById('result');
+  const prompt = "Find 10 Series A fintech companies with 50–200 people that are hiring SDRs. For each, find the VP Sales, verify their email, summarize recent news, and draft a first-touch email.";
+
+  function resetScene(i){
+    if (i === 4){
+      typed.textContent = ''; icaret.hidden = false; send.classList.remove('hot');
+      bubble.classList.remove('show'); bubble.textContent = '';
+      tools.forEach(x => x.classList.remove('show','run','done'));
+      result.classList.remove('show');
+    }
+  }
+
+  function tick(i, lt){
+    if (i === 0) tabs.textContent = Math.min(23, 3 + Math.floor(lt * 4));
+    if (i === 3) mins.textContent = Math.round(Math.min(1, Math.max(0, (lt - .8) / 2.6)) * 45);
+    if (i === 4){
+      const tStart = .9, cps = 46, sendAt = tStart + prompt.length / cps + .4;
+      if (lt < sendAt){
+        const n = reduce ? prompt.length : Math.max(0, Math.floor((lt - tStart) * cps));
+        typed.textContent = prompt.slice(0, n);
+        send.classList.toggle('hot', n > 0);
+      } else if (!bubble.classList.contains('show')){
+        typed.textContent = ''; send.classList.remove('hot');
+        typed.innerHTML = '<span class="ph">Reply to Claude…</span>';
+        bubble.textContent = prompt; bubble.classList.add('show');
+      }
+      tools.forEach((x, k) => {
+        const on = sendAt + .5 + k * .75;
+        x.classList.toggle('show', lt >= on);
+        x.classList.toggle('run', lt >= on && lt < on + .6);
+        x.classList.toggle('done', lt >= on + .6);
+      });
+      result.classList.toggle('show', lt >= sendAt + .5 + tools.length * .75 + .5);
+    }
+  }
+
+  function fmt(s){ s = Math.floor(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+  function loop(now){
+    if (playing){ t += (now - last) / 1000; if (t >= total) t = 0; }
+    last = now;
+    let i = scenes.findIndex(s => t >= s.start && t < s.start + s.d); if (i < 0) i = 0;
+    if (i !== cur) activate(i);
+    const lt = t - scenes[i].start;
+    tick(i, lt);
+    chips.forEach((c, k) => {
+      const p = k < i ? 1 : k > i ? 0 : lt / scenes[k].d;
+      c.firstChild.style.width = (p * 100) + '%';
+    });
+    document.getElementById('time').textContent = fmt(t) + ' / ' + fmt(total);
+    requestAnimationFrame(loop);
+  }
+
+  function jump(i){ t = scenes[i].start + .001; cur = -1; }
+  const playBtn = document.getElementById('play');
+  function setPlaying(p){
+    playing = p; stage.classList.toggle('paused', !p);
+    playBtn.textContent = p ? '❚❚ Pause' : '▶ Play';
+    playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+  }
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  document.getElementById('restart').addEventListener('click', () => { jump(0); setPlaying(true); });
+  const ccBtn = document.getElementById('cc');
+  function toggleCC(){ const off = stage.classList.toggle('nocap'); ccBtn.setAttribute('aria-pressed', String(!off)); }
+  ccBtn.addEventListener('click', toggleCC);
+  function fullscreen(){ try { if (document.fullscreenElement) document.exitFullscreen(); else frame.requestFullscreen().catch(() => {}); } catch(e){} }
+  document.getElementById('fs').addEventListener('click', fullscreen);
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
+    if (e.key === ' '){ e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === 'ArrowRight') jump(Math.min(scenes.length - 1, cur + 1));
+    else if (e.key === 'ArrowLeft') jump(Math.max(0, cur - 1));
+    else if (e.key.toLowerCase() === 'c') toggleCC();
+    else if (e.key.toLowerCase() === 'f') fullscreen();
+  });
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
