@@ -31,13 +31,13 @@ ffmpeg -i out/video-silent.mp4 -i out/sfx.wav -c:v copy -c:a aac -shortest out/c
 
 `hook.html` is the same animation retimed to the real voiceover (0:00–0:38.25, ending on "…all over again."), using word timestamps from the VO.
 
-- `out/hook-vo-sfx.mp4` has the VO, SFX and pad mixed
+- `out/hook-vo-sfx.mp4` has the VO plus subtle UI SFX (no whooshes, no background music)
 - `out/hook-sfx-only.mp4` has the same video with SFX only, to drop under your own VO track in the editor
-- `out/hook-sfx.wav` is the SFX/pad stem by itself
+- `out/hook-sfx.wav` is the SFX stem by itself
 
 It ends on the last word with no fade to black, so the main video ("So today I'm testing…") can cut in straight after.
 
 ```
 node render.mjs --html hook.html out/hook-silent.mp4
-node sfx.mjs out/hook-sfx.wav cues-hook.json 38.25
+node sfx.mjs out/hook-sfx.wav cues-hook.json 38.25 subtle
 ```

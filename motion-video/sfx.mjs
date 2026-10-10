@@ -1,5 +1,6 @@
 // Synthesizes a WAV sound-design bed from cues.json (written by render.mjs).
-// Usage: node sfx.mjs [out.wav] [cues.json] [durationSeconds]
+// Usage: node sfx.mjs [out.wav] [cues.json] [durationSeconds] [subtle]
+// "subtle" = UI sounds only: no whooshes/swipes, no background pad, everything quieter.
 import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,6 +8,7 @@ import { fileURLToPath } from 'url';
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const out = process.argv[2] || path.join(dir, 'out', 'sfx.wav');
 const cues = JSON.parse(readFileSync(process.argv[3] || path.join(dir, 'cues-index.json'), 'utf8'));
+const SUBTLE = process.argv[5] === 'subtle';
 const SR = 44100, DUR = +(process.argv[4] || 57.5), N = Math.ceil(SR * DUR);
 const L = new Float32Array(N), R = new Float32Array(N);
 let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647 * 2 - 1;
@@ -21,7 +23,7 @@ function svf() { let lp = 0, bp = 0; return (x, fc, q = .7) => { const f = 2 * M
 
 const SFX = {
   whoosh(t) { const F = svf(), d = .75; add(t, d, (x) => { const u = x / d; const env = Math.sin(Math.PI * u) ** 2; return F(rnd(), 300 + 3200 * Math.sin(Math.PI * u) ** 1.5, 1.4).bp * env * .55; }, rnd() * .4); },
-  shimmer(t) { add(t, 1.6, (x) => { let v = 0; for (const f of [1760, 2217, 2637, 3520]) v += Math.sin(2 * Math.PI * f * x * (1 + x * .02)); return v * .025 * Math.exp(-x * 2.2) * Math.min(1, x * 30); }); SFX.whoosh(t - .1); },
+  shimmer(t) { add(t, 1.6, (x) => { let v = 0; for (const f of [1760, 2217, 2637, 3520]) v += Math.sin(2 * Math.PI * f * x * (1 + x * .02)); return v * .025 * Math.exp(-x * 2.2) * Math.min(1, x * 30); }); if (!SUBTLE) SFX.whoosh(t - .1); },
   tick(t) { add(t, .08, (x) => Math.sin(2 * Math.PI * 1500 * x) * Math.exp(-x * 60) * .12, rnd() * .5); },
   tick2(t) { add(t, .5, (x) => (Math.sin(2 * Math.PI * 880 * x) + .5 * Math.sin(2 * Math.PI * 1320 * x)) * Math.exp(-x * 9) * .13); },
   pop(t) { add(t, .15, (x) => Math.sin(2 * Math.PI * (300 + 700 * Math.exp(-x * 40)) * x) * Math.exp(-x * 28) * .32, rnd() * .6); },
@@ -32,9 +34,12 @@ const SFX = {
   flip(t) { const F = svf(); add(t, .12, (x) => F(rnd(), 2500).bp * Math.exp(-x * 40) * .5); add(t + .2, .12, (x) => F(rnd(), 2000).bp * Math.exp(-x * 40) * .4); },
   thud(t) { const F = svf(); add(t, .7, (x) => Math.sin(2 * Math.PI * (45 + 90 * Math.exp(-x * 12)) * x) * Math.exp(-x * 6) * .9 + F(rnd(), 900).lp * Math.exp(-x * 25) * .6); },
 };
-for (const [t, type] of cues) SFX[type]?.(t);
+const SKIP = SUBTLE ? new Set(['whoosh', 'swipe']) : new Set();
+for (const [t, type] of cues) if (!SKIP.has(type)) SFX[type]?.(t);
+if (SUBTLE) for (let i = 0; i < N; i++) { L[i] *= .6; R[i] *= .6; }
 
 // ambient pad: slow chord progression, filtered, gently swelling
+if (!SUBTLE) {
 const chords = [[174.6, 220, 261.6, 329.6], [220, 261.6, 329.6, 392], [146.8, 220, 261.6, 349.2], [196, 246.9, 293.7, 392]]; // Fmaj7 Am7 Dm7 G
 const padF = [svf(), svf()];
 for (let i = 0; i < N; i++) {
@@ -49,6 +54,8 @@ for (let i = 0; i < N; i++) {
   const env = Math.min(1, t / 2.5) * Math.min(1, (DUR - .5 - t) / 2) * (.8 + .2 * Math.sin(t * .9));
   const g = .028 * Math.max(0, env);
   L[i] += padF[0](v, 1200 + 500 * Math.sin(t * .3)).lp * g; R[i] += padF[1](v, 1200 + 500 * Math.cos(t * .27)).lp * g;
+}
+
 }
 
 // soft limit + write 16-bit stereo WAV
