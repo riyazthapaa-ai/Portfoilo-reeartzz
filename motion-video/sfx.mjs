@@ -1,13 +1,13 @@
 // Synthesizes a WAV sound-design bed from cues.json (written by render.mjs).
-// Usage: node sfx.mjs [out.wav]
+// Usage: node sfx.mjs [out.wav] [cues.json] [durationSeconds]
 import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const out = process.argv[2] || path.join(dir, 'out', 'sfx.wav');
-const cues = JSON.parse(readFileSync(path.join(dir, 'cues.json'), 'utf8'));
-const SR = 44100, DUR = 57.5, N = Math.ceil(SR * DUR);
+const cues = JSON.parse(readFileSync(process.argv[3] || path.join(dir, 'cues-index.json'), 'utf8'));
+const SR = 44100, DUR = +(process.argv[4] || 57.5), N = Math.ceil(SR * DUR);
 const L = new Float32Array(N), R = new Float32Array(N);
 let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647 * 2 - 1;
 
