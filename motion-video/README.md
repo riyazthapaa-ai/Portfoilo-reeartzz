@@ -41,3 +41,20 @@ It ends on the last word with no fade to black, so the main video ("So today I'm
 node render.mjs --html hook.html out/hook-silent.mp4
 node sfx.mjs out/hook-sfx.wav cues-hook.json 38.25 subtle
 ```
+
+---
+
+# Part 2: "So today I'm testing…" → end of Section 1 (VO 0:38.12–1:21.37)
+
+`part2.html`, same style, synced to the VO words:
+- WorkBuddy wordmark reveal on "Workbuddy"
+- files dropped into a "storage" box, which bursts into a resource library that an AI agent links to
+- a Library window where each resource lands on its spoken word (sponsorship briefs → performance reports)
+- "the important part": a dusty folder, then the resources becoming context for the agent
+- a "Which files do I need…?" thought bubble, then a single prompt that pulls the library in automatically
+
+Outputs: `out/part2-vo-sfx.mp4`, `out/part2-sfx-only.mp4`, `out/part2-sfx.wav`, and `out/hook+part2-vo-sfx.mp4` (both joined, 0:00–1:21).
+```
+node render.mjs --html part2.html out/p2-silent.mp4
+node sfx.mjs out/part2-sfx.wav cues-part2.json 43.25 subtle
+```
