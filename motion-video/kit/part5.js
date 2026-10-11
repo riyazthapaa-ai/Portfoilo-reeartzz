@@ -74,7 +74,7 @@ scene('q4',192.1,204.1,HL(110,[['q4a','Instead, I ask WorkBuddy to [update the e
 const Q4P=promptBubble($('q4pb'),'Update the existing campaign plan with the new deadline and add the new CTA requirement to the content checklist. Keep everything else unchanged.',q4s,{2:'hl',3:'hl',4:'hl',7:'pa',8:'pa',12:'pa',13:'pa',14:'pa',19:'pa',20:'pa',21:'pa',22:'pa'});
 // ---- 5: modify, not recreate
 const scrT=at('scratch',208.9),modT=at('modify',210.4),soT=at('so',212.2);
-scene('q5',204.1,215.42,HL(110,[['q5a','And this is an [important distinction.]',84,'font-weight:800'],['q5b','Not another version {from scratch…}',76],['q5c','…[modify the existing work.]',76],['q5d','So the project [continues from where it was.]',70]])+
+scene('q5',204.1,215.42,HL(110,[['q5a','And this is an [important distinction.]',84,'font-weight:800'],['q5b','Not another version {from scratch…}',76],['q5c','[…modify the existing work.]',76],['q5d','So the project [continues from where it was.]',70]])+
   `<div class="plan glass" id="q5old" style="left:200px;top:330px;width:560px;opacity:.6"><div class="ph">${icx('copy','#8a8fa8')}<div><b style="font-size:28px">Campaign_plan_v2 (copy)</b><small>Rebuilt from scratch</small></div></div><div class="pf"><span>Deadline</span><em>?</em></div><div class="pf"><span>Talking points</span><em>?</em></div><div class="pf"><span>Checklist</span><em>re-do…</em></div></div>`+
   `<div class="xstamp" id="q5x" style="left:290px;top:520px">✕ NOT THIS</div>`+plan('q5p',980,250,'new')+
   `<div class="vtag" id="q5t1" style="left:1660px;top:383px;background:rgba(47,210,143,.18);color:#7ef0c0;border:1px solid rgba(47,210,143,.5)">UPDATED</div>`+
