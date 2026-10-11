@@ -76,3 +76,26 @@ Outputs: `out/part3-vo-sfx.mp4`, `out/part3-sfx-only.mp4`, `out/part3-sfx.wav`, 
 node render.mjs --html part3.html out/p3-silent.mp4
 node sfx.mjs out/part3-sfx.wav cues-part3.json 44.48 subtle
 ```
+
+---
+
+# Parts 4–10: the rest of the script
+
+Built with a small shared toolkit (`kit/`): every scene is timed in absolute VO seconds and looked up from the VO word timestamps (`vo-words.json`, transcribed from the voiceover), so visuals land on the spoken words.
+
+| Part | VO | Section |
+|---|---|---|
+| `part4.html` | 2:05.9–2:51.6 | 3. From a collection of files to a working system |
+| `part5.html` | 2:51.6–3:35.4 | 4. Now let's change something |
+| `part6.html` | 3:35.4–4:07.1 | 5. A completely different request |
+| `part7.html` | 4:07.1–4:40.6 | 6. The work doesn't stop after the first output |
+| `part8.html` | 4:40.6–5:15.2 | 7. Collaboration |
+| `part9.html` | 5:15.2–5:43.9 | 8. Why the Library matters |
+| `part10.html` | 5:43.9–end | 9. Final takeaway + outro (fades to black) |
+
+Rebuild a part (run from `motion-video/`):
+```
+python3 kit/build.py part5 "WorkBuddy Update" 171.55 215.42   # kit/part5.js -> part5.html
+kit/make.sh part5 171.55 215.42                                 # render + subtle SFX + VO mix
+```
+`out/workbuddy-full-1080p.mp4` is the full video (hook + Parts 2–10). `out/workbuddy-full-720p-preview.mp4` is a small preview copy.

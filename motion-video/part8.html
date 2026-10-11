@@ -1,0 +1,440 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WorkBuddy Collab</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#07080f}
+body{font-family:'Inter Display','Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden}
+#bg{position:absolute;inset:0;background:#07080f}
+.glow{position:absolute;width:1600px;height:1600px;margin:-800px 0 0 -800px;border-radius:50%}
+#grid{position:absolute;inset:-80px;background-image:radial-gradient(rgba(255,255,255,.07) 1.2px,transparent 1.8px);background-size:44px 44px}
+#grain{position:absolute;inset:0;opacity:.06;mix-blend-mode:overlay;pointer-events:none}
+#vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.65) 100%);pointer-events:none}
+#fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0}
+.abs{position:absolute}
+.line{position:relative;font-weight:700;letter-spacing:-.035em;line-height:1.1;text-align:center;white-space:nowrap}
+.line.abs{position:absolute}
+.w{display:inline-block;margin-right:.24em;will-change:transform}
+.w:last-child{margin-right:0}
+.acc{background:linear-gradient(95deg,#a493ff 0%,#5fd8ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
+.warm{background:linear-gradient(95deg,#ff8a7a 0%,#ffc857 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
+.center{left:0;right:0;display:flex;flex-direction:column;align-items:center}
+.glass{background:linear-gradient(180deg,#1a1d31,#121426);border:1px solid rgba(255,255,255,.11);box-shadow:0 40px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
+.label{font-size:22px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+svg.i{width:34px;height:34px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* s1 */
+.mdoc{position:absolute;left:0;top:0;width:42px;height:54px;border-radius:7px;border:2px solid currentColor;
+  background:linear-gradient(currentColor,currentColor) 8px 14px/22px 3px no-repeat,linear-gradient(currentColor,currentColor) 8px 23px/18px 3px no-repeat,linear-gradient(currentColor,currentColor) 8px 32px/22px 3px no-repeat,rgba(10,12,24,.8)}
+.pill{width:70px;height:70px;border-radius:20px;display:grid;place-items:center;font-size:26px;font-weight:700;color:rgba(255,255,255,.45);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+
+/* s2 */
+.card{position:absolute;left:0;top:0;width:440px;height:126px;margin:-63px 0 0 -220px;border-radius:24px;display:flex;align-items:center;gap:22px;padding:0 28px}
+.ic{width:70px;height:70px;border-radius:19px;display:grid;place-items:center;flex:none}
+.card b{display:block;font-size:30px;font-weight:700;letter-spacing:-.02em}
+.card small{display:block;font-size:19px;color:rgba(255,255,255,.5);margin-top:4px;font-family:'Inter';font-weight:500}
+
+/* s4 */
+.search{position:absolute;left:470px;top:250px;width:980px;height:108px;border-radius:54px;display:flex;align-items:center;gap:22px;padding:0 40px;font-size:38px;font-weight:500;font-family:'Inter'}
+.caret{display:inline-block;width:3px;height:42px;background:#5fd8ff;vertical-align:middle;margin-left:3px}
+.drop{position:absolute;left:470px;top:378px;width:980px;height:96px;border-radius:28px;display:flex;align-items:center;gap:18px;padding:0 40px;font-size:28px;font-family:'Inter';color:rgba(255,255,255,.75)}
+
+/* s5 */
+.win{position:absolute;left:210px;top:110px;width:1500px;height:790px;border-radius:28px;overflow:hidden}
+.bar{height:62px;display:flex;align-items:center;gap:12px;padding:0 26px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.dot{width:16px;height:16px;border-radius:50%}
+.path{margin-left:24px;font-family:'Inter';font-size:20px;color:rgba(255,255,255,.5)}
+.content{position:absolute;left:0;top:62px;right:0;bottom:0}
+.fold{position:absolute;width:150px;text-align:center;font-family:'Inter';font-size:18px;color:rgba(255,255,255,.7)}
+.fold svg{width:110px;height:88px;display:block;margin:0 auto 6px}
+.file{position:absolute;width:330px;height:96px;border-radius:22px;display:flex;align-items:center;gap:18px;padding:0 22px;font-family:'Inter';font-size:22px;font-weight:600}
+.file .ic{width:58px;height:58px;border-radius:15px}
+.file .tag{position:absolute;left:22px;top:-40px;font-size:17px;font-weight:500;color:rgba(255,255,255,.6);white-space:nowrap}
+.ring{position:absolute;inset:-10px;border-radius:30px;border:3px solid}
+.lower{position:absolute;left:0;right:0;top:940px;display:flex;justify-content:center}
+.lower div{position:absolute;padding:20px 40px;border-radius:40px;font-size:38px;font-weight:600;letter-spacing:-.02em;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);white-space:nowrap}
+
+/* s6 */
+.chat{position:absolute;left:410px;top:270px;width:1100px;height:720px;border-radius:30px;overflow:hidden}
+.chat .bar{font-size:24px;font-weight:600;gap:14px}
+.msgs{position:absolute;left:0;right:0;top:62px;bottom:170px;padding:30px 36px;display:flex;flex-direction:column;justify-content:flex-end;gap:22px;overflow:hidden;font-family:'Inter'}
+.bub{max-width:780px;padding:22px 28px;border-radius:26px;font-size:25px;line-height:1.45}
+.bot{align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-bottom-left-radius:8px}
+.me{align-self:flex-end;background:linear-gradient(135deg,#6d5cff,#3aa8ff);border-bottom-right-radius:8px}
+.input{position:absolute;left:30px;right:30px;bottom:28px;height:84px;border-radius:42px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;padding:0 32px;font-family:'Inter';font-size:24px;color:rgba(255,255,255,.4)}
+.chip{position:absolute;left:0;top:0;height:54px;padding:0 20px 0 12px;border-radius:16px;display:flex;align-items:center;gap:12px;font-family:'Inter';font-size:20px;font-weight:600;white-space:nowrap}
+.chip .ic{width:34px;height:34px;border-radius:10px}
+.chip svg.i{width:22px;height:22px}
+.stamp{position:absolute;left:960px;top:610px;padding:18px 46px;border:10px solid #ff6b6b;border-radius:24px;color:#ff6b6b;font-size:140px;font-weight:900;letter-spacing:-.02em;white-space:nowrap;background:rgba(7,8,15,.55)}
+
+/* s7 */
+.cal{position:absolute;left:560px;top:330px;width:360px;height:420px;border-radius:36px;overflow:hidden;perspective:900px}
+.cal .top{height:96px;background:linear-gradient(135deg,#ff6b6b,#ff9a6b);display:grid;place-items:center;font-size:40px;font-weight:800;letter-spacing:.2em}
+.num{position:absolute;left:0;right:0;top:120px;text-align:center;font-size:190px;font-weight:800;letter-spacing:-.05em;line-height:1;backface-visibility:hidden}
+.cal .lbl{position:absolute;left:0;right:0;bottom:40px;text-align:center;font-size:26px;font-weight:700;letter-spacing:.3em;color:rgba(255,255,255,.6)}
+.toast{position:absolute;left:1000px;width:560px;border-radius:26px;padding:24px 28px 24px 70px;font-family:'Inter'}
+.toast i{position:absolute;left:30px;top:32px;width:18px;height:18px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 0 6px rgba(255,107,107,.2)}
+.toast b{display:block;font-size:26px;margin-bottom:6px}
+.toast span{font-size:21px;color:rgba(255,255,255,.6)}
+.node{position:absolute;width:150px;margin-left:-75px;text-align:center;font-size:24px;font-weight:600}
+.node .c{width:96px;height:96px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;border:2px solid rgba(255,255,255,.15)}
+.node svg.i{width:40px;height:40px}
+/* part 2 */
+.wm{display:flex;align-items:center;gap:34px}
+.logo{width:132px;height:132px;border-radius:36px;display:grid;place-items:center;background:linear-gradient(135deg,#7c5cff,#3ab8ff);box-shadow:0 30px 80px rgba(110,90,255,.45),inset 0 2px 0 rgba(255,255,255,.3)}
+.logo svg.i{width:72px;height:72px;stroke-width:1.6;fill:rgba(255,255,255,.25)}
+.wmtext{font-size:156px;font-weight:800;letter-spacing:-.045em}
+.burstring{position:absolute;left:960px;top:540px;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;border:3px solid #8f7dff}
+.minidoc{position:absolute;left:0;top:0;width:150px;height:62px;margin:-31px 0 0 -75px;border-radius:16px;display:flex;align-items:center;gap:10px;padding:0 12px;font-family:Inter;font-size:16px;font-weight:600}
+.minidoc .ic{width:38px;height:38px;border-radius:11px}
+.minidoc svg.i{width:22px;height:22px}
+.box{position:absolute;left:780px;top:520px;width:360px;height:250px}
+.boxbody{position:absolute;left:0;right:0;top:40px;bottom:0;border-radius:0 0 26px 26px;background:linear-gradient(180deg,#2a2d40,#1b1d2c);border:1px solid rgba(255,255,255,.12)}
+.boxlid{position:absolute;left:-14px;right:-14px;top:0;height:46px;border-radius:16px;background:#33364b;border:1px solid rgba(255,255,255,.14);transform-origin:left bottom}
+.boxlbl{position:absolute;left:0;right:0;top:120px;text-align:center;font-size:24px;font-weight:700;letter-spacing:.3em;color:rgba(255,255,255,.35)}
+.tile{position:absolute;left:0;top:0;width:190px;height:140px;margin:-70px 0 0 -95px;border-radius:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;font-family:Inter;font-size:18px;font-weight:600;text-align:center}
+.tile .ic{width:58px;height:58px;border-radius:16px}
+.orb{position:absolute;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9bfff,#7c5cff 45%,#2b6cff 100%);box-shadow:0 0 80px rgba(124,92,255,.7),0 0 0 14px rgba(124,92,255,.12);display:grid;place-items:center}
+.orb svg.i{width:66px;height:66px;fill:rgba(255,255,255,.35);stroke-width:1.5}
+.orblbl{position:absolute;width:240px;margin-left:-120px;text-align:center;font-size:26px;font-weight:700}
+.pulse{position:absolute;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;border:2px solid rgba(143,125,255,.8)}
+.app{position:absolute;left:250px;top:240px;width:1420px;height:720px;border-radius:30px;overflow:hidden}
+.side{position:absolute;left:0;top:62px;bottom:0;width:270px;border-right:1px solid rgba(255,255,255,.08);padding:26px 18px;font-family:Inter;font-size:21px;font-weight:600}
+.side div{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;color:rgba(255,255,255,.55);margin-bottom:6px}
+.side div.on{background:rgba(143,125,255,.18);color:#fff}
+.side svg.i{width:24px;height:24px}
+.main{position:absolute;left:270px;right:0;top:62px;bottom:0;padding:34px 40px}
+.mh{display:flex;align-items:baseline;gap:18px;font-size:40px;font-weight:700;letter-spacing:-.02em}
+.mh span{font-family:Inter;font-size:20px;font-weight:500;color:rgba(255,255,255,.5)}
+.res{position:absolute;width:256px;height:190px;border-radius:22px;padding:22px;font-family:Inter}
+.res .ic{width:56px;height:56px;border-radius:15px;margin-bottom:18px}
+.res b{display:block;font-size:21px;line-height:1.25}
+.res small{display:block;font-size:16px;color:rgba(255,255,255,.45);margin-top:6px}
+.res .ok{position:absolute;right:18px;top:18px;width:30px;height:30px;border-radius:50%;background:#2fd28f;display:grid;place-items:center}
+.res .ok svg{width:18px;height:18px;stroke:#062;stroke-width:3;fill:none}
+.addslot{position:absolute;width:256px;height:190px;border-radius:22px;border:2px dashed rgba(255,255,255,.18);display:grid;place-items:center;font-family:Inter;font-size:20px;color:rgba(255,255,255,.4)}
+.chipc{position:absolute;left:0;top:0;height:62px;margin:-31px 0 0 0;padding:0 20px 0 12px;border-radius:18px;display:flex;align-items:center;gap:12px;font-family:Inter;font-size:19px;font-weight:600;white-space:nowrap;transform-origin:center}
+.chipc .ic{width:38px;height:38px;border-radius:11px}
+.chipc svg.i{width:22px;height:22px}
+.dfold{position:absolute;left:810px;top:520px;width:300px}
+.zz{position:absolute;font-size:44px;font-weight:800;color:rgba(255,255,255,.5)}
+.dust{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35)}
+.thought{position:absolute;left:460px;top:440px;width:1000px;height:230px;border-radius:115px;display:flex;align-items:center;justify-content:center;padding:0 70px;font-size:56px;font-weight:700;letter-spacing:-.02em;text-align:center}
+.tdot{position:absolute;border-radius:50%}
+.qm{position:absolute;font-size:64px;font-weight:800;color:#ffc857}
+.ask{position:absolute;left:410px;top:470px;width:1100px;height:110px;border-radius:55px;display:flex;align-items:center;gap:22px;padding:0 20px 0 44px;font-family:Inter;font-size:34px;font-weight:500}
+.send{margin-left:auto;width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,#7c5cff,#3ab8ff);display:grid;place-items:center}
+.send svg{width:34px;height:34px;stroke:#fff;stroke-width:2.4;fill:none}
+
+/* part 3 */
+.day{width:220px;height:250px;border-radius:28px;display:flex;flex-direction:column;align-items:center;padding-top:26px;gap:14px}
+.day b{font-size:30px;font-weight:800;letter-spacing:.12em;color:rgba(255,255,255,.55)}
+.day .q{width:150px;height:40px;border-radius:12px;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.18);display:grid;place-items:center;font-family:Inter;font-size:22px;font-weight:700;color:rgba(255,255,255,.35)}
+.agentwin{position:absolute;left:210px;top:205px;width:1500px;height:790px;border-radius:30px;overflow:hidden}
+.pbub{position:absolute;right:44px;top:100px;width:1160px;padding:34px 40px;border-radius:30px;border-bottom-right-radius:10px;background:linear-gradient(135deg,rgba(109,92,255,.9),rgba(58,168,255,.85));font-family:Inter;font-size:36px;font-weight:500;line-height:1.5}
+.pw{display:inline-block;margin-right:.26em}
+.pw.hl{font-weight:700;color:#fff;background:rgba(255,255,255,.18);border-radius:8px;padding:0 6px;margin-left:-6px;margin-right:.2em}
+.pw.pa{text-decoration:underline;text-decoration-color:#ffd77a;text-decoration-thickness:4px;text-underline-offset:8px}
+.sec{position:absolute;font-family:Inter;font-size:19px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.askp{position:absolute;height:72px;padding:0 26px 0 14px;border-radius:20px;display:flex;align-items:center;gap:14px;font-family:Inter;font-size:24px;font-weight:600;white-space:nowrap}
+.askp i{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-style:normal;font-weight:800;background:rgba(255,200,87,.18);color:#ffd77a;border:1px solid rgba(255,200,87,.45)}
+.instr{position:absolute;width:440px;height:150px;border-radius:26px;display:flex;align-items:center;gap:22px;padding:0 30px;font-size:36px;font-weight:700;letter-spacing:-.02em}
+.instr .ic{width:74px;height:74px;border-radius:20px}
+.instr svg.i{width:40px;height:40px}
+.xline{position:absolute;left:20px;right:20px;top:50%;height:8px;margin-top:-4px;border-radius:4px;background:#ff6b6b;transform-origin:left center}
+.taskcard{position:absolute;left:560px;top:430px;width:800px;height:200px;border-radius:34px;display:flex;align-items:center;gap:30px;padding:0 44px}
+.taskcard .logo{width:110px;height:110px;border-radius:30px;flex:none}
+.taskcard .logo svg.i{width:58px;height:58px}
+.taskcard b{display:block;font-size:52px;font-weight:800;letter-spacing:-.03em}
+.taskcard small{display:block;font-family:Inter;font-size:22px;color:rgba(255,255,255,.55);margin-top:6px}
+.beam{position:absolute;width:12px;border-radius:6px;background:linear-gradient(180deg,transparent,#8f7dff,transparent);box-shadow:0 0 40px #8f7dff}
+.status{position:absolute;width:420px;margin-left:-210px;text-align:center;font-family:Inter;font-size:22px;font-weight:600;padding:12px 0;border-radius:30px}
+.result{position:absolute;left:260px;top:250px;width:1400px;height:620px;border-radius:32px;padding:40px 48px;font-family:Inter}
+.result h3{font-family:'Inter Display';font-size:44px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:18px}
+.result h3 span{font-family:Inter;font-size:20px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.04em}
+.col{position:absolute;top:140px;width:410px}
+.col .sec{position:static;margin-bottom:18px;display:block}
+.it{padding:18px 20px;border-radius:18px;margin-bottom:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);font-size:22px;font-weight:600;line-height:1.35}
+.it small{display:block;font-size:17px;font-weight:500;color:rgba(255,255,255,.5);margin-top:4px}
+.it.warn{border-color:rgba(255,200,87,.45);background:rgba(255,200,87,.08)}
+.it.top{border-color:rgba(124,92,255,.7);background:linear-gradient(135deg,rgba(124,92,255,.28),rgba(58,168,255,.18));font-size:28px;padding:28px 24px}
+.badge{position:absolute;padding:14px 28px;border-radius:40px;font-family:Inter;font-size:24px;font-weight:700;background:rgba(47,210,143,.15);border:1px solid rgba(47,210,143,.55);color:#7ef0c0;white-space:nowrap}
+.loopic{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px}
+.loopic svg{width:120px;height:120px;fill:none;stroke:#8f7dff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="bg">
+    <div class="glow" id="g1"></div><div class="glow" id="g2"></div><div class="glow" id="g3"></div>
+    <div id="grid"></div>
+  </div>
+    <canvas id="grain" width="1920" height="1080"></canvas>
+  <div id="vig"></div>
+  <div id="fade"></div>
+</div>
+
+<script>
+// ---------- helpers ----------
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const p=(t,s,d)=>clamp((t-s)/d);
+const eo=x=>1-Math.pow(1-x,3);
+const eo5=x=>1-Math.pow(1-x,5);
+const ei=x=>x*x*x;
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c1=1.6,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const lerp=(a,b,x)=>a+(b-a)*x;
+const $=id=>document.getElementById(id);
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+const blur=v=>v>.05?`blur(${v.toFixed(2)}px)`:'none';
+const ICON={
+ doc:'<path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5M9 12h7M9 15.5h7M9 19h4"/>',
+ film:'<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 9l1.5-5 16.5 0L19.5 9M8.5 4L7 9M13.5 4L12 9M18 4l-1.5 5"/>',
+ note:'<path d="M5 3h14v12l-6 6H5z"/><path d="M13 21v-6h6M8 8h8M8 11.5h5"/>',
+ target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+ chart:'<path d="M4 4v16h16M8.5 16v-4M12.5 16V8M16.5 16v-6"/>',
+ sheet:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>',
+ chat:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+ redo:'<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/>',
+};
+const svg=(k,style='')=>`<svg class="i" viewBox="0 0 24 24" style="${style}">${ICON[k]}</svg>`;
+
+function build(el,text){
+  el.querySelectorAll('.w').forEach(n=>n.remove());
+  let acc=null;
+  text.split(' ').forEach(tok=>{
+    let cls=acc;
+    const m=tok.match(/^([\[{])/);
+    if(m){acc=m[1]=='['?'acc':'warm';cls=acc;tok=tok.slice(1)}
+    const k=tok.search(/[\]}]/);
+    if(k>=0){tok=tok.slice(0,k)+tok.slice(k+1);acc=null}
+    const s=document.createElement('span');s.className='w'+(cls?' '+cls:'');s.textContent=tok;el.appendChild(s);
+  });
+}
+function kin(el,lt,inAt,outAt=1e9,st=.07){
+  const ws=el.querySelectorAll('.w');
+  ws.forEach((w,i)=>{
+    const a=eo(p(lt,inAt+i*st,.65)),b=eio(p(lt,outAt+i*.03,.4));
+    w.style.opacity=(a*(1-b)).toFixed(3);
+    w.style.transform=`translateY(${((1-a)*55-b*40).toFixed(1)}px) scale(${(lerp(.92,1,a)).toFixed(3)})`;
+    w.style.filter=blur((1-a)*12+b*12);
+  });
+}
+const typed=(s,lt,start,cps)=>s.slice(0,Math.max(0,Math.floor((lt-start)*cps)));
+const caretOn=t=>(Math.floor(t*2.2)%2)==0?1:0;
+
+
+// ---------- shared kit: author everything in absolute VO seconds ----------
+const VO0=280.55, VOW=[[279.92, "response."], [280.86, "and"], [281.1, "let's"], [281.34, "say"], [281.5, "I"], [281.66, "have"], [281.9, "someone"], [282.22, "else"], [282.54, "reviewing"], [283.1, "the"], [283.18, "campaign."], [284.06, "They"], [284.22, "leave"], [284.54, "a"], [284.7, "comment"], [285.34, "Can"], [285.66, "we"], [285.82, "make"], [285.98, "this"], [286.22, "section"], [286.62, "shorter"], [287.02, "and"], [287.18, "move"], [287.42, "the"], [287.58, "CTA"], [288.22, "higher?"], [289.02, "Instead"], [289.34, "of"], [289.5, "creating"], [289.98, "another"], [290.3, "copy"], [290.7, "and"], [290.86, "sending"], [291.18, "it"], [291.42, "back"], [291.58, "and"], [291.74, "forth,"], [292.38, "I"], [292.54, "can"], [292.78, "continue"], [293.26, "working"], [293.58, "around"], [293.9, "the"], [294.06, "same"], [294.3, "artifact."], [295.42, "Apply"], [295.9, "this"], [296.06, "feedback"], [296.54, "to"], [296.7, "the"], [296.86, "existing"], [297.34, "campaign"], [297.82, "document."], [298.76, "move"], [299.0, "the"], [299.16, "C"], [299.4, "T"], [299.56, "A"], [299.8, "higher"], [300.2, "and"], [300.36, "shorten"], [300.84, "this"], [301.0, "section,"], [301.4, "but"], [301.64, "leave"], [301.88, "the"], [302.04, "rest"], [302.28, "unchanged."], [303.32, "Now"], [303.56, "the"], [303.72, "human"], [304.04, "feedback"], [304.52, "and"], [304.68, "AI"], [305.08, "assistance"], [305.64, "are"], [305.8, "happening"], [306.2, "around"], [306.44, "the"], [306.6, "same"], [306.84, "piece"], [307.08, "of"], [307.24, "work,"], [307.88, "so"], [308.04, "it's"], [308.28, "not"], [308.44, "just"], [308.68, "me"], [309.0, "having"], [309.24, "a"], [309.4, "conversation"], [309.96, "with"], [310.12, "an"], [310.36, "AI."], [311.25, "the"], [311.41, "work"], [311.65, "can"], [311.81, "involve"], [312.29, "people,"], [312.69, "AI"], [313.17, "revisions"], [313.73, "and"], [313.89, "new"], [314.13, "information"], [314.69, "over"], [314.93, "time."], [315.33, "And"], [315.49, "I"], [315.65, "think"], [315.81, "this"], [315.97, "is"], [316.13, "the"]];
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
+function at(w,after=0){const n=norm(w);for(const [t,x] of VOW){if(t>=after-.005&&norm(x).startsWith(n))return t}console.warn('no word',w,after);return after}
+const CUES=[];const cue=(t,type)=>CUES.push([t-VO0,type]);
+const S=[];const FN={};
+let STRESS=()=>0,FADE=()=>0;
+function addCSS(c){const s=document.createElement('style');s.textContent=c;document.head.appendChild(s)}
+function scene(id,a,b,html,fn){const d=document.createElement('div');d.className='scene';d.id=id;d.innerHTML=html;$('stage').insertBefore(d,$('grain'));
+  d.querySelectorAll('[data-k]').forEach(e=>build(e,e.dataset.k));S.push({id,a:a-VO0,b:b-VO0});FN[id]=fn;return d}
+// stacked headline slots: HL(top,[[id,text,fontSize,css]...])
+const HL=(top,rows)=>`<div class="abs center" style="top:${top}px">${rows.map(([id,t,fs,css])=>`<div class="line abs" id="${id}" data-k="${t.replace(/"/g,'&quot;')}" style="font-size:${fs||72}px;${css||''}"></div>`).join('')}</div>`;
+function enter(el,T,t0,o={}){const {y=60,x=0,s=.7,dur=.55,r=0,out=1e9,outDur=.35}=o;const k=back(p(T,t0,dur)),op=clamp(p(T,t0,.2))*(1-eio(p(T,out,outDur)));
+  el.style.opacity=op.toFixed(3);el.style.transform=`translate(${((1-k)*x).toFixed(1)}px,${((1-k)*y).toFixed(1)}px) rotate(${((1-k)*r).toFixed(2)}deg) scale(${lerp(s,1,k).toFixed(3)})`;return k}
+ICON.spark='<path d="M12 3l2 5.5 5.5 2-5.5 2L12 18l-2-5.5-5.5-2 5.5-2z"/>';
+ICON.lib='<path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 2.5 15.5-3.5 1z"/>';
+ICON.user='<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>';
+ICON.check='<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+ICON.upload='<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>';
+ICON.edit='<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>';
+ICON.eye='<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+ICON.comment='<path d="M4 5h16v11H9l-5 4z"/>';
+ICON.save='<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>';
+ICON.plus='<path d="M12 5v14M5 12h14"/>';
+ICON.send='<path d="M4 12l16-8-6 16-3-6z"/>';
+ICON.copy='<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>';
+ICON.down='<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>';
+ICON.flag='<path d="M5 21V4h11l-2 4 2 4H5"/>';
+ICON.arrow='<path d="M5 12h14M13 6l6 6-6 6"/>';
+ICON.bell='<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>';
+ICON.play='<path d="M8 5l11 7-11 7z"/>';
+ICON.zero='<ellipse cx="12" cy="12" rx="6" ry="8"/>';
+const RES=[
+ ['Sponsorship briefs','12 files','doc','#ff6b6b'],
+ ['Brand guidelines','6 files','spark','#a493ff'],
+ ['Past & current scripts','48 files','film','#5fd8ff'],
+ ['Product notes','19 files','note','#ffc857'],
+ ['Campaign requirements','9 files','target','#6ee7b7'],
+ ['Content calendar','Oct–Dec','cal','#7c9cff'],
+ ['Performance reports','Q1–Q3','chart','#ff8a7a'],
+];
+const ic=(r)=>`<div class="ic" style="background:${r[3]}2b;border:1px solid ${r[3]}55;display:grid;place-items:center">${svg(r[2],'stroke:'+r[3])}</div>`;
+const icx=(k,c)=>ic(['','',k,c]);
+// prompt bubble whose words light up exactly when spoken
+function promptBubble(el,text,startVO,cls={}){
+  const words=text.split(' ');let idx=VOW.findIndex(([t])=>t>=startVO-.01);let prev=startVO;
+  const times=words.map(d=>{const n=norm(d);let f=-1;for(let k=idx;k<Math.min(VOW.length,idx+5);k++){const m=norm(VOW[k][1]);if(m&&n&&(m.startsWith(n)||n.startsWith(m))){f=k;break}}
+    if(f>=0){prev=VOW[f][0];idx=f+1}else prev+=.18;return prev});
+  el.innerHTML='';const spans=words.map((w,i)=>{const s=document.createElement('span');s.className='pw '+(cls[i]||'');s.textContent=w;el.appendChild(s);if(i%2==0)cue(times[i]+.02,'key');return s});
+  return {times,end:times[times.length-1],update(T){spans.forEach((s,i)=>{const x=eo(p(T,times[i]-.04,.28));s.style.opacity=(.08+.92*x).toFixed(3);s.style.transform=`translateY(${((1-x)*14).toFixed(1)}px)`;s.style.filter=blur((1-x)*4)})}};
+}
+function orb(parent,label){const w=document.createElement('div');w.innerHTML=`<div class="pulse"></div><div class="pulse"></div><div class="orb"><svg class="i" viewBox="0 0 24 24">${ICON.spark}</svg></div>${label?`<div class="orblbl">${label}</div>`:''}`;parent.appendChild(w);const [p1,p2,o,lb]=w.children;
+  return {update(T,t0,x,y,sc=1,out=1e9){const k=back(p(T,t0,.6)),fo=1-eio(p(T,out,.35));o.style.left=x+'px';o.style.top=y+'px';o.style.opacity=clamp(k*2)*fo;o.style.transform=`scale(${(lerp(.3,1,k)*sc*(1+.03*Math.sin(T*4))).toFixed(3)})`;
+    if(lb){lb.style.left=x+'px';lb.style.top=(y+95*sc)+'px';lb.style.opacity=eo(p(T,t0+.3,.4))*fo}
+    [[p1,0],[p2,.9]].forEach(([e,off])=>{const r=T>t0+.3?((T-t0-.3+off)%1.8)/1.8:0;e.style.left=x+'px';e.style.top=y+'px';e.style.opacity=T>t0+.3?(1-r)*.7*clamp(k)*fo:0;e.style.transform=`scale(${sc*(1+r*1.3)})`})}};}
+const NS='http://www.w3.org/2000/svg';
+function mkline(svgEl,color='#8f7dff',w=3){const l=document.createElementNS(NS,'line');l.setAttribute('stroke',color);l.setAttribute('stroke-width',w);l.setAttribute('stroke-linecap','round');svgEl.appendChild(l);return l}
+function mkdot(svgEl){const c=document.createElementNS(NS,'circle');c.setAttribute('r','6');c.setAttribute('fill','#c9f4ff');svgEl.appendChild(c);return c}
+function link(l,d,T,t0,x1,y1,x2,y2,ph=0,fo=1){const k=eio(p(T,t0,.45));l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',lerp(x1,x2,k));l.setAttribute('y2',lerp(y1,y2,k));l.style.opacity=k*.55*fo;
+  if(d){const u=T>t0+.45?((T*1.1+ph)%1):0;d.setAttribute('cx',lerp(x1,x2,u));d.setAttribute('cy',lerp(y1,y2,u));d.style.opacity=T>t0+.45?Math.sin(Math.PI*u)*fo:0}}
+const winBar=(title='Agent')=>`<div class="bar"><svg class="i" viewBox="0 0 24 24" style="stroke:#a493ff;fill:rgba(164,147,255,.25)">${ICON.spark}</svg><span style="font-size:22px;font-weight:700">Work<span class="acc">Buddy</span></span><span style="margin-left:14px;font-family:Inter;font-size:19px;color:rgba(255,255,255,.45)">${title}</span></div>`;
+
+addCSS(`
+.doc{position:absolute;width:700px;height:720px;border-radius:28px;font-family:Inter;overflow:hidden}
+.doc .dh{display:flex;align-items:center;gap:16px;padding:26px 30px 0}
+.doc .dh b{font-family:'Inter Display';font-size:28px;font-weight:800}.doc .dh small{display:block;font-size:16px;color:rgba(255,255,255,.5)}
+.blk{position:absolute;left:30px;right:30px;border-radius:16px;padding:16px 20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:19px;font-weight:700;overflow:hidden}
+.blk .ln{height:10px;border-radius:5px;background:rgba(255,255,255,.12);margin-top:12px}
+.blk.cta{background:linear-gradient(135deg,rgba(124,92,255,.35),rgba(58,168,255,.25));border-color:rgba(143,125,255,.6)}
+.cmt{position:absolute;width:560px;border-radius:26px;padding:24px 28px;font-family:Inter}
+.cmt .who{display:flex;align-items:center;gap:14px;margin-bottom:14px;font-size:20px;font-weight:700}
+.cmt .who small{display:block;font-size:15px;font-weight:500;color:rgba(255,255,255,.5)}
+.av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+.cmt .txt{font-size:28px;line-height:1.4;font-weight:600}
+.cmt .txt .pw{margin-right:.24em}
+.res2{display:inline-block;margin-top:14px;padding:6px 12px;border-radius:10px;font-size:16px;font-weight:700;background:rgba(47,210,143,.15);color:#7ef0c0;border:1px solid rgba(47,210,143,.5)}
+.cursor{position:absolute;left:0;top:0}
+.cursor svg{width:34px;height:34px}
+.cursor span{position:absolute;left:28px;top:26px;padding:4px 10px;border-radius:8px;background:#ffc857;color:#1a1300;font-family:Inter;font-size:15px;font-weight:700;white-space:nowrap}
+.person{position:absolute;width:200px;margin-left:-100px;text-align:center;font-family:Inter;font-size:22px;font-weight:700}
+.person .av{width:120px;height:120px;font-size:44px;margin:0 auto 12px}
+.fcopy{position:absolute;left:0;top:0;height:64px;padding:0 20px 0 12px;margin:-32px 0 0 0;border-radius:16px;display:flex;align-items:center;gap:10px;font-family:Inter;font-size:19px;font-weight:600;white-space:nowrap}
+.fcopy .ic{width:40px;height:40px;border-radius:11px}.fcopy svg.i{width:22px;height:22px}
+.sat{position:absolute;left:0;top:0;height:72px;padding:0 26px 0 14px;margin:-36px 0 0 0;border-radius:22px;display:flex;align-items:center;gap:12px;font-family:Inter;font-size:24px;font-weight:700;white-space:nowrap}
+.sat .ic{width:46px;height:46px;border-radius:14px}.sat svg.i{width:26px;height:26px}
+`);
+const AV=(c,l)=>`<div class="av" style="background:${c}33;border:2px solid ${c};color:${c}">${l}</div>`;
+// campaign doc with movable blocks; layout(order,heights) positions them
+const BL=[['Hook','hook',90,''],['Product story','story',230,''],['Routine demo','demo',130,''],['CTA · “Link in bio for 15% off”','cta',80,'cta']];
+const docHTML=(id,x,y)=>`<div class="doc glass" id="${id}" style="left:${x}px;top:${y}px"><div class="dh">${icx('doc','#5fd8ff')}<div><b>Glow Serum · Campaign doc</b><small>Shared with Sam</small></div></div>`+
+  BL.map(b=>`<div class="blk ${b[3]}" id="${id}${b[1]}">${b[0]}${b[3]?'':'<div class="ln" style="width:92%"></div><div class="ln" style="width:80%"></div><div class="ln" style="width:86%"></div><div class="ln" style="width:70%"></div><div class="ln" style="width:88%"></div><div class="ln" style="width:60%"></div>'}</div>`).join('')+`</div>`;
+function layoutDoc(id,order,h){let y=120;order.forEach(k=>{const b=BL[k],e=$(id+b[1]);e.style.top=y+'px';e.style.height=h[k]+'px';y+=h[k]+14})}
+// ---- 1: reviewer leaves a comment
+const u1c=at('can',285.2);
+const cursorSVG=`<svg viewBox="0 0 24 24"><path d="M4 3l7 18 2.5-7.5L21 11z" fill="#ffc857" stroke="#1a1300" stroke-width="1.2"/></svg>`;
+scene('u1',280.55,288.9,HL(120,[['u1a','Someone else is [reviewing the campaign.]',76],['u1b','They leave a comment:',76,'font-weight:600;color:rgba(255,255,255,.88)']])+docHTML('u1d',300,240)+
+  `<div class="cursor" id="u1cur">${cursorSVG}<span>Sam</span></div>`+
+  `<div class="cmt glass" id="u1cm" style="left:1110px;top:360px"><div class="who">${AV('#ffc857','S')}<div>Sam<small>Reviewer · just now</small></div></div><div class="txt" id="u1tx"></div></div>`,(lt,T)=>{
+  kin($('u1a'),T,280.86,283.9,.06);kin($('u1b'),T,284.06,1e9,.06);
+  enter($('u1d'),T,280.9,{y:60,s:.92});layoutDoc('u1d',[0,1,2,3],[90,230,130,80]);
+  const cx=lerp(1400,640,eio(p(T,282.3,1.2))),cy=lerp(900,500,eio(p(T,282.3,1.2)));$('u1cur').style.transform=`translate(${cx+Math.sin(T*2)*6}px,${cy+Math.cos(T*2.3)*6}px)`;$('u1cur').style.opacity=eo(p(T,282.2,.3));
+  enter($('u1cm'),T,284.3,{x:60,y:0,s:.9});U1P.update(T);
+  const sec=eo(p(T,U1P.times[4],.3)),cta=eo(p(T,U1P.times[9],.3));
+  $('u1dstory').style.boxShadow=sec?`0 0 0 3px rgba(255,200,87,${.8*sec})`:'';$('u1dstory').style.background=sec?`rgba(255,200,87,${.1*sec})`:'';
+  $('u1dcta').style.boxShadow=cta?`0 0 0 3px rgba(255,200,87,${.8*cta})`:'';
+});
+const U1P=promptBubble($('u1tx'),'“Can we make this section shorter and move the CTA higher?”',u1c);
+cue(284.4,'ding');
+// ---- 2: no more copies back and forth -> same artifact
+const COPIES=['Campaign_v3.docx','Campaign_v3_edits.docx','Campaign_FINAL_v2.docx'];const cpT=[289.5,290.35,291.2];const sameT=at('i',292.3);
+scene('u2',288.9,295.3,HL(130,[['u2a','No more copies sent {back and forth…}',80],['u2b','I keep working on the [same artifact.]',84,'font-weight:800']])+
+  `<div class="person" id="u2p1" style="left:360px;top:430px">${AV('#a493ff','Me')}You</div><div class="person" id="u2p2" style="left:1560px;top:430px">${AV('#ffc857','S')}Sam</div>`+
+  COPIES.map((c,i)=>`<div class="fcopy glass" id="u2c${i}">${icx('copy','#8a8fa8')}${c}</div>`).join('')+
+  `<svg id="u2sv" class="abs" width="1920" height="1080" style="left:0;top:0"></svg><div class="doc glass" id="u2art" style="left:760px;top:420px;width:400px;height:240px"><div class="dh">${icx('doc','#5fd8ff')}<div><b style="font-size:24px">Campaign doc</b><small>One shared artifact</small></div></div><div style="padding:20px 30px"><div class="ln" style="height:10px;border-radius:5px;background:rgba(255,255,255,.12);width:90%"></div><div style="height:10px;border-radius:5px;background:rgba(255,255,255,.12);width:70%;margin-top:12px"></div><div style="height:10px;border-radius:5px;background:rgba(255,255,255,.12);width:80%;margin-top:12px"></div></div></div>`,(lt,T)=>{
+  kin($('u2a'),T,289.02,sameT-.25,.06);kin($('u2b'),T,sameT,1e9,.06);
+  enter($('u2p1'),T,289.1,{y:40,s:.7});enter($('u2p2'),T,289.2,{y:40,s:.7});
+  const merge=eio(p(T,sameT+.1,.6));
+  COPIES.forEach((c,i)=>{const s=cpT[i],x=eio(p(T,s,.8)),dir=i%2?-1:1;const sx=dir>0?600:1320,ex=dir>0?1320:600;
+    const fx=lerp(lerp(sx,ex,x),960,merge),fy=lerp(640-Math.sin(Math.PI*x)*150+i*16,540,merge);
+    const el=$('u2c'+i);el.style.opacity=clamp(p(T,s,.15))*(1-merge);el.style.transform=`translate(${fx-el.offsetWidth/2}px,${fy}px) rotate(${Math.sin(Math.PI*x)*dir*8}deg)`});
+  enter($('u2art'),T,sameT+.4,{s:.5,y:0});
+  link(U2L[0],U2D[0],T,sameT+.8,430,500,760,540);link(U2L[1],U2D[1],T,sameT+.9,1490,500,1160,540,.5);
+});
+const U2L=[mkline($('u2sv')),mkline($('u2sv'))],U2D=[mkdot($('u2sv')),mkdot($('u2sv'))];
+cpT.forEach(t=>cue(t+.1,'tick'));cue(sameT+.5,'pop');
+// ---- 3: the prompt
+const u3s=at('apply',295.3);
+scene('u3',295.3,303.2,`<div class="abs center label" style="top:150px" id="u3l">I ask the agent</div><div class="agentwin glass" id="u3w" style="top:250px;height:520px">${winBar()}<div class="pbub" id="u3pb" style="top:120px"></div></div>`,(lt,T)=>{
+  $('u3l').style.opacity=eo(p(T,295.35,.4));
+  const a=eo(p(T,295.3,.7));$('u3w').style.opacity=a;$('u3w').style.transform=`translateY(${(1-a)*60}px) scale(${lerp(.95,1,a)})`;
+  const bb=eo(p(T,u3s-.3,.4));$('u3pb').style.opacity=bb;$('u3pb').style.transform=`scale(${lerp(.85,1,bb)})`;$('u3pb').style.transformOrigin='right bottom';U3P.update(T);
+});
+const U3P=promptBubble($('u3pb'),'Apply this feedback to the existing campaign document. Move the CTA higher and shorten this section, but leave the rest unchanged.',u3s,{5:'hl',6:'hl',7:'hl',8:'pa',10:'pa',11:'pa',13:'pa',15:'pa',17:'pa',18:'pa',19:'pa',20:'pa'});
+// ---- 4: the same doc, updated in place
+const notT8=at('so',307.8);
+scene('u4',303.2,311.1,HL(120,[['u4a','Human feedback + AI, around the [same piece of work.]',70],['u4b',"Not just me {chatting with an AI.}",80]])+docHTML('u4d',300,240)+
+  `<div class="cmt glass" id="u4cm" style="left:1110px;top:380px"><div class="who">${AV('#ffc857','S')}<div>Sam<small>Reviewer</small></div></div><div class="txt" style="font-size:24px;color:rgba(255,255,255,.75)">“Can we make this section shorter and move the CTA higher?”</div><span class="res2" id="u4ok">✓ Resolved · applied by agent</span></div>`,(lt,T)=>{
+  kin($('u4a'),T,303.32,notT8-.25,.05);kin($('u4b'),T,notT8,1e9,.06);
+  enter($('u4d'),T,303.25,{y:0,s:.97,dur:.4});enter($('u4cm'),T,303.4,{x:40,y:0,s:.95});
+  const m=eio(p(T,303.9,.9)),h=lerp(230,120,eio(p(T,304.3,.8)));
+  // CTA climbs from last to second place
+  const ys=[];let y=120;[90,h,130,80].forEach(v=>{ys.push(y);y+=v+14});
+  const ctaY=lerp(ys[3],ys[1],m),storyY=lerp(ys[1],ys[1]+80+14,m),demoY=lerp(ys[2],ys[2]+80+14-(230-h)*0,m);
+  $('u4dhook').style.top=ys[0]+'px';$('u4dhook').style.height='90px';
+  $('u4dcta').style.top=ctaY+'px';$('u4dcta').style.height='80px';$('u4dcta').style.zIndex=2;$('u4dcta').style.boxShadow=m>0&&m<1?'0 20px 50px rgba(0,0,0,.5)':'';
+  $('u4dstory').style.top=storyY+'px';$('u4dstory').style.height=h+'px';
+  $('u4ddemo').style.top=(storyY+h+14)+'px';$('u4ddemo').style.height='130px';
+  const ok=back(p(T,305.0,.5));$('u4ok').style.opacity=clamp(ok*2);$('u4ok').style.transform=`scale(${lerp(.6,1,ok)})`;
+});
+cue(304.0,'tick');cue(304.5,'tick');cue(305.1,'ding');
+// ---- 5: people, AI, revisions, new information
+const SAT=[['People','user','#ffc857','people',312.1,-140,-170],['AI','spark','#a493ff','ai',312.6,250,-170],['Revisions','edit','#5fd8ff','revisions',313.1,-180,170],['New information','plus','#6ee7b7','new',313.8,270,170]];
+const saT=SAT.map(s=>at(s[3],s[4]));
+scene('u5',311.1,315.2,HL(130,[['u5a','The work can involve [people, AI, revisions & new information.]',60]])+
+  `<svg id="u5sv" class="abs" width="1920" height="1080" style="left:0;top:0"></svg><div class="doc glass" id="u5art" style="left:780px;top:520px;width:360px;height:200px"><div class="dh">${icx('doc','#5fd8ff')}<div><b style="font-size:24px">Campaign doc</b><small>Living artifact</small></div></div></div>`+
+  SAT.map((s,i)=>`<div class="sat glass" id="u5s${i}">${icx(s[1],s[2])}${s[0]}</div>`).join(''),(lt,T)=>{
+  kin($('u5a'),T,311.25,1e9,.05);enter($('u5art'),T,311.3,{s:.7,y:0});
+  SAT.forEach((s,i)=>{const el=$('u5s'+i),x=960+s[5],y=620+s[6];enter(el,T,saT[i]-.05,{s:.5,y:0});el.style.left=(x-el.offsetWidth/2)+'px';el.style.top=y+'px';link(U5L[i],U5D[i],T,saT[i]+.1,x,y,960,620,i*.25)});
+});
+const U5L=SAT.map(()=>mkline($('u5sv'))),U5D=SAT.map(()=>mkdot($('u5sv')));
+saT.forEach(t=>cue(t+.1,'pop'));
+
+const DURATION=34.65;
+// ---------- background / grain ----------
+const gctx=$('grain').getContext('2d');const noise=[];
+for(let k=0;k<6;k++){const c=document.createElement('canvas');c.width=480;c.height=270;const x=c.getContext('2d');const im=x.createImageData(480,270);
+  for(let i=0;i<im.data.length;i+=4){const v=rnd()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}x.putImageData(im,0,0);noise.push(c)}
+const stress=t=>STRESS(t+VO0);
+function bg(t){
+  const g1=$('g1'),g2=$('g2'),g3=$('g3');
+  g1.style.background='radial-gradient(circle,rgba(124,92,255,.32),transparent 60%)';
+  g2.style.background='radial-gradient(circle,rgba(34,211,238,.20),transparent 60%)';
+  g3.style.background='radial-gradient(circle,rgba(255,107,107,.30),transparent 60%)';
+  g1.style.transform=`translate(${560+Math.sin(t*.21)*220}px,${300+Math.cos(t*.17)*160}px)`;
+  g2.style.transform=`translate(${1420+Math.cos(t*.19)*200}px,${800+Math.sin(t*.23)*140}px)`;
+  g3.style.transform=`translate(${960+Math.sin(t*.3)*300}px,${540+Math.cos(t*.25)*120}px)`;g3.style.opacity=stress(t);
+  $('grid').style.transform=`translate(${(t*6)%44}px,${(t*3)%44}px)`;
+  gctx.imageSmoothingEnabled=false;gctx.drawImage(noise[Math.floor(t*24)%6],0,0,1920,1080);
+}
+
+// ---------- master render ----------
+
+function render(t){
+  bg(t);
+  S.forEach((s,i)=>{
+    const el=$(s.id);
+    if(t<s.a-.01||t>s.b+.01){el.style.opacity=0;el.style.visibility='hidden';return}
+    el.style.visibility='visible';
+    const lt=t-s.a,last=i==S.length-1;
+    const inn=i==0?eo(p(t,0,.6)):eo(p(t,s.a,.55));
+    const out=last?0:ei(p(t,s.b-.45,.45));
+    el.style.opacity=(inn*(1-out)).toFixed(3);
+    el.style.transform=`scale(${(lerp(1.06,1,inn)*lerp(1,.94,out)*(1+lt*.0035)).toFixed(4)})`;
+    el.style.filter=blur((1-inn)*14+out*14);
+    FN[s.id](lt,t+VO0);
+  });
+  $('fade').style.opacity=FADE(t+VO0);
+}
+window.render=render;window.DURATION=DURATION;window.CUES=CUES.sort((a,b)=>a[0]-b[0]);
+// preview mode: open the file directly in a browser to watch it play
+if(!location.search.includes('capture')){
+  document.fonts.ready.then(()=>{const t0=performance.now();const loop=()=>{render(((performance.now()-t0)/1000)%DURATION);requestAnimationFrame(loop)};loop()});
+}
+</script>
+</body>
+</html>
