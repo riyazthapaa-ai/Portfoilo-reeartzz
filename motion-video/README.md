@@ -58,3 +58,21 @@ Outputs: `out/part2-vo-sfx.mp4`, `out/part2-sfx-only.mp4`, `out/part2-sfx.wav`, 
 node render.mjs --html part2.html out/p2-silent.mp4
 node sfx.mjs out/part2-sfx.wav cues-part2.json 43.25 subtle
 ```
+
+---
+
+# Part 3: Section 2, "Let's ask the agent to find the context" (VO 1:21.37–2:05.85)
+
+`part3.html`:
+- "Let's say it's Monday": a weekday strip with Monday lighting up
+- the prompt appears word by word as it's spoken; sources (briefs, scripts, notes) pop in as they're named, and the three asks become a numbered list
+- "open this file, then this file, then this spreadsheet": three instruction cards, each struck out
+- "I'm giving it the task": a task card goes to the agent, which scans the Library, lights up the 3 relevant sources and shows "Context ready"
+- "a much clearer picture": a "This week" result panel (deliverables, missing requirements, top priority)
+- "I already had it" → scattered resources pull together into one bundle, "every time"
+
+Outputs: `out/part3-vo-sfx.mp4`, `out/part3-sfx-only.mp4`, `out/part3-sfx.wav`, and `out/full-so-far-vo-sfx.mp4` (hook + Part 2 + Part 3, 0:00–2:06).
+```
+node render.mjs --html part3.html out/p3-silent.mp4
+node sfx.mjs out/part3-sfx.wav cues-part3.json 44.48 subtle
+```
