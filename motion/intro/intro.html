@@ -262,7 +262,6 @@ function renderPrompt(t) {
   $('caret').style.opacity = (Math.floor(t * 2.6) % 2 === 0 || (t > 4.3 && t < 5.2)) ? 1 : 0;
   $('prompt').style.top = '668px';
 }
-sfx(3.72, 'whoosh', 0.7);
 for (let i = 0; i < PROMPT.length - 1; i++) sfx(4.35 + i * (0.8 / PROMPT.length), 'key', 0.45);
 
 // ---------------- 02 model chip, stamp ----------------
@@ -281,7 +280,7 @@ function renderModel(t) {
   st.style.transform = `rotate(-9deg) scale(${sc})`;
   st.style.filter = o > 0.01 ? `blur(${o * 12}px)` : 'none';
 }
-sfx(6.75, 'whoosh', 0.6); sfx(7.98, 'impact', 1);
+sfx(7.98, 'impact', 1);
 
 // ---------------- 03 pipeline ----------------
 const STEPS = [
@@ -327,7 +326,7 @@ function renderPipeline(t) {
   place(rc, t, 14.2, 14.95, { dy: 40 });
   rc.style.left = (960 - rc.offsetWidth / 2) + 'px'; rc.style.top = '800px';
 }
-sfx(10.4, 'whoosh', 0.6); sfx(14.25, 'ding', 0.9);
+sfx(14.25, 'ding', 0.9);
 
 // ---------------- 04 app window ----------------
 const ROWS = [['01', 'Plan the work', 18.25, 18.95], ['02', 'Build the product', 18.75, 19.55], ['03', 'Fix problems', 19.3, 19.95], ['04', 'Improve the result', 19.75, 20.4]];
@@ -355,7 +354,6 @@ function renderApp(t) {
     r.st.style.transform = `scale(${pop})`;
   });
 }
-sfx(17.98, 'whoosh', 0.8);
 
 // ---------------- 06 idea -> product ----------------
 const sksEl = $('sks');
@@ -385,7 +383,7 @@ function renderIdea(t) {
   place($('prodCap'), t, 26.05, 27.05, { dy: 20 });
   [...sksEl.children].forEach((d, i) => { const k = eOutQ(prog(t, 26.0 + i * 0.07, 26.35 + i * 0.07)); d.style.opacity = k; d.style.transform = `translateY(${(1 - k) * 16}px)`; });
 }
-sfx(24.5, 'pop', 0.8); sfx(25.0, 'swoosh', 0.7); sfx(25.85, 'pop', 0.9); sfx(26.4, 'ding', 0.5);
+sfx(24.5, 'pop', 0.8); sfx(25.85, 'pop', 0.9); sfx(26.4, 'ding', 0.5);
 
 // ---------------- 07 finale ----------------
 sfx(26.6, 'riser', 0.9); sfx(27.27, 'impact', 1.1);
@@ -393,8 +391,6 @@ function renderFlash(t) {
   $('flash').style.opacity = 0.85 * (1 - eOut(prog(t, 27.27, 27.6))) * (t >= 27.27 ? 1 : 0);
 }
 
-// scene whooshes
-[5.8, 8.95, 15.65, 20.85, 22.55].forEach(t => sfx(t, 'whoosh', 0.75));
 
 // ---------------- background, camera, HUD, grain ----------------
 function renderBg(t) {
