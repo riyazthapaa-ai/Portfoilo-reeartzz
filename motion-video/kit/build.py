@@ -9,8 +9,9 @@ master='// ---------- background / grain ----------'+tail.split('// ---------- b
 master=re.sub(r"const stress=t=>.*?;\n","const stress=t=>STRESS(t+VO0);\n",master,count=1)
 master=master.replace("const FN={f1,f2,f3,f4,f5,f6};","").replace("FN[s.id](lt);","FN[s.id](lt,t+VO0);").replace("$('fade').style.opacity=0;","$('fade').style.opacity=FADE(t+VO0);")
 assert 'FN[s.id](lt,t+VO0)' in master and 'STRESS' in master and 'FADE' in master
-w=json.load(open('vo-words.json'))
+import os
+w=json.load(open(os.environ.get('WORDS','vo-words.json')))
 vow=[[round(t,2),x] for t,x in w if vo0-1<=t<=vo1+1]
 kit=open('kit/kit.js').read().replace('__VO0__',str(vo0)).replace('__VOW__',json.dumps(vow))
-code=open(f'kit/{name}.js').read()
+code=open(os.environ.get('CODE',f'kit/{name}.js')).read()
 open(f'{name}.html','w').write(head+stage+helpers+kit+'\n'+code+f'\nconst DURATION={round(vo1-vo0,3)};\n'+master)

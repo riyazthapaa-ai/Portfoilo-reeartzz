@@ -99,3 +99,20 @@ python3 kit/build.py part5 "WorkBuddy Update" 171.55 215.42   # kit/part5.js -> 
 kit/make.sh part5 171.55 215.42                                 # render + subtle SFX + VO mix
 ```
 `out/workbuddy-full-1080p.mp4` is the full video (hook + Parts 2–10). `out/workbuddy-full-720p-preview.mp4` is a small preview copy.
+
+---
+
+# MVLAND outro (separate video, 42.6 s)
+
+`mvland-outro.html`. There's no recorded VO yet, so it's timed to a natural speaking pace (word timings in `mvland-words.json`). Outputs: `out/mvland-outro-sfx.mp4` (video + subtle SFX, for laying your VO under) and `out/mvland-outro-sfx.wav`.
+
+| Time | Line | On screen |
+|---|---|---|
+| 0:00–0:11 | If you've got your own song, a story idea, or even just a visual concept… check out MVLAND. | Song / story / visual cards merge into a music-video player → MVLAND logo |
+| 0:11–0:16.6 | I'll leave the link in the description so you can explore it yourself. | Description box with the link glowing, "Explore it yourself" |
+| 0:16.6–0:24 | And if you try it, my recommendation is to start with the music and the story you want to tell. | "01 The music" (live waveform) + "02 The story" (Intro · Build · Payoff) |
+| 0:24–0:27 | Then build the visuals around that. | Shot thumbnails orbit a Music + Story core |
+| 0:27–0:42.6 | Because from the music and storytelling to the characters, individual shots, and final cut, MVLAND gives you a way to turn your creative idea into a music video. | Music → Storytelling → Characters → Shots → Final cut, then the player plays the shots, end logo, fade to black |
+
+Re-time to a real recording: transcribe it to `[[seconds, word], …]`, then
+`WORDS=that.json CODE=kit/mvland.js python3 kit/build.py mvland-outro "MVLAND Outro" 0 <end>`.
