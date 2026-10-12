@@ -1,0 +1,742 @@
+[
+ {
+  "t": 0.1,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 0.35,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 0.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 0.85,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 1.25,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 1.55,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 2.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 2.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 3.1,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 3.35,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 3.85,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 3.5,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 4.6,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 4.62,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 5.38,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 5.55,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 5.75,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 6.2,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 6.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 7.1,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 7.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 7.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 7.7,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 7.9,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 8.1,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 8.6,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 8.8,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 9,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 9.1,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 10.05,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 10.2,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 10.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 10.7,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 10.85,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 10.9,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 11.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 11.85,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 12.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 12.5,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 12.6,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 13.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 13.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 14,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 14.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 14.7,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 14.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 14.8,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 15.9,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 16.05,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 16.4,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 16.1,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 16.7,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 16.85,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 17.55,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 17.6,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 18.8,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 19,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 19.15,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 19.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 19.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 19.85,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 20.2,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 19.9,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 21.15,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 21.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 21.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 22.15,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 22.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 22.75,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 22.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 22.2,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 23.85,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 24.05,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 24.2,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 24.4,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 24.95,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 24.45,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 25.2,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 25.45,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 25.7,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 25.9,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 26.65,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 26.85,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 27,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 27.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 27.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 27.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 28.1,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 27.7,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 28.77,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 28.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 29.2,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 29.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 29.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 30.1,
+  "type": "scratch",
+  "gain": 0.8
+ },
+ {
+  "t": 30.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 30.75,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 30.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 31.25,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 31.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 31.65,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 32,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 32.15,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 31.7,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 32.45,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 32.6,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 32.75,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 32.95,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 33.15,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 33.3,
+  "type": "tick",
+  "gain": 0.5
+ },
+ {
+  "t": 33.4,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 33.9,
+  "type": "pop",
+  "gain": 0.9
+ },
+ {
+  "t": 33.5,
+  "type": "swipe",
+  "gain": 0.8
+ },
+ {
+  "t": 3.6,
+  "type": "tick",
+  "gain": 0.45
+ },
+ {
+  "t": 3.67,
+  "type": "tick",
+  "gain": 0.45
+ },
+ {
+  "t": 3.74,
+  "type": "tick",
+  "gain": 0.45
+ },
+ {
+  "t": 3.81,
+  "type": "tick",
+  "gain": 0.45
+ },
+ {
+  "t": 3.88,
+  "type": "tick",
+  "gain": 0.45
+ },
+ {
+  "t": 4.6,
+  "type": "impact",
+  "gain": 1
+ },
+ {
+  "t": 10.9,
+  "type": "blip",
+  "gain": 0.85
+ },
+ {
+  "t": 9.95,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 12.6,
+  "type": "blip",
+  "gain": 0.85
+ },
+ {
+  "t": 10.01,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 14.8,
+  "type": "blip",
+  "gain": 0.85
+ },
+ {
+  "t": 10.069999999999999,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 16.1,
+  "type": "check",
+  "gain": 0.85
+ },
+ {
+  "t": 10.129999999999999,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 17.6,
+  "type": "blip",
+  "gain": 0.85
+ },
+ {
+  "t": 10.19,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 19.9,
+  "type": "blip",
+  "gain": 0.85
+ },
+ {
+  "t": 10.25,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 22.2,
+  "type": "blip",
+  "gain": 0.85
+ },
+ {
+  "t": 10.309999999999999,
+  "type": "tick",
+  "gain": 0.35
+ },
+ {
+  "t": 22.35,
+  "type": "swipe",
+  "gain": 0.6
+ },
+ {
+  "t": 22.9,
+  "type": "ding",
+  "gain": 0.7
+ },
+ {
+  "t": 14.85,
+  "type": "pop",
+  "gain": 0.5
+ },
+ {
+  "t": 22.3,
+  "type": "pop",
+  "gain": 0.6
+ },
+ {
+  "t": 22.95,
+  "type": "pop",
+  "gain": 0.6
+ },
+ {
+  "t": 28.95,
+  "type": "pop",
+  "gain": 0.55
+ },
+ {
+  "t": 29.2,
+  "type": "pop",
+  "gain": 0.55
+ },
+ {
+  "t": 29.45,
+  "type": "pop",
+  "gain": 0.55
+ },
+ {
+  "t": 29.7,
+  "type": "pop",
+  "gain": 0.55
+ },
+ {
+  "t": 31.25,
+  "type": "pop",
+  "gain": 0.7
+ },
+ {
+  "t": 31.8,
+  "type": "ding",
+  "gain": 0.8
+ },
+ {
+  "t": 32.55,
+  "type": "pop",
+  "gain": 0.7
+ },
+ {
+  "t": 32.7,
+  "type": "pop",
+  "gain": 0.7
+ },
+ {
+  "t": 33.85,
+  "type": "blip",
+  "gain": 0.8
+ }
+]

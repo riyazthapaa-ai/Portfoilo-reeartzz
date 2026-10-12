@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sol Workflow Motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,500;0,700;0,800;0,900;1,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e0f14;
+    --mute: #8a8d99;
+    --accent: #3d5afe;
+    --hot: #ff5a36;
+    --ok: #1fb36b;
+    --card: #ffffff;
+    --line: rgba(14,15,20,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f4f5f8; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; color: var(--ink); font-family: 'Inter Tight', sans-serif;
+    background: radial-gradient(120% 90% at 50% 38%, #ffffff 0%, #f6f7fa 45%, #e7e9ef 100%); }
+  #blobs, #grain { position: absolute; inset: 0; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); }
+  #world { position: absolute; inset: 0; transform-origin: 50% 50%; }
+
+  .t { position: absolute; left: 0; width: 100%; text-align: center; white-space: nowrap; font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+  .t .w { display: inline-block; position: relative; margin: 0 0.12em; will-change: transform, opacity; }
+  .t .w .tx { position: relative; z-index: 1; }
+  .t .w .hl { position: absolute; left: -0.16em; right: -0.16em; top: 0.02em; bottom: -0.1em; background: var(--accent); border-radius: 0.14em; transform-origin: 0 50%; z-index: 0; }
+  .t.hot .w .hl { background: var(--hot); }
+  .t .w .st { position: absolute; left: -0.08em; right: -0.08em; top: 52%; height: 0.09em; background: var(--hot); border-radius: 0.05em; transform-origin: 0 50%; z-index: 2; }
+  .t .mute { color: var(--mute); }
+  .t .acc { color: var(--accent); }
+
+  .chip { position: absolute; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; padding: 12px 20px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(20,24,40,0.08); white-space: nowrap; display: flex; align-items: center; gap: 12px; }
+  .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 30px 80px rgba(20,24,40,0.10), 0 4px 14px rgba(20,24,40,0.05); }
+
+  /* team avatars */
+  .av { position: absolute; width: 112px; height: 112px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); box-shadow: 0 14px 40px rgba(20,24,40,0.10); display: grid; place-items: center; }
+
+  /* workflow steps */
+  .step { width: 216px; height: 190px; border-radius: 24px; }
+  .step .fillbg { position: absolute; inset: 0; border-radius: 24px; background: var(--accent); transform-origin: 50% 100%; }
+  .step .content { position: absolute; inset: 0; padding: 20px 20px; }
+  .step .n { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; letter-spacing: 0.08em; color: var(--mute); }
+  .step .ic { position: absolute; right: 16px; top: 14px; width: 48px; height: 48px; border-radius: 14px; background: #eef0f6; display: grid; place-items: center; }
+  .step .lb { position: absolute; left: 20px; right: 14px; bottom: 18px; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; }
+  .step .badge { position: absolute; right: -10px; top: -12px; height: 34px; min-width: 34px; padding: 0 10px; border-radius: 17px; background: var(--hot); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(255,90,54,0.35); }
+
+  /* editor */
+  #editor { width: 1080px; height: 480px; left: 420px; top: 400px; overflow: hidden; }
+  #editor .bar { height: 56px; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 24px; gap: 10px; }
+  #editor .bar i { width: 13px; height: 13px; border-radius: 50%; background: #e3e5ec; display: block; }
+  #editor .file { margin-left: 18px; font-family: 'JetBrains Mono', monospace; font-size: 17px; color: var(--mute); background: #f2f3f7; padding: 7px 16px; border-radius: 9px; }
+  #editor .gutter { position: absolute; left: 0; top: 56px; bottom: 0; width: 80px; border-right: 1px solid var(--line); padding-top: 22px; font-family: 'JetBrains Mono', monospace; font-size: 20px; line-height: 44px; color: #c3c6d0; text-align: right; padding-right: 20px; }
+  #editor .caret { position: absolute; left: 104px; top: 86px; width: 3px; height: 30px; background: var(--ink); }
+  .q { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 500; padding: 14px 22px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(20,24,40,0.12); white-space: nowrap; color: var(--ink); }
+  .q b { color: var(--hot); margin-right: 8px; }
+
+  /* outcome */
+  #outcome { width: 680px; height: 430px; left: 620px; top: 410px; overflow: hidden; }
+  .sk { position: absolute; background: #eceef4; border-radius: 10px; }
+  #okBadge { position: absolute; left: 1250px; top: 380px; width: 84px; height: 84px; border-radius: 50%; background: var(--ok); display: grid; place-items: center; box-shadow: 0 14px 30px rgba(31,179,107,0.35); }
+
+  /* partners */
+  .pc { width: 400px; height: 300px; top: 540px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+  .pc .nm { font-size: 46px; font-weight: 800; letter-spacing: -0.03em; }
+  .pc .rl { font-family: 'JetBrains Mono', monospace; font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+  .pc .ring { width: 108px; height: 108px; border-radius: 50%; display: grid; place-items: center; }
+
+  .hud { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #6c6f7b; white-space: nowrap; display: flex; align-items: center; gap: 10px; }
+  svg.ov { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: visible; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="blobs">
+    <div class="blob" id="b1" style="width:760px;height:760px;background:rgba(61,90,254,0.13)"></div>
+    <div class="blob" id="b2" style="width:640px;height:640px;background:rgba(255,90,54,0.08)"></div>
+    <div class="blob" id="b3" style="width:820px;height:820px;background:rgba(140,120,255,0.09)"></div>
+  </div>
+  <div id="world">
+    <svg class="ov" id="lines"></svg>
+    <div id="team"></div>
+    <div id="steps"></div>
+    <div class="chip" id="verChip"><span style="width:10px;height:10px;border-radius:50%;background:#3d5afe;display:block"></span>Same project · <span id="ver">v1</span></div>
+
+    <div class="card" id="editor">
+      <div class="bar"><i></i><i></i><i></i><span class="file">untitled.tsx</span></div>
+      <div class="gutter">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9</div>
+      <div class="caret" id="caret"></div>
+    </div>
+    <div id="qs"></div>
+
+    <div class="card" id="outcome">
+      <div style="height:50px;border-bottom:1px solid rgba(14,15,20,0.08);display:flex;gap:8px;align-items:center;padding:0 22px"><i style="width:12px;height:12px;border-radius:50%;background:#e3e5ec;display:block"></i><i style="width:12px;height:12px;border-radius:50%;background:#e3e5ec;display:block"></i><i style="width:12px;height:12px;border-radius:50%;background:#e3e5ec;display:block"></i><span style="margin-left:14px;font-family:'JetBrains Mono',monospace;font-size:16px;color:#8a8d99">the outcome I want</span></div>
+      <div id="sks"></div>
+    </div>
+    <div id="okBadge"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+
+    <div class="card pc" id="pcYou" style="left:340px">
+      <div class="ring" style="background:#0e0f14"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg></div>
+      <div class="nm">You</div><div class="rl">The outcome</div>
+    </div>
+    <div class="card pc" id="pcSol" style="left:1180px">
+      <div class="ring" style="background:#3d5afe"><svg width="56" height="56" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg></div>
+      <div class="nm">Sol 6.1</div><div class="rl">The build</div>
+    </div>
+
+    <div id="texts"></div>
+  </div>
+
+  <div class="hud" style="left:64px;top:52px"><span style="width:9px;height:9px;border-radius:50%;background:#ff5a36;display:block" id="hudDot"></span>Sol 6.1 · Field test</div>
+  <div class="hud" style="right:64px;top:52px" id="hudTc">00:00</div>
+  <div class="hud" style="left:64px;bottom:50px" id="hudScene"></div>
+  <div class="hud" style="right:64px;bottom:50px">Built inside Runable</div>
+  <canvas id="grain" width="1920" height="1080"></canvas>
+</div>
+
+<script src="envelope.js"></script>
+<script>
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => cl((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = x => 1 - Math.pow(1 - x, 3);
+const eOutQ = x => 1 - Math.pow(1 - x, 5);
+const eIn = x => x * x * x;
+const eIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eBack = x => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const FPS = 30, DURATION = 34.9;
+const ENV = window.ENV;
+const env = t => { const f = t * FPS, i = Math.floor(f), k = f - i; return lerp(ENV[cl(i, 0, ENV.length - 1)] || 0, ENV[cl(i + 1, 0, ENV.length - 1)] || 0, k); };
+function rnd(seed) { let a = seed * 2654435761 >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const $ = id => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+function place(el, t, a, b, { dy = 50, sc = 0.85, din = 0.45, extra = '' } = {}) {
+  const r = prog(t, a, a + din), k = eBack(r), o = eIn(prog(t, b, b + 0.3));
+  const vis = t >= a - 0.01 && t <= b + 0.3;
+  if (!vis) { el.style.display = 'none'; return { vis, k, r, o }; }
+  el.style.display = '';
+  el.style.opacity = cl(r * 3) * (1 - o);
+  el.style.transform = `translateY(${(1 - k) * dy - o * 40}px) scale(${lerp(sc, 1, k) * (1 - o * 0.06)}) ${extra}`;
+  el.style.filter = o > 0.01 ? `blur(${o * 14}px)` : 'none';
+  return { vis, k, r, o };
+}
+
+// ---------------- SFX cue sheet (read by the renderer, synthesised in mix.py) ----------------
+window.SFX = [];
+const sfx = (t, type, gain = 1) => window.SFX.push({ t, type, gain });
+
+// ---------------- copy, timed to the voiceover ----------------
+// *word* = highlight box, _word_ = muted, ~word~ = struck, ^word^ = accent colour; w = per-word start times.
+const CAP_Y = 230;
+const TEXTS = [
+  // 01 the claim
+  { s: 'Now, does this mean ^Sol^ ^6.1^', y: 240, size: 92, w: [0.1, 0.35, 0.6, 0.85, 1.25, 1.55], tout: 4.45 },
+  { s: 'replaces an entire', y: 370, size: 92, w: [2.45, 2.95, 3.1], tout: 4.45 },
+  { s: '*development* *team?*', y: 530, size: 170, w: [3.35, 3.85], hl: 3.5, tout: 4.45 },
+  // 02 no
+  { s: '*No.*', y: 470, size: 360, w: [4.6], hl: 4.62, hot: true, tout: 6.95 },
+  { s: "And I wouldn't make that claim.", y: 760, size: 64, w: [5.38, 5.55, 5.75, 6.0, 6.2, 6.45], tout: 6.95, mute: true },
+  // 03 the workflow
+  { s: 'What I find much more interesting', y: 400, size: 88, w: [7.1, 7.3, 7.45, 7.7, 7.9, 8.1], tout: 9.75 },
+  { s: 'is the *workflow.*', y: 570, size: 200, w: [8.6, 8.8, 9.0], hl: 9.1, tout: 9.75 },
+  // 04 the loop — captions over the step cards
+  { s: 'I started with an *idea.*', y: CAP_Y, size: 96, w: [10.05, 10.2, 10.45, 10.7, 10.85], hl: 10.9, tout: 11.5 },
+  { s: 'I explained the *objective.*', y: CAP_Y, size: 96, w: [11.6, 11.85, 12.3, 12.5], hl: 12.6, tout: 13.22 },
+  { s: '^Sol^ ^6.1^ created the *first* *version.*', y: CAP_Y, size: 96, w: [13.3, 13.6, 14.0, 14.45, 14.7, 14.95], hl: 14.8, tout: 15.75 },
+  { s: 'I *tested* it.', y: CAP_Y, size: 96, w: [15.9, 16.05, 16.4], hl: 16.1, tout: 16.62 },
+  { s: 'I identified *problems.*', y: CAP_Y, size: 96, w: [16.7, 16.85, 17.55], hl: 17.6, hot: true, tout: 18.7 },
+  { s: 'Then I gave it more *specific* *instructions.*', y: CAP_Y, size: 84, w: [18.8, 19.0, 19.15, 19.3, 19.45, 19.85, 20.2], hl: 19.9, tout: 21.05 },
+  { s: 'and it continued *improving* the same project.', y: CAP_Y, size: 84, w: [21.15, 21.3, 21.45, 22.15, 22.6, 22.75, 22.95], hl: 22.2, tout: 23.6 },
+  // 05 a different way
+  { s: "That's a very *different* way", y: 430, size: 124, w: [23.85, 24.05, 24.2, 24.4, 24.95], hl: 24.45, tout: 26.45 },
+  { s: 'of working with ^AI.^', y: 590, size: 124, w: [25.2, 25.45, 25.7, 25.9], tout: 26.45 },
+  // 06 the old way
+  { s: 'Instead of starting with a *blank* *editor*', y: 190, size: 76, w: [26.65, 26.85, 27.0, 27.3, 27.45, 27.6, 28.1], hl: 27.7, hot: true, tout: 30.5 },
+  { s: 'and figuring everything out ~manually~', y: 295, size: 76, w: [28.77, 28.95, 29.2, 29.6, 29.95], strike: 30.1, tout: 30.5, mute: true },
+  // 07 the new way
+  { s: 'I can start with the *outcome* I want.', y: 230, size: 88, w: [30.6, 30.75, 30.95, 31.25, 31.45, 31.65, 32.0, 32.15], hl: 31.7, tout: 32.4 },
+  { s: 'and use the model as a', y: 220, size: 72, w: [32.45, 32.6, 32.75, 32.95, 33.15, 33.3], tout: 99, mute: true },
+  { s: '*development* *partner.*', y: 360, size: 150, w: [33.4, 33.9], hl: 33.5, tout: 99 },
+];
+const SCENES = [[0, '01 / The claim'], [4.5, '02 / The answer'], [7.0, '03 / The workflow'], [9.95, '04 / The loop'], [23.75, '05 / A different way'], [26.55, '06 / The old way'], [30.5, '07 / The new way']];
+
+const textsEl = $('texts');
+TEXTS.forEach(d => {
+  const el = document.createElement('div'); el.className = 't' + (d.hot ? ' hot' : '');
+  el.style.fontSize = d.size + 'px';
+  d.words = [];
+  d.s.split(' ').forEach(raw => {
+    let word = raw, kind = '';
+    const m = word.match(/^([*_~^])(.*)\1$/); if (m) { kind = m[1]; word = m[2]; }
+    const w = document.createElement('span'); w.className = 'w';
+    if (kind === '*') { const hl = document.createElement('span'); hl.className = 'hl'; w.appendChild(hl); }
+    const tx = document.createElement('span'); tx.className = 'tx' + (kind === '_' || d.mute ? ' mute' : '') + (kind === '^' ? ' acc' : ''); tx.textContent = word; w.appendChild(tx);
+    if (kind === '~') { const st = document.createElement('span'); st.className = 'st'; w.appendChild(st); }
+    el.appendChild(w); d.words.push({ el: w, kind, tx, hl: w.querySelector('.hl'), st: w.querySelector('.st') });
+  });
+  textsEl.appendChild(el); d.el = el;
+  d.times = d.words.map((_, i) => d.w && d.w[i] != null ? d.w[i] : d.w[0] + i * 0.09);
+  d.tin = d.times[0];
+  d.times.forEach(wt => sfx(wt, d.size >= 120 ? 'pop' : 'tick', d.size >= 120 ? 0.9 : 0.5));
+  if (d.hl != null) sfx(d.hl, 'swipe', 0.8);
+  if (d.strike != null) sfx(d.strike, 'scratch', 0.8);
+});
+
+function renderTexts(t) {
+  TEXTS.forEach(d => {
+    const el = d.el;
+    if (t < d.tin - 0.02 || t > d.tout + 0.4) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const o = eIn(prog(t, d.tout, d.tout + 0.3));
+    el.style.top = (d.y - el.offsetHeight / 2) + 'px';
+    el.style.opacity = 1 - o;
+    el.style.filter = o > 0.01 ? `blur(${o * 16}px)` : 'none';
+    el.style.transform = `translateY(${-o * 50}px) scale(${1 - o * 0.05})`;
+    d.words.forEach((w, i) => {
+      const wt = d.times[i];
+      const r = prog(t, wt, wt + 0.42), k = eBack(r);
+      w.el.style.opacity = cl(r * 4);
+      w.el.style.transform = `translateY(${(1 - k) * 0.35 * d.size}px) scale(${lerp(0.55, 1, k)}) rotate(${(1 - k) * -5}deg)`;
+      w.el.style.filter = r < 0.5 ? `blur(${(1 - r * 2) * 8}px)` : 'none';
+      if (w.hl) {
+        const hk = eOutQ(prog(t, d.hl - 0.04, d.hl + 0.3));
+        w.hl.style.transform = `scaleX(${hk})`;
+        w.tx.style.color = hk > 0.55 ? '#fff' : '';
+      }
+      if (w.st) w.st.style.transform = `scaleX(${eOutQ(prog(t, d.strike + i * 0.08, d.strike + i * 0.08 + 0.3))})`;
+      if (w.kind === '~') w.tx.style.color = t > d.strike + 0.2 ? '#a6a9b4' : '';
+    });
+  });
+}
+
+// ---------------- 01/02 the team ----------------
+const TEAM = 5, teamEl = $('team'), AV = [];
+const PERSON = '<svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#0e0f14" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>';
+for (let i = 0; i < TEAM; i++) {
+  const el = document.createElement('div'); el.className = 'av'; el.innerHTML = PERSON;
+  el.style.left = (960 - 2 * 150 + i * 150 - 56) + 'px'; el.style.top = '730px';
+  teamEl.appendChild(el); AV.push(el);
+  sfx(3.6 + i * 0.07, 'tick', 0.45);
+}
+function renderTeam(t) {
+  AV.forEach((el, i) => place(el, t, 3.6 + i * 0.07, 4.45, { dy: 60, sc: 0.5 }));
+}
+sfx(4.6, 'impact', 1);
+
+// ---------------- 04 the loop ----------------
+const STEPS = [
+  { lb: 'Idea', t: 10.9, ic: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
+  { lb: 'Objective', t: 12.6, ic: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8" fill="#0e0f14"/>' },
+  { lb: 'First version', t: 14.8, ic: '<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 9h16"/>' },
+  { lb: 'Test', t: 16.1, ic: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/>' },
+  { lb: 'Problems', t: 17.6, ic: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>', badge: '3' },
+  { lb: 'Instructions', t: 19.9, ic: '<path d="M5 6h14M5 11h14M5 16h9"/>' },
+  { lb: 'Improve', t: 22.2, ic: '<path d="M4 17l6-6 4 4 6-7M15 8h5v5"/>' },
+];
+const SW = 216, SGAP = 30, SY = 560;
+const SX = STEPS.map((_, i) => 960 - (7 * SW + 6 * SGAP) / 2 + i * (SW + SGAP));
+const stepsEl = $('steps'), linesSvg = $('lines');
+STEPS.forEach((s, i) => {
+  const el = document.createElement('div'); el.className = 'card step';
+  el.style.left = SX[i] + 'px'; el.style.top = SY + 'px';
+  el.innerHTML = `<div class="fillbg"></div><div class="content"><div class="n">${String(i + 1).padStart(2, '0')}</div><div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0e0f14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${s.ic}</svg></div><div class="lb">${s.lb}</div></div>${s.badge ? `<div class="badge">${s.badge}</div>` : ''}`;
+  stepsEl.appendChild(el); s.el = el; s.fill = el.querySelector('.fillbg'); s.badgeEl = el.querySelector('.badge');
+  sfx(s.t, i === 3 ? 'check' : 'blip', 0.85);
+  sfx(9.95 + i * 0.06, 'tick', 0.35);
+});
+const CONN = STEPS.slice(0, -1).map((_, i) => {
+  const x1 = SX[i] + SW, x2 = SX[i + 1], y = SY + 95;
+  const p = svgEl('path', { d: `M${x1},${y} L${x2},${y}`, stroke: '#3d5afe', 'stroke-width': 4, 'stroke-linecap': 'round', fill: 'none' }, linesSvg);
+  p.setAttribute('stroke-dasharray', x2 - x1); return { p, len: x2 - x1 };
+});
+// loop: Improve -> back to Test
+const lx1 = SX[6] + SW / 2, lx2 = SX[3] + SW / 2, ly = SY + 190;
+const loop = svgEl('path', { d: `M${lx1},${ly + 8} C${lx1},${ly + 120} ${lx2},${ly + 120} ${lx2},${ly + 14}`, stroke: '#3d5afe', 'stroke-width': 4, 'stroke-linecap': 'round', fill: 'none', 'stroke-dasharray': '1' }, linesSvg);
+const loopLen = loop.getTotalLength(); loop.setAttribute('stroke-dasharray', loopLen);
+const loopHead = svgEl('path', { d: 'M-13,-11 L0,0 L-13,11', fill: 'none', stroke: '#3d5afe', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, linesSvg);
+const loopDot = svgEl('circle', { r: 8, fill: '#3d5afe' }, linesSvg);
+sfx(22.35, 'swipe', 0.6); sfx(22.9, 'ding', 0.7);
+
+function renderLoop(t) {
+  const out = 23.6;
+  STEPS.forEach((s, i) => {
+    const st = place(s.el, t, 9.95 + i * 0.06, out + i * 0.025, { dy: 90 });
+    if (!st.vis) return;
+    const a = eOutQ(prog(t, s.t, s.t + 0.35));
+    s.fill.style.transform = `scaleY(${a})`;
+    const on = a > 0.5;
+    s.el.querySelector('.lb').style.color = on ? '#fff' : '';
+    s.el.querySelector('.n').style.color = on ? 'rgba(255,255,255,0.75)' : '';
+    s.el.querySelector('.ic').style.background = on ? 'rgba(255,255,255,0.92)' : '';
+    // the step being talked about lifts up
+    const next = (STEPS[i + 1] || { t: 23.0 }).t;
+    const lift = eOut(prog(t, s.t, s.t + 0.3)) * (1 - eOut(prog(t, next, next + 0.3)));
+    s.el.style.transform += ` translateY(${-lift * 26}px) scale(${1 + lift * 0.06})`;
+    s.el.style.boxShadow = lift > 0.05 ? `0 ${30 + lift * 20}px ${80 + lift * 30}px rgba(61,90,254,${0.08 + lift * 0.22})` : '';
+    s.el.style.zIndex = lift > 0.05 ? 2 : 1;
+    if (s.badgeEl) { const b = eBack(prog(t, s.t + 0.15, s.t + 0.5)); s.badgeEl.style.transform = `scale(${b})`; s.badgeEl.style.opacity = cl(b * 2); }
+  });
+  CONN.forEach((c, i) => {
+    const a = eIO(prog(t, STEPS[i].t + 0.05, STEPS[i + 1].t - 0.1));
+    c.p.setAttribute('stroke-dashoffset', c.len * (1 - a));
+    c.p.style.opacity = t < 10 ? 0 : 1 - prog(t, out, out + 0.3);
+  });
+  const la = eIO(prog(t, 22.3, 22.9));
+  loop.setAttribute('stroke-dashoffset', loopLen * (1 - la));
+  const lo = t < 22.25 ? 0 : 1 - prog(t, out, out + 0.3);
+  loop.style.opacity = lo;
+  const p = loop.getPointAtLength(loopLen * la), p2 = loop.getPointAtLength(Math.max(0, loopLen * la - 2));
+  loopHead.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${Math.atan2(p.y - p2.y, p.x - p2.x) * 180 / Math.PI})`);
+  loopHead.style.opacity = la > 0.02 ? lo : 0;
+  // a dot keeps cycling round the loop once it exists
+  const ph = ((t - 22.9) * 1.2) % 1;
+  const dp = loop.getPointAtLength(loopLen * eIO(ph));
+  loopDot.setAttribute('cx', dp.x); loopDot.setAttribute('cy', dp.y);
+  loopDot.style.opacity = t > 22.9 ? lo * Math.sin(ph * Math.PI) : 0;
+  // version chip
+  const vc = $('verChip');
+  place(vc, t, 14.85, out, { dy: 30 });
+  vc.style.left = (960 - vc.offsetWidth / 2) + 'px'; vc.style.top = '930px';
+  const v = t >= 22.95 ? 'v3' : t >= 22.3 ? 'v2' : 'v1';
+  if ($('ver').textContent !== v) $('ver').textContent = v;
+}
+sfx(14.85, 'pop', 0.5); sfx(22.3, 'pop', 0.6); sfx(22.95, 'pop', 0.6);
+
+// ---------------- 06 blank editor ----------------
+const QS = [['where do I start?', 360, 470, 28.95], ['which framework?', 1310, 520, 29.2], ['why is this broken?', 300, 780, 29.45], ['how do I deploy?', 1300, 800, 29.7]];
+const qsEl = $('qs');
+QS.forEach(q => { const el = document.createElement('div'); el.className = 'q'; el.innerHTML = `<b>?</b>${q[0]}`; el.style.left = q[1] + 'px'; el.style.top = q[2] + 'px'; qsEl.appendChild(el); q.el = el; sfx(q[3], 'pop', 0.55); });
+function renderEditor(t) {
+  const s = place($('editor'), t, 27.55, 30.45, { dy: 120, sc: 0.85, din: 0.55 });
+  $('caret').style.opacity = Math.floor(t * 2.4) % 2 ? 0 : 1;
+  const dim = eOut(prog(t, 30.05, 30.3));
+  if (s.vis) $('editor').style.opacity = parseFloat($('editor').style.opacity) * (1 - dim * 0.4);
+  QS.forEach((q, i) => {
+    const r = rnd(i + 21);
+    place(q.el, t, q[3], 30.45, { dy: 40, sc: 0.6, extra: `rotate(${(r() - 0.5) * 8 + Math.sin(t * 2 + i) * 1.5}deg)` });
+  });
+}
+
+// ---------------- 07 outcome + partners ----------------
+const sksEl = $('sks');
+[[30, 82, 260, 30], [30, 128, 170, 18], [30, 178, 400, 200], [450, 178, 200, 92], [450, 286, 200, 92], [30, 0, 0, 0]].forEach(([x, y, w, h], i) => {
+  if (!w) return;
+  const d = document.createElement('div'); d.className = 'sk'; Object.assign(d.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+  if (i === 2) d.style.background = 'linear-gradient(135deg, rgba(61,90,254,0.18), rgba(140,120,255,0.12))';
+  sksEl.appendChild(d);
+});
+const link = svgEl('path', { d: 'M740,690 L1180,690', stroke: '#3d5afe', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-dasharray': '2 14', fill: 'none' }, linesSvg);
+const plus = svgEl('g', {}, linesSvg);
+svgEl('circle', { cx: 960, cy: 690, r: 34, fill: '#fff', stroke: 'rgba(14,15,20,0.08)' }, plus);
+svgEl('path', { d: 'M960,676 L960,704 M946,690 L974,690', stroke: '#3d5afe', 'stroke-width': 4, 'stroke-linecap': 'round' }, plus);
+const pulses = [0, 1, 2].map(() => svgEl('circle', { r: 6, fill: '#3d5afe' }, linesSvg));
+
+function renderOutcome(t) {
+  place($('outcome'), t, 31.25, 32.35, { dy: 90, sc: 0.8, din: 0.55 });
+  [...sksEl.children].forEach((d, i) => { const k = eOutQ(prog(t, 31.4 + i * 0.07, 31.75 + i * 0.07)); d.style.opacity = k; d.style.transform = `translateY(${(1 - k) * 16}px)`; });
+  const b = $('okBadge');
+  const s = place(b, t, 31.8, 32.35, { dy: 0, sc: 0.2 });
+  const yo = place($('pcYou'), t, 32.55, 99, { dy: 80, sc: 0.8 });
+  const so = place($('pcSol'), t, 32.7, 99, { dy: 80, sc: 0.8 });
+  const lk = eIO(prog(t, 33.45, 34.0));
+  link.style.opacity = t > 33.4 ? 1 : 0;
+  link.setAttribute('d', `M740,690 L${lerp(740, 1180, lk)},690`);
+  link.setAttribute('stroke-dashoffset', -t * 40);
+  const pk = eBack(prog(t, 33.85, 34.25));
+  plus.style.opacity = cl(pk * 2) * (t > 33.8 ? 1 : 0);
+  plus.setAttribute('transform', `translate(960,690) scale(${pk}) translate(-960,-690)`);
+  pulses.forEach((p, i) => {
+    const ph = ((t - 34.0) * 0.9 + i / 3) % 1;
+    const dir = i % 2 ? -1 : 1;
+    p.setAttribute('cx', dir > 0 ? lerp(760, 1160, ph) : lerp(1160, 760, ph)); p.setAttribute('cy', 690);
+    p.style.opacity = t > 34.0 ? Math.sin(ph * Math.PI) : 0;
+  });
+}
+sfx(31.25, 'pop', 0.7); sfx(31.8, 'ding', 0.8); sfx(32.55, 'pop', 0.7); sfx(32.7, 'pop', 0.7); sfx(33.85, 'blip', 0.8);
+
+// ---------------- background, camera, HUD, grain ----------------
+function renderBg(t) {
+  [['b1', 300, 200, 0.11, 0], ['b2', 1400, 650, 0.08, 2], ['b3', 1100, 100, 0.07, 4]].forEach(([id, x, y, sp, ph]) => {
+    $(id).style.transform = `translate(${x + Math.sin(t * sp * 2 + ph) * 180 - 380}px, ${y + Math.cos(t * sp * 1.6 + ph) * 120 - 380}px) scale(${1 + 0.06 * env(t)})`;
+  });
+}
+function renderCamera(t) {
+  let sc = 1, rot = 0;
+  SCENES.forEach(([s], i) => {
+    const end = (SCENES[i + 1] || [DURATION])[0];
+    if (t >= s && t < end) {
+      const k = prog(t, s, end);
+      sc = 1 + 0.035 * k + (i > 0 ? 0.03 * (1 - eOut(prog(t, s, s + 0.5))) : 0);
+      rot = (i % 2 ? -1 : 1) * 0.25 * (1 - k);
+    }
+  });
+  [4.6].forEach(ti => { const s = Math.max(0, 1 - (t - ti) * 5) * (t >= ti ? 1 : 0); sc += 0.025 * s; rot += Math.sin(t * 70) * 0.45 * s; });
+  $('world').style.transform = `scale(${sc}) rotate(${rot}deg)`;
+  $('stage').style.opacity = Math.min(eOut(prog(t, 0, 0.25)), 1 - prog(t, 34.6, 34.9));
+}
+function renderHud(t) {
+  let label = SCENES[0][1]; SCENES.forEach(([s, l]) => { if (t >= s) label = l; });
+  $('hudScene').textContent = label;
+  const s = Math.floor(t), cs = Math.floor((t - s) * 100);
+  $('hudTc').textContent = `00:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+  $('hudDot').style.opacity = Math.floor(t * 2) % 2 ? 1 : 0.3;
+}
+const gctx = $('grain').getContext('2d');
+const GRAIN = [];
+for (let n = 0; n < 6; n++) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d'), img = x.createImageData(256, 256), r = rnd(n + 7);
+  for (let p = 0; p < img.data.length; p += 4) { const v = r() * 255; img.data[p] = img.data[p + 1] = img.data[p + 2] = v; img.data[p + 3] = 255; }
+  x.putImageData(img, 0, 0); GRAIN.push(c);
+}
+function renderGrain(t) {
+  gctx.clearRect(0, 0, 1920, 1080);
+  gctx.globalAlpha = 0.07;
+  gctx.fillStyle = gctx.createPattern(GRAIN[Math.floor(t * FPS) % GRAIN.length], 'repeat');
+  gctx.fillRect(0, 0, 1920, 1080);
+}
+
+window.render = function (t) {
+  renderBg(t); renderCamera(t); renderTexts(t); renderTeam(t); renderLoop(t);
+  renderEditor(t); renderOutcome(t); renderHud(t); renderGrain(t);
+};
+window.DURATION = DURATION;
+
+if (!location.search.includes('render')) {
+  document.fonts.ready.then(() => {
+    const audio = new Audio('workflow-mix.m4a');
+    let t0 = performance.now();
+    const loopFn = () => { window.render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loopFn); };
+    document.addEventListener('click', () => { audio.currentTime = 0; audio.play().catch(() => {}); t0 = performance.now(); });
+    loopFn();
+  });
+}
+</script>
+</body>
+</html>
