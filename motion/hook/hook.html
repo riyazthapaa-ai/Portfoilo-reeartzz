@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hook Motion Graphic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f2ede8;
+    --dim: rgba(242,237,232,0.45);
+    --line: rgba(242,237,232,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; background: var(--black); overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; background: var(--black); color: var(--white); overflow: hidden; }
+  #world { position: absolute; inset: 0; transform-origin: 50% 45%; }
+  canvas { position: absolute; inset: 0; }
+
+  .t { position: absolute; left: 0; width: 100%; text-align: center; white-space: nowrap; will-change: transform, opacity, filter; }
+  .t .m { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0 0.04em; }
+  .t .i { display: inline-block; will-change: transform; }
+  .small { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 26px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--dim); line-height: 1.5; }
+  .big { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 196px; line-height: 1.08; letter-spacing: -0.01em; }
+  .mid { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 112px; line-height: 1.12; }
+  .t em { font-style: italic; }
+  .strike { position: absolute; left: 50%; top: 56%; height: 3px; background: var(--white); transform-origin: 0 50%; }
+
+  .panel { position: absolute; left: 0; top: 0; border: 1.5px solid rgba(242,237,232,0.55); transform-origin: 50% 50%; will-change: transform, opacity; overflow: hidden; }
+  .panel .fill { position: absolute; inset: 0; }
+  .panel svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .panel .lbl { position: absolute; left: 12px; top: 9px; font-family: 'Jost', sans-serif; font-weight: 400; font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(242,237,232,0.7); white-space: nowrap; }
+
+  .card { position: absolute; top: 560px; width: 470px; height: 290px; border: 1.5px solid rgba(242,237,232,0.3); padding: 28px 32px; will-change: transform, opacity; }
+  .card .num { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 15px; letter-spacing: 0.3em; color: var(--dim); }
+  .card .ttl { position: absolute; left: 32px; bottom: 26px; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: 64px; line-height: 1; }
+  .card svg { position: absolute; right: 30px; top: 28px; width: 150px; height: 110px; }
+
+  .hud { position: absolute; font-family: 'Jost', sans-serif; font-weight: 300; font-size: 15px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+  .corner { position: absolute; width: 28px; height: 28px; border-color: rgba(242,237,232,0.35); border-style: solid; border-width: 0; }
+  #progress { position: absolute; left: 64px; bottom: 44px; height: 1px; background: var(--white); transform-origin: 0 50%; width: 1792px; }
+  #progressTrack { position: absolute; left: 64px; bottom: 44px; height: 1px; background: var(--line); width: 1792px; }
+  svg.overlay { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: visible; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <canvas id="wave" width="1920" height="1080"></canvas>
+    <svg class="overlay" id="fx"></svg>
+    <div id="panels"></div>
+    <div id="cards"></div>
+    <div id="texts"></div>
+  </div>
+
+  <!-- editorial HUD, matching the portfolio's typographic chrome -->
+  <div class="corner" style="left:48px;top:48px;border-left-width:1px;border-top-width:1px"></div>
+  <div class="corner" style="right:48px;top:48px;border-right-width:1px;border-top-width:1px"></div>
+  <div class="corner" style="left:48px;bottom:64px;border-left-width:1px;border-bottom-width:1px"></div>
+  <div class="corner" style="right:48px;bottom:64px;border-right-width:1px;border-bottom-width:1px"></div>
+  <div class="hud" style="left:96px;top:58px">Riyaz Thapa</div>
+  <div class="hud" style="right:96px;top:58px" id="hudScene"></div>
+  <div class="hud" style="left:96px;bottom:68px" id="hudTc">00:00:00:00</div>
+  <div class="hud" style="right:96px;bottom:68px">One track &rarr; One story</div>
+  <div id="progressTrack"></div>
+  <div id="progress"></div>
+
+  <canvas id="grain" width="1920" height="1080"></canvas>
+</div>
+
+<script src="envelope.js"></script>
+<script>
+// ---------- helpers ----------
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => cl((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = x => 1 - Math.pow(1 - x, 3);
+const eOutQ = x => 1 - Math.pow(1 - x, 5);
+const eIn = x => x * x * x;
+const eIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eBack = x => { const c = 1.4; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const FPS = 30;
+const ENV = window.ENV;
+const env = t => { const f = t * FPS, i = Math.floor(f), k = f - i; return lerp(ENV[cl(i, 0, ENV.length - 1)] || 0, ENV[cl(i + 1, 0, ENV.length - 1)] || 0, k); };
+function rnd(seed) { let a = seed * 2654435761 >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const $ = id => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+// ---------- copy, timed to the voiceover ----------
+// y = vertical centre in px. Words wrapped in *asterisks* render italic.
+const TEXTS = [
+  // 01 the song
+  { cls: 'small', s: 'I had a', y: 330, tin: 0.05, tout: 1.0 },
+  { cls: 'big', s: '*song*', y: 480, tin: 0.42, tout: 1.02 },
+  { cls: 'small', s: "but I didn't have a", y: 330, tin: 1.0, tout: 2.35 },
+  { cls: 'big', s: 'music video', y: 480, tin: 1.4, tout: 2.38, strike: [1.95, 2.2] },
+  { cls: 'small', s: 'so I wanted to see if I could take', y: 330, tin: 2.38, tout: 3.6 },
+  // 02 the story
+  { cls: 'big', s: 'that *one track*', y: 480, tin: 3.5, tout: 4.95 },
+  { cls: 'small', s: 'into a complete', y: 330, tin: 4.95, tout: 6.75 },
+  { cls: 'big', s: '*visual story.*', y: 480, tin: 5.3, tout: 6.75 },
+  // 03 not this
+  { cls: 'small', s: 'not just generate', y: 190, tin: 6.85, tout: 8.95 },
+  { cls: 'mid', s: 'a few random *AI clips*', y: 290, tin: 7.9, tout: 9.05 },
+  { cls: 'small', s: 'and put them together', y: 190, tin: 8.95, tout: 10.35 },
+  // 04 the influence
+  { cls: 'mid', s: 'I wanted the *music*', y: 200, tin: 10.5, tout: 14.35 },
+  { cls: 'small', s: 'to influence', y: 300, tin: 11.55, tout: 14.35 },
+  // 05 studio mode
+  { cls: 'small', s: "So today I'm testing", y: 330, tin: 14.85, tout: 17.2 },
+  { cls: 'big', s: 'Studio *Mode*', y: 480, tin: 16.45, tout: 17.75 },
+  { cls: 'small', s: 'to see how much of this', y: 330, tin: 17.22, tout: 18.7 },
+  { cls: 'big', s: '*creative* process', y: 480, tin: 17.8, tout: 18.95 },
+  { cls: 'small', s: 'I can handle in', y: 340, tin: 18.72, tout: 99 },
+  { cls: 'big', s: '*one place.*', y: 470, tin: 19.3, tout: 99 },
+];
+
+const SCENES = [
+  [0, '01 — The song'], [3.5, '02 — The story'], [6.8, '03 — Not this'],
+  [10.4, '04 — The influence'], [14.7, '05 — Studio mode'],
+];
+
+// ---------- build text DOM ----------
+const textsEl = $('texts');
+TEXTS.forEach(d => {
+  const el = document.createElement('div');
+  el.className = 't ' + d.cls;
+  const words = d.s.split(' ');
+  let italic = false;
+  d.inner = [];
+  words.forEach((w, wi) => {
+    let word = w;
+    const open = word.startsWith('*'); if (open) { italic = true; word = word.slice(1); }
+    const close = word.endsWith('*'); if (close) word = word.slice(0, -1);
+    const m = document.createElement('span'); m.className = 'm';
+    const i = document.createElement(italic ? 'em' : 'span'); i.className = 'i'; i.textContent = word;
+    m.appendChild(i); el.appendChild(m);
+    if (wi < words.length - 1) el.appendChild(document.createTextNode(' '));
+    d.inner.push(i);
+    if (close) italic = false;
+  });
+  if (d.strike) { d.strikeEl = document.createElement('div'); d.strikeEl.className = 'strike'; el.appendChild(d.strikeEl); }
+  textsEl.appendChild(el);
+  d.el = el;
+});
+
+function renderTexts(t) {
+  TEXTS.forEach(d => {
+    const el = d.el;
+    if (t < d.tin - 0.01 || t > d.tout + 0.5) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const h = el.offsetHeight;
+    const stagger = d.cls === 'small' ? 0.045 : 0.085;
+    const dur = d.cls === 'small' ? 0.5 : 0.7;
+    d.inner.forEach((w, i) => {
+      const k = eOutQ(prog(t, d.tin + i * stagger, d.tin + i * stagger + dur));
+      w.style.transform = `translateY(${(1 - k) * 105}%) rotate(${(1 - k) * 4}deg)`;
+    });
+    const o = prog(t, d.tout, d.tout + 0.35);
+    const ko = eIn(o);
+    el.style.top = (d.y - h / 2 - ko * 26) + 'px';
+    el.style.opacity = 1 - ko;
+    el.style.filter = ko > 0.01 ? `blur(${ko * 10}px)` : 'none';
+    if (d.strikeEl) {
+      const w = el.firstElementChild ? [...el.querySelectorAll('.m')].reduce((a, m) => a + m.offsetWidth, 0) + 60 : 0;
+      d.strikeEl.style.width = w + 'px';
+      d.strikeEl.style.marginLeft = (-w / 2) + 'px';
+      d.strikeEl.style.transform = `scaleX(${eIO(prog(t, d.strike[0], d.strike[1]))})`;
+    }
+  });
+}
+
+// ---------- waveform ----------
+const wctx = $('wave').getContext('2d');
+const BARS = 72;
+function waveState(t) {
+  // y, maxH, alpha, collapse (0 bars -> 1 line), width
+  const s = { y: 720, maxH: 120, alpha: 1, collapse: 0, width: 1580, playhead: 0 };
+  // intro
+  s.alpha = eOut(prog(t, 0, 0.5));
+  // 02: bars collapse into one track line, then the line becomes panels
+  s.collapse = eIO(prog(t, 3.6, 4.5));
+  s.playhead = prog(t, 4.1, 5.3);
+  if (t > 4.9) s.alpha = 1 - prog(t, 4.95, 5.45);
+  // 04: waveform returns as the source of influence
+  if (t > 10.3) {
+    s.y = 410; s.maxH = 72; s.collapse = 0; s.width = 980;
+    s.alpha = eOut(prog(t, 10.45, 10.95)) * (1 - prog(t, 14.25, 14.6));
+  }
+  // 05: quiet bed along the bottom
+  if (t > 14.6) {
+    s.y = 900; s.maxH = 34; s.width = 1580;
+    s.alpha = 0.5 * eOut(prog(t, 14.8, 15.4)) * (1 - prog(t, 20.45, 20.8));
+  }
+  return s;
+}
+function renderWave(t) {
+  wctx.clearRect(0, 0, 1920, 1080);
+  const s = waveState(t);
+  if (s.alpha <= 0.001) return;
+  wctx.globalAlpha = s.alpha;
+  const x0 = 960 - s.width / 2, step = s.width / (BARS - 1);
+  const intro = eOut(prog(t, 0, 0.9));
+  for (let i = 0; i < BARS; i++) {
+    const d = Math.abs(i - (BARS - 1) / 2);
+    // bars further from centre show the recent past -> ripples outward
+    const v = env(Math.max(0, t - d * 0.022));
+    const shape = 0.35 + 0.65 * Math.cos((d / (BARS / 2)) * Math.PI / 2);
+    const reveal = cl(intro * (BARS / 2) - d + 1);
+    let h = (3 + v * s.maxH * shape) * reveal * (1 - s.collapse) + 1 * s.collapse;
+    const x = lerp(x0 + i * step, x0 + i * step, s.collapse);
+    const bw = lerp(4, step + 0.6, s.collapse);
+    wctx.fillStyle = `rgba(242,237,232,${lerp(0.35 + 0.65 * shape, 0.85, s.collapse)})`;
+    wctx.fillRect(x - bw / 2, s.y - h, bw, h * 2);
+  }
+  if (s.collapse > 0.95 && s.playhead > 0) {
+    const px = x0 + s.width * eIO(s.playhead);
+    wctx.fillStyle = '#f2ede8';
+    wctx.beginPath(); wctx.arc(px, s.y, 7, 0, Math.PI * 2); wctx.fill();
+    wctx.globalAlpha = s.alpha * 0.25;
+    wctx.beginPath(); wctx.arc(px, s.y, 7 + 14 * env(t), 0, Math.PI * 2); wctx.fill();
+  }
+  wctx.globalAlpha = 1;
+}
+
+// ---------- storyboard panels (they morph across scenes 02, 03 and 05) ----------
+const SHOTS = ['Wide', 'Close', 'Over shoulder', 'Insert', 'Tracking', 'Aerial'];
+const SHOT_ART = [
+  '<line x1="0" y1="62%" x2="100%" y2="62%"/><circle cx="58%" cy="50%" r="5"/><line x1="58%" y1="54%" x2="58%" y2="62%"/>',
+  '<circle cx="50%" cy="60%" r="38"/><line x1="40%" y1="100%" x2="60%" y2="100%"/>',
+  '<circle cx="20%" cy="78%" r="44"/><circle cx="66%" cy="48%" r="16"/>',
+  '<rect x="34%" y="34%" width="32%" height="38%"/><line x1="0" y1="72%" x2="100%" y2="72%"/>',
+  '<line x1="16%" y1="64%" x2="84%" y2="64%"/><polyline points="74%,56% 84%,64% 74%,72%" fill="none"/><circle cx="30%" cy="46%" r="9"/>',
+  '<line x1="0" y1="35%" x2="100%" y2="35%"/><line x1="0" y1="70%" x2="100%" y2="70%"/><line x1="33%" y1="0" x2="33%" y2="100%"/><line x1="66%" y1="0" x2="66%" y2="100%"/>',
+];
+const panelsEl = $('panels');
+const PANELS = [];
+for (let i = 0; i < 12; i++) {
+  const r = rnd(i + 3);
+  const el = document.createElement('div'); el.className = 'panel';
+  const fill = document.createElement('div'); fill.className = 'fill';
+  const g1 = 30 + r() * 60, g2 = 10 + r() * 40, ang = Math.floor(r() * 360);
+  fill.style.background = `linear-gradient(${ang}deg, rgb(${g1},${g1 - 2},${g1 - 4}), rgb(${g2},${g2},${g2}))`;
+  el.appendChild(fill);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'rgba(242,237,232,0.6)'); svg.setAttribute('stroke-width', '1.5');
+  svg.innerHTML = SHOT_ART[i % 6];
+  el.appendChild(svg);
+  const lbl = document.createElement('div'); lbl.className = 'lbl'; el.appendChild(lbl);
+  panelsEl.appendChild(el);
+  PANELS.push({ el, fill, svg, lbl, r: [r(), r(), r(), r(), r(), r(), r(), r()], clip: 'ai_clip_' + String(Math.floor(r() * 9000 + 1000)) + '.mp4' });
+}
+function rowState(i) {
+  const j = i % 6, w = 238, gap = 30;
+  return { x: 960 - (6 * w + 5 * gap) / 2 + w / 2 + j * (w + gap), y: 720, w, h: w * 9 / 16, r: 0, o: i < 6 ? 1 : 0 };
+}
+function lineState(i) { const s = rowState(i); return { ...s, h: 1.5, o: 0 }; }
+function chaosState(i, t) {
+  const r = PANELS[i].r;
+  const w = 190 + r[0] * 150;
+  return {
+    x: 260 + r[1] * 1400 + Math.sin(t * (2 + r[2] * 3) + r[3] * 9) * 10,
+    y: 470 + r[4] * 400 + Math.cos(t * (2 + r[5] * 3) + r[6] * 9) * 8,
+    w, h: w * 9 / 16, r: (r[7] - 0.5) * 36 + Math.sin(t * 3 + i) * 2, o: 0.95,
+  };
+}
+function pileState(i) {
+  const r = PANELS[i].r;
+  return { x: 960 + (r[1] - 0.5) * 70, y: 690 + (r[4] - 0.5) * 50, w: 250, h: 250 * 9 / 16, r: (r[7] - 0.5) * 40, o: 1 };
+}
+function finalState(i) {
+  return { x: 960, y: 418, w: 1320, h: 470, r: 0, o: i === 0 ? 1 : 0 };
+}
+function mix(a, b, k) { const o = {}; for (const key in a) o[key] = lerp(a[key], b[key], k); return o; }
+
+function renderPanels(t) {
+  PANELS.forEach((p, i) => {
+    let s, art = 1, fillO = 0, label = '';
+    const st = i * 0.055;
+    if (t < 4.85) { p.el.style.display = 'none'; return; }
+    if (t < 6.8) {
+      s = mix(lineState(i), rowState(i), eOutQ(prog(t, 4.95 + st, 5.75 + st)));
+      s.o = i < 6 ? cl((t - 4.95 - st) * 8) : 0;
+      label = String(i % 6 + 1).padStart(2, '0') + ' · ' + SHOTS[i % 6];
+    } else if (t < 9.0) {
+      const k = eIO(prog(t, 6.85 + st * 0.6, 7.6 + st * 0.6));
+      const from = i < 6 ? rowState(i) : { ...chaosState(i, t), w: 10, h: 6, o: 0 };
+      s = mix(from, chaosState(i, t), k);
+      art = 1 - k; fillO = k; label = k > 0.5 ? p.clip : String(i % 6 + 1).padStart(2, '0') + ' · ' + SHOTS[i % 6];
+    } else if (t < 10.5) {
+      const k = eIn(prog(t, 9.0 + st * 0.3, 9.45 + st * 0.3));
+      s = mix(chaosState(i, 9.0), pileState(i), k);
+      fillO = 1; art = 0; label = p.clip;
+      const gone = eIn(prog(t, 10.1, 10.45));
+      s.o *= 1 - gone; s.w *= 1 - gone * 0.3; s.h *= 1 - gone * 0.3;
+      // impact shake when the clips slam together
+      const shake = Math.max(0, 1 - Math.abs(t - 9.55) * 6);
+      s.x += Math.sin(t * 90 + i) * 10 * shake;
+    } else if (t > 18.75 && i < 6) {
+      const k = eIO(prog(t, 18.8 + i * 0.05, 19.75 + i * 0.05));
+      const from = { ...rowState(i), y: 760, o: 0 };
+      s = mix(from, finalState(i), k);
+      s.o = i === 0 ? cl(k * 3) : Math.sin(k * Math.PI) * 0.8;
+      art = 1 - cl(k * 1.5); label = k < 0.5 ? String(i + 1).padStart(2, '0') + ' · ' + SHOTS[i] : '';
+    } else { p.el.style.display = 'none'; return; }
+    p.el.style.display = 'block';
+    p.el.style.width = s.w + 'px'; p.el.style.height = s.h + 'px';
+    p.el.style.transform = `translate(${s.x - s.w / 2}px, ${s.y - s.h / 2}px) rotate(${s.r}deg)`;
+    p.el.style.opacity = s.o;
+    p.svg.style.opacity = art; p.fill.style.opacity = fillO * 0.9;
+    if (p.lbl.textContent !== label) p.lbl.textContent = label;
+  });
+}
+
+// ---------- fx overlay: slash (03), influence lines (04), frame corners (05) ----------
+const fx = $('fx');
+const slash = svgEl('line', { x1: 620, y1: 900, x2: 1300, y2: 470, stroke: '#f2ede8', 'stroke-width': 4, 'stroke-linecap': 'round' }, fx);
+const slashLen = Math.hypot(680, 430);
+slash.setAttribute('stroke-dasharray', slashLen);
+
+const CARD_X = [960 - 520, 960, 960 + 520];
+const curves = CARD_X.map(x => svgEl('path', { d: `M960,${452} C960,${510} ${x},${500} ${x},560`, fill: 'none', stroke: 'rgba(242,237,232,0.5)', 'stroke-width': 1.5 }, fx));
+const curveLen = curves.map(c => c.getTotalLength());
+curves.forEach((c, i) => c.setAttribute('stroke-dasharray', curveLen[i]));
+const dots = [];
+CARD_X.forEach((_, i) => { for (let k = 0; k < 3; k++) dots.push({ c: i, k, el: svgEl('circle', { r: 4, fill: '#f2ede8' }, fx) }); });
+
+const brackets = [];
+for (let i = 0; i < 4; i++) brackets.push(svgEl('path', { fill: 'none', stroke: '#f2ede8', 'stroke-width': 2 }, fx));
+
+function renderFx(t) {
+  // slash through the pile of random clips
+  const sk = eOutQ(prog(t, 9.85, 10.1));
+  slash.setAttribute('stroke-dashoffset', slashLen * (1 - sk));
+  slash.style.opacity = t < 9.8 ? 0 : 1 - prog(t, 10.2, 10.5);
+  // music -> story / characters / shots
+  const vis = 1 - prog(t, 14.25, 14.6);
+  curves.forEach((c, i) => {
+    const k = eIO(prog(t, 11.6 + i * 0.12, 12.35 + i * 0.12));
+    c.setAttribute('stroke-dashoffset', curveLen[i] * (1 - k));
+    c.style.opacity = t < 11.5 ? 0 : vis;
+  });
+  dots.forEach(d => {
+    const on = t > 12.2 + d.c * 0.12 && t < 14.6;
+    if (!on) { d.el.style.opacity = 0; return; }
+    const ph = ((t - 12.2) * 0.9 + d.k / 3) % 1;
+    const pt = curves[d.c].getPointAtLength(ph * curveLen[d.c]);
+    d.el.setAttribute('cx', pt.x); d.el.setAttribute('cy', pt.y);
+    d.el.setAttribute('r', 2.5 + env(t) * 4);
+    d.el.style.opacity = Math.sin(ph * Math.PI) * vis;
+  });
+  // final frame corner brackets around "one place."
+  const bk = eOutQ(prog(t, 19.55, 20.15));
+  const cx = 960, cy = 418, hw = lerp(760, 690, bk), hh = lerp(290, 262, bk), L = 46;
+  const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+  brackets.forEach((b, i) => {
+    const [sx, sy] = pts[i], x = cx + sx * hw, y = cy + sy * hh;
+    b.setAttribute('d', `M${x},${y - sy * L} L${x},${y} L${x - sx * L},${y}`);
+    b.style.opacity = bk;
+  });
+}
+
+// ---------- cards (04) ----------
+const CARDS = [
+  { n: '01', ttl: 'the story', tin: 12.5, art: '<line x1="10" y1="22" x2="140" y2="22"/><line x1="10" y1="48" x2="140" y2="48"/><line x1="10" y1="74" x2="96" y2="74"/>' },
+  { n: '02', ttl: 'the characters', tin: 13.05, art: '<circle cx="50" cy="40" r="18"/><path d="M18,100 C18,72 82,72 82,100"/><circle cx="108" cy="46" r="14"/><path d="M84,100 C86,80 132,80 134,100"/>' },
+  { n: '03', ttl: 'the actual shots', tin: 13.7, art: '<rect x="12" y="12" width="128" height="80"/><line x1="76" y1="36" x2="76" y2="68"/><line x1="60" y1="52" x2="92" y2="52"/>' },
+];
+const cardsEl = $('cards');
+CARDS.forEach((c, i) => {
+  const el = document.createElement('div'); el.className = 'card';
+  el.style.left = (CARD_X[i] - 235) + 'px';
+  el.innerHTML = `<div class="num">${c.n}</div><svg viewBox="0 0 150 110" fill="none" stroke="rgba(242,237,232,0.7)" stroke-width="1.5">${c.art}</svg><div class="ttl">${c.ttl}</div>`;
+  cardsEl.appendChild(el); c.el = el;
+});
+function renderCards(t) {
+  CARDS.forEach((c, i) => {
+    const k = eOutQ(prog(t, c.tin, c.tin + 0.7));
+    const o = eIn(prog(t, 14.25 + i * 0.04, 14.6 + i * 0.04));
+    c.el.style.display = k > 0 && o < 1 ? 'block' : 'none';
+    c.el.style.opacity = k * (1 - o);
+    const pulse = 1 + env(t) * 0.012 * k;
+    c.el.style.transform = `translateY(${(1 - k) * 60 - o * 30}px) scale(${pulse})`;
+    c.el.style.filter = o > 0.01 ? `blur(${o * 8}px)` : 'none';
+    c.el.style.borderColor = `rgba(242,237,232,${0.22 + 0.25 * env(t)})`;
+  });
+}
+
+// ---------- camera, HUD, grain ----------
+function renderCamera(t) {
+  // slow push within each scene plus a tiny kick on every cut
+  let sc = 1;
+  SCENES.forEach(([s], i) => {
+    const end = (SCENES[i + 1] || [20.82])[0];
+    if (t >= s && t < end) sc = 1 + 0.035 * prog(t, s, end) + 0.012 * (1 - eOut(prog(t, s, s + 0.6))) * (i > 0 ? 1 : 0);
+  });
+  const fadeIn = eOut(prog(t, 0, 0.35)), fadeOut = 1 - prog(t, 20.5, 20.82);
+  $('world').style.transform = `scale(${sc})`;
+  $('stage').style.opacity = Math.min(fadeIn, fadeOut);
+}
+function renderHud(t) {
+  let label = SCENES[0][1];
+  SCENES.forEach(([s, l]) => { if (t >= s) label = l; });
+  $('hudScene').textContent = label;
+  const f = Math.floor(t * FPS);
+  const ss = Math.floor(f / FPS), ff = f % FPS;
+  $('hudTc').textContent = `00:00:${String(ss).padStart(2, '0')}:${String(ff).padStart(2, '0')}`;
+  $('progress').style.transform = `scaleX(${t / 20.82})`;
+}
+const gctx = $('grain').getContext('2d');
+const GRAIN = [];
+for (let n = 0; n < 6; n++) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d'), img = x.createImageData(256, 256), r = rnd(n + 11);
+  for (let p = 0; p < img.data.length; p += 4) { const v = r() * 255; img.data[p] = img.data[p + 1] = img.data[p + 2] = v; img.data[p + 3] = 255; }
+  x.putImageData(img, 0, 0); GRAIN.push(c);
+}
+function renderGrain(t) {
+  const f = Math.floor(t * FPS);
+  gctx.clearRect(0, 0, 1920, 1080);
+  gctx.globalAlpha = 0.045;
+  gctx.fillStyle = gctx.createPattern(GRAIN[f % GRAIN.length], 'repeat');
+  gctx.fillRect(0, 0, 1920, 1080);
+  // vignette
+  gctx.globalAlpha = 1;
+  const g = gctx.createRadialGradient(960, 520, 380, 960, 540, 1150);
+  g.addColorStop(0, 'rgba(10,10,10,0)'); g.addColorStop(1, 'rgba(0,0,0,0.6)');
+  gctx.fillStyle = g; gctx.fillRect(0, 0, 1920, 1080);
+}
+
+window.render = function (t) {
+  renderCamera(t); renderWave(t); renderPanels(t); renderCards(t);
+  renderFx(t); renderTexts(t); renderHud(t); renderGrain(t);
+};
+window.DURATION = 20.82;
+
+// live preview when opened in a browser (the renderer sets ?render)
+if (!location.search.includes('render')) {
+  document.fonts.ready.then(() => {
+    const audio = new Audio('hook-audio.m4a');
+    let t0 = performance.now();
+    const loop = () => { const t = ((performance.now() - t0) / 1000) % window.DURATION; window.render(t); requestAnimationFrame(loop); };
+    document.addEventListener('click', () => { audio.currentTime = 0; audio.play().catch(() => {}); t0 = performance.now(); });
+    loop();
+  });
+}
+</script>
+</body>
+</html>
