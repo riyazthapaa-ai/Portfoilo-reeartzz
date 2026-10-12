@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sol Intro Motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,500;0,700;0,800;0,900;1,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e0f14;
+    --mute: #8a8d99;
+    --accent: #3d5afe;
+    --hot: #ff5a36;
+    --card: #ffffff;
+    --line: rgba(14,15,20,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f4f5f8; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; color: var(--ink); font-family: 'Inter Tight', sans-serif;
+    background: radial-gradient(120% 90% at 50% 38%, #ffffff 0%, #f6f7fa 45%, #e7e9ef 100%); }
+  #blobs, #grain { position: absolute; inset: 0; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); }
+  #world { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  .abs { position: absolute; }
+
+  .t { position: absolute; left: 0; width: 100%; text-align: center; white-space: nowrap; font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+  .t .w { display: inline-block; position: relative; margin: 0 0.12em; will-change: transform, opacity; }
+  .t .w .tx { position: relative; z-index: 1; }
+  .t .w .hl { position: absolute; left: -0.16em; right: -0.16em; top: 0.02em; bottom: -0.1em; background: var(--accent); border-radius: 0.14em; transform-origin: 0 50%; z-index: 0; }
+  .t .w .st { position: absolute; left: -0.08em; right: -0.08em; top: 52%; height: 0.09em; background: var(--hot); border-radius: 0.05em; transform-origin: 0 50%; z-index: 2; }
+  .t .mute { color: var(--mute); }
+  .t .acc { color: var(--accent); }
+
+  .chip { position: absolute; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; padding: 12px 20px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(20,24,40,0.08); white-space: nowrap; display: flex; align-items: center; gap: 12px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+
+  .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 30px 80px rgba(20,24,40,0.10), 0 4px 14px rgba(20,24,40,0.05); }
+
+  /* prompt bar */
+  #prompt { width: 980px; height: 104px; left: 470px; top: 668px; display: flex; align-items: center; padding: 0 22px 0 40px; font-size: 38px; font-weight: 500; letter-spacing: -0.01em; }
+  #prompt .caret { display: inline-block; width: 3px; height: 42px; background: var(--accent); margin-left: 3px; vertical-align: middle; }
+  #prompt .send { margin-left: auto; width: 64px; height: 64px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+  #prompt .ph { color: var(--mute); }
+
+  /* stamp */
+  #stamp { left: 0; top: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 46px; letter-spacing: 0.12em; color: var(--hot); border: 5px solid var(--hot); border-radius: 14px; padding: 12px 26px; white-space: nowrap; background: rgba(255,255,255,0.6); }
+
+  /* pipeline nodes */
+  .node { width: 300px; height: 210px; padding: 26px 28px; }
+  .node .n { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; letter-spacing: 0.08em; color: var(--mute); }
+  .node .lb { position: absolute; left: 28px; bottom: 26px; font-size: 46px; font-weight: 800; letter-spacing: -0.03em; }
+  .node .ic { position: absolute; right: 24px; top: 22px; width: 54px; height: 54px; border-radius: 16px; background: #eef0f6; display: grid; place-items: center; }
+  .node .fillbg { position: absolute; inset: 0; border-radius: 28px; background: var(--accent); transform-origin: 0 50%; }
+  .node .content { position: absolute; inset: 0; padding: 26px 28px; }
+
+  /* app window */
+  #app { width: 1240px; height: 600px; left: 340px; top: 330px; overflow: hidden; }
+  #app .bar { height: 62px; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 26px; gap: 10px; }
+  #app .bar i { width: 14px; height: 14px; border-radius: 50%; background: #e3e5ec; display: block; }
+  #app .url { margin-left: 24px; font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--mute); background: #f2f3f7; padding: 8px 18px; border-radius: 10px; }
+  #app .brand { margin-left: auto; font-weight: 800; font-size: 26px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+  #app .row { position: absolute; left: 60px; right: 60px; height: 92px; border-radius: 18px; background: #f6f7fb; display: flex; align-items: center; padding: 0 28px; gap: 22px; }
+  #app .row .k { font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--mute); width: 40px; }
+  #app .row .nm { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; width: 420px; }
+  #app .row .track { flex: 1; height: 10px; border-radius: 5px; background: #e3e6ef; overflow: hidden; }
+  #app .row .track b { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; }
+  #app .row .st { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; }
+
+  /* idea -> product */
+  #idea { width: 380px; height: 380px; left: 300px; top: 470px; display: grid; place-items: center; }
+  #prod { width: 520px; height: 380px; left: 1100px; top: 470px; overflow: hidden; }
+  .cap { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); white-space: nowrap; text-align: center; }
+  .sk { position: absolute; background: #eceef4; border-radius: 10px; }
+
+  .hud { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #6c6f7b; white-space: nowrap; display: flex; align-items: center; gap: 10px; }
+  #flash { position: absolute; inset: 0; background: #fff; pointer-events: none; }
+  svg.ov { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: visible; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="blobs">
+    <div class="blob" id="b1" style="width:760px;height:760px;background:rgba(61,90,254,0.13)"></div>
+    <div class="blob" id="b2" style="width:640px;height:640px;background:rgba(255,90,54,0.08)"></div>
+    <div class="blob" id="b3" style="width:820px;height:820px;background:rgba(140,120,255,0.09)"></div>
+  </div>
+  <div id="world">
+    <svg class="ov" id="lines"></svg>
+
+    <!-- 01 prompt -->
+    <div class="card" id="prompt"><span id="ptext"></span><span class="caret" id="caret"></span>
+      <div class="send"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+    </div>
+
+    <!-- 02 model chip + stamp -->
+    <div class="chip" id="modelChip"><span class="dot" id="recDot"></span>Model under test</div>
+    <div class="abs" id="stamp">TO THE TEST</div>
+
+    <!-- 03 pipeline -->
+    <div id="nodes"></div>
+    <div class="chip" id="resultChip" style="font-size:24px;padding:16px 28px">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1fb36b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>Final result
+    </div>
+
+    <!-- 04 app -->
+    <div class="card" id="app">
+      <div class="bar"><i></i><i></i><i></i><span class="url">runable / projects / sol-6.1-test</span>
+        <span class="brand"><svg width="30" height="30" viewBox="0 0 30 30"><rect width="30" height="30" rx="9" fill="#0e0f14"/><path d="M11 9l10 6-10 6z" fill="#fff"/></svg>Runable</span></div>
+      <div id="rows"></div>
+    </div>
+
+    <!-- 06 idea -> product -->
+    <div class="card" id="idea">
+      <svg width="170" height="200" viewBox="0 0 170 200" fill="none" stroke="#0e0f14" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <path id="bulb" d="M85 18c-36 0-62 27-62 60 0 22 11 36 24 48 7 7 11 15 11 24v6h54v-6c0-9 4-17 11-24 13-12 24-26 24-48 0-33-26-60-62-60z"/>
+        <path d="M62 176h46M70 194h30"/>
+      </svg>
+    </div>
+    <div class="cap" id="ideaCap" style="left:300px;width:380px;top:880px">An idea</div>
+    <div class="card" id="prod">
+      <div style="height:48px;border-bottom:1px solid rgba(14,15,20,0.08);display:flex;gap:8px;align-items:center;padding:0 20px"><i style="width:11px;height:11px;border-radius:50%;background:#e3e5ec;display:block"></i><i style="width:11px;height:11px;border-radius:50%;background:#e3e5ec;display:block"></i><i style="width:11px;height:11px;border-radius:50%;background:#e3e5ec;display:block"></i></div>
+      <div id="sks"></div>
+    </div>
+    <div class="cap" id="prodCap" style="left:1100px;width:520px;top:880px">Something I could use</div>
+
+    <div id="texts"></div>
+  </div>
+
+  <div class="hud" style="left:64px;top:52px"><span style="width:9px;height:9px;border-radius:50%;background:#ff5a36;display:block" id="hudDot"></span>Sol 6.1 · Field test</div>
+  <div class="hud" style="right:64px;top:52px" id="hudTc">00:00</div>
+  <div class="hud" style="left:64px;bottom:50px" id="hudScene"></div>
+  <div class="hud" style="right:64px;bottom:50px">Built inside Runable</div>
+  <canvas id="grain" width="1920" height="1080"></canvas>
+  <div id="flash"></div>
+</div>
+
+<script src="envelope.js"></script>
+<script>
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => cl((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = x => 1 - Math.pow(1 - x, 3);
+const eOutQ = x => 1 - Math.pow(1 - x, 5);
+const eIn = x => x * x * x;
+const eIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eBack = x => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const FPS = 30, DURATION = 28.26;
+const ENV = window.ENV;
+const env = t => { const f = t * FPS, i = Math.floor(f), k = f - i; return lerp(ENV[cl(i, 0, ENV.length - 1)] || 0, ENV[cl(i + 1, 0, ENV.length - 1)] || 0, k); };
+function rnd(seed) { let a = seed * 2654435761 >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const $ = id => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+
+// in/out for a block: pops in at a, leaves at b (blurred push up)
+function inOut(t, a, b, din = 0.45, dout = 0.3) {
+  return { k: eBack(prog(t, a, a + din)), raw: prog(t, a, a + din), o: eIn(prog(t, b, b + dout)), vis: t >= a - 0.01 && t <= b + dout };
+}
+function place(el, t, a, b, { dy = 50, sc = 0.85, din = 0.45 } = {}) {
+  const s = inOut(t, a, b, din);
+  if (!s.vis) { el.style.display = 'none'; return s; }
+  el.style.display = '';
+  el.style.opacity = cl(s.raw * 3) * (1 - s.o);
+  el.style.transform = `translateY(${(1 - s.k) * dy - s.o * 40}px) scale(${lerp(sc, 1, s.k) * (1 - s.o * 0.06)})`;
+  el.style.filter = s.o > 0.01 ? `blur(${s.o * 14}px)` : 'none';
+  return s;
+}
+
+// ---------------- SFX cue sheet (read by the renderer, synthesised in mix.py) ----------------
+window.SFX = [];
+const sfx = (t, type, gain = 1) => window.SFX.push({ t, type, gain });
+
+// ---------------- copy, timed to the voiceover ----------------
+// *word* = accent highlight, _word_ = muted, ~word~ = struck, ^word^ = accent colour.
+// w = per-word start times (s); omitted -> staggered from tin.
+const TEXTS = [
+  // 01 hook question
+  { s: 'What happens', y: 250, size: 104, tin: 0.08, w: [0.08, 0.42], tout: 2.5 },
+  { s: 'when you give an ^AI^ ^model^', y: 380, size: 104, tin: 0.8, w: [0.8, 0.98, 1.12, 1.4, 1.55, 1.8], tout: 2.5 },
+  { s: 'an actual *project*', y: 470, size: 190, tin: 2.05, w: [2.05, 2.25, 2.62], tout: 3.25, hl: 2.62 },
+  { s: '_instead_ _of_ _just_ asking it to', y: 300, size: 84, tin: 3.3, w: [3.3, 3.48, 3.62, 3.88, 4.1, 4.25], tout: 5.55 },
+  { s: '~generate~ ~something~', y: 470, size: 150, tin: 4.4, w: [4.4, 4.82], tout: 5.55, strike: 5.25 },
+  // 02 model under test
+  { s: "Today, I'm putting", y: 250, size: 92, tin: 5.9, w: [5.9, 6.2, 6.55], tout: 8.6 },
+  { s: '^Sol^ ^6.1^', y: 590, size: 300, tin: 6.9, w: [6.9, 7.22], tout: 8.6 },
+  // 03 the project
+  { s: "I'm going to give it", y: 230, size: 84, tin: 9.0, tout: 15.05 },
+  { s: 'a *real* *project*', y: 340, size: 128, tin: 9.8, w: [9.8, 9.95, 10.28], tout: 15.05, hl: 10.28 },
+  // 04 not manual -> inside runable
+  { s: "And I'm not going to build everything", y: 380, size: 84, tin: 15.75, w: [15.75, 15.9, 16.05, 16.22, 16.35, 16.5, 16.78], tout: 17.95 },
+  { s: '~manually.~', y: 560, size: 230, tin: 17.05, tout: 17.95, strike: 17.55 },
+  { s: 'The entire workflow is happening', y: 180, size: 72, tin: 18.0, w: [18.0, 18.2, 18.45, 19.05, 19.25], tout: 20.55 },
+  { s: 'inside *Runable*', y: 260, size: 72, tin: 19.72, w: [19.72, 20.0], tout: 20.55, hl: 20.0 },
+  // 05 the question
+  { s: 'So the question is', y: 410, size: 96, tin: 20.92, w: [20.92, 21.1, 21.25, 21.55], tout: 22.45 },
+  { s: '*simple.*', y: 590, size: 220, tin: 21.82, tout: 22.45, hl: 21.9 },
+  // 06 can it?
+  { s: 'Can ^Sol^ ^6.1^ actually', y: 200, size: 104, tin: 22.65, w: [22.65, 22.92, 23.3, 23.9], tout: 27.05 },
+  { s: 'take an idea and turn it into', y: 330, size: 64, tin: 24.35, w: [24.35, 24.5, 24.62, 25.0, 25.18, 25.32, 25.5], tout: 27.05, mute: true },
+  // 07 let's find out
+  { s: "Let's", y: 370, size: 150, tin: 27.27, tout: 99 },
+  { s: '*find* *out.*', y: 610, size: 260, tin: 27.5, w: [27.5, 27.72], tout: 99, hl: 27.6 },
+];
+
+const SCENES = [[0, '01 / The question'], [5.8, '02 / The model'], [8.9, '03 / The project'], [15.6, '04 / The workflow'], [20.8, '05 / Simple'], [22.55, '06 / The test'], [27.2, "07 / Let's go"]];
+
+const textsEl = $('texts');
+TEXTS.forEach(d => {
+  const el = document.createElement('div'); el.className = 't';
+  el.style.fontSize = d.size + 'px';
+  d.words = [];
+  d.s.split(' ').forEach(raw => {
+    let word = raw, kind = '';
+    const m = word.match(/^([*_~^])(.*)\1$/); if (m) { kind = m[1]; word = m[2]; }
+    const w = document.createElement('span'); w.className = 'w';
+    if (kind === '*') { const hl = document.createElement('span'); hl.className = 'hl'; w.appendChild(hl); }
+    const tx = document.createElement('span'); tx.className = 'tx' + (kind === '_' || d.mute ? ' mute' : '') + (kind === '^' ? ' acc' : ''); tx.textContent = word; w.appendChild(tx);
+    if (kind === '~') { const st = document.createElement('span'); st.className = 'st'; w.appendChild(st); }
+    el.appendChild(w); d.words.push({ el: w, kind, tx, hl: w.querySelector('.hl'), st: w.querySelector('.st') });
+  });
+  textsEl.appendChild(el); d.el = el;
+  const times = d.words.map((_, i) => d.w && d.w[i] != null ? d.w[i] : d.tin + i * 0.09);
+  d.times = times;
+  // a soft pop per word for big type, ticks for small type
+  times.forEach((wt, i) => sfx(wt, d.size >= 120 ? 'pop' : 'tick', d.size >= 120 ? 0.9 : 0.55));
+  if (d.hl != null) sfx(d.hl, 'swipe', 0.8);
+  if (d.strike != null) sfx(d.strike, 'scratch', 0.8);
+});
+
+function renderTexts(t) {
+  TEXTS.forEach(d => {
+    const el = d.el;
+    if (t < d.tin - 0.02 || t > d.tout + 0.4) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const o = eIn(prog(t, d.tout, d.tout + 0.3));
+    el.style.top = (d.y - el.offsetHeight / 2) + 'px';
+    el.style.opacity = 1 - o;
+    el.style.filter = o > 0.01 ? `blur(${o * 16}px)` : 'none';
+    el.style.transform = `translateY(${-o * 50}px) scale(${1 - o * 0.05})`;
+    d.words.forEach((w, i) => {
+      const wt = d.times[i];
+      const r = prog(t, wt, wt + 0.42), k = eBack(r);
+      w.el.style.opacity = cl(r * 4);
+      w.el.style.transform = `translateY(${(1 - k) * 0.35 * d.size}px) scale(${lerp(0.55, 1, k)}) rotate(${(1 - k) * -5}deg)`;
+      w.el.style.filter = r < 0.5 ? `blur(${(1 - r * 2) * 8}px)` : 'none';
+      if (w.hl) {
+        const hk = eOutQ(prog(t, d.hl - 0.04, d.hl + 0.3));
+        w.hl.style.transform = `scaleX(${hk})`;
+        w.tx.style.color = hk > 0.55 ? '#fff' : '';
+      }
+      if (w.st) w.st.style.transform = `scaleX(${eOutQ(prog(t, d.strike + i * 0.08, d.strike + i * 0.08 + 0.3))})`;
+      if (w.kind === '~') w.tx.style.color = t > d.strike + 0.2 ? '#a6a9b4' : '';
+    });
+  });
+}
+
+// ---------------- 01 prompt bar ----------------
+const PROMPT = 'generate something…';
+function renderPrompt(t) {
+  const s = place($('prompt'), t, 3.75, 5.5, { dy: 80 });
+  const n = Math.round(PROMPT.length * prog(t, 4.35, 5.15));
+  $('ptext').innerHTML = n ? PROMPT.slice(0, n) : '<span class="ph">Ask anything…</span>';
+  $('caret').style.opacity = (Math.floor(t * 2.6) % 2 === 0 || (t > 4.3 && t < 5.2)) ? 1 : 0;
+  $('prompt').style.top = '668px';
+}
+sfx(3.72, 'whoosh', 0.7);
+for (let i = 0; i < PROMPT.length - 1; i++) sfx(4.35 + i * (0.8 / PROMPT.length), 'key', 0.45);
+
+// ---------------- 02 model chip, stamp ----------------
+function renderModel(t) {
+  const c = $('modelChip');
+  place(c, t, 6.75, 8.6);
+  c.style.left = (960 - c.offsetWidth / 2) + 'px'; c.style.top = '326px';
+  $('recDot').style.opacity = Math.floor(t * 3) % 2 ? 1 : 0.25;
+  const st = $('stamp');
+  const r = prog(t, 7.9, 8.12), o = eIn(prog(t, 8.6, 8.9));
+  if (t < 7.9 || t > 8.9) { st.style.display = 'none'; return; }
+  st.style.display = '';
+  const sc = lerp(2.4, 1, eOut(r));
+  st.style.left = (1330 - st.offsetWidth / 2) + 'px'; st.style.top = '720px';
+  st.style.opacity = cl(r * 3) * (1 - o);
+  st.style.transform = `rotate(-9deg) scale(${sc})`;
+  st.style.filter = o > 0.01 ? `blur(${o * 12}px)` : 'none';
+}
+sfx(6.75, 'whoosh', 0.6); sfx(7.98, 'impact', 1);
+
+// ---------------- 03 pipeline ----------------
+const STEPS = [
+  { n: '01', lb: 'Plan', t: 11.25, ic: '<path d="M6 7h12M6 12h12M6 17h7"/>' },
+  { n: '02', lb: 'Build', t: 11.9, ic: '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>' },
+  { n: '03', lb: 'Fix', t: 12.75, ic: '<path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-3-3z"/>' },
+  { n: '04', lb: 'Improve', t: 13.8, ic: '<path d="M4 17l6-6 4 4 6-7M15 8h5v5"/>' },
+];
+const NODE_X = [0, 1, 2, 3].map(i => 960 - 1.5 * 340 + i * 340 - 150);
+const nodesEl = $('nodes');
+STEPS.forEach((s, i) => {
+  const el = document.createElement('div'); el.className = 'card node';
+  el.style.left = NODE_X[i] + 'px'; el.style.top = '520px';
+  el.innerHTML = `<div class="fillbg"></div><div class="content"><div class="n">STEP ${s.n}</div><div class="ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0e0f14" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${s.ic}</svg></div><div class="lb">${s.lb}</div></div>`;
+  nodesEl.appendChild(el); s.el = el; s.fill = el.querySelector('.fillbg');
+  sfx(s.t, 'blip', 0.9);
+});
+const linesSvg = $('lines');
+const CONNECT = [0, 1, 2].map(i => {
+  const x1 = NODE_X[i] + 300, x2 = NODE_X[i + 1], y = 625;
+  const p = document.createElementNS(NS, 'path'); p.setAttribute('d', `M${x1},${y} L${x2},${y}`);
+  p.setAttribute('stroke', '#3d5afe'); p.setAttribute('stroke-width', 4); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('fill', 'none');
+  p.setAttribute('stroke-dasharray', x2 - x1); linesSvg.appendChild(p); return { p, len: x2 - x1 };
+});
+function renderPipeline(t) {
+  STEPS.forEach((s, i) => {
+    const st = place(s.el, t, 10.45 + i * 0.09, 14.95 + i * 0.03, { dy: 90 });
+    if (!st.vis) return;
+    const a = eOutQ(prog(t, s.t, s.t + 0.35));
+    s.fill.style.transform = `scaleX(${a})`;
+    s.el.querySelector('.lb').style.color = a > 0.5 ? '#fff' : '';
+    s.el.querySelector('.n').style.color = a > 0.5 ? 'rgba(255,255,255,0.75)' : '';
+    s.el.querySelector('.ic').style.background = a > 0.5 ? 'rgba(255,255,255,0.9)' : '';
+    const bump = Math.sin(prog(t, s.t, s.t + 0.35) * Math.PI) * 0.06;
+    s.el.style.transform += ` scale(${1 + bump})`;
+  });
+  CONNECT.forEach((c, i) => {
+    const a = eIO(prog(t, STEPS[i].t + 0.1, STEPS[i + 1].t));
+    c.p.setAttribute('stroke-dashoffset', c.len * (1 - a));
+    c.p.style.opacity = t > 15.0 || t < 10.5 ? 0 : 1;
+  });
+  const rc = $('resultChip');
+  place(rc, t, 14.2, 14.95, { dy: 40 });
+  rc.style.left = (960 - rc.offsetWidth / 2) + 'px'; rc.style.top = '800px';
+}
+sfx(10.4, 'whoosh', 0.6); sfx(14.25, 'ding', 0.9);
+
+// ---------------- 04 app window ----------------
+const ROWS = [['01', 'Plan the work', 18.25, 18.95], ['02', 'Build the product', 18.75, 19.55], ['03', 'Fix problems', 19.3, 19.95], ['04', 'Improve the result', 19.75, 20.4]];
+const rowsEl = $('rows');
+ROWS.forEach((r, i) => {
+  const el = document.createElement('div'); el.className = 'row'; el.style.top = (100 + i * 116) + 'px';
+  el.innerHTML = `<span class="k">${r[0]}</span><span class="nm">${r[1]}</span><span class="track"><b></b></span><span class="st"></span>`;
+  rowsEl.appendChild(el); r.el = el; r.bar = el.querySelector('b'); r.st = el.querySelector('.st');
+  sfx(r[3], 'check', 0.7);
+});
+const CHECK = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+function renderApp(t) {
+  const app = $('app');
+  const s = place(app, t, 18.0, 20.55, { dy: 140, sc: 0.8, din: 0.6 });
+  if (!s.vis) return;
+  ROWS.forEach((r, i) => {
+    const a = prog(t, r[2], r[3]);
+    const ri = eOutQ(prog(t, 18.1 + i * 0.08, 18.55 + i * 0.08));
+    r.el.style.opacity = ri; r.el.style.transform = `translateX(${(1 - ri) * 60}px)`;
+    r.bar.style.transform = `scaleX(${eIO(a)})`;
+    const done = t >= r[3];
+    if (done && r.st.dataset.s !== 'd') { r.st.innerHTML = CHECK; r.st.style.background = '#1fb36b'; r.st.dataset.s = 'd'; }
+    if (!done && r.st.dataset.s !== 'p') { r.st.innerHTML = ''; r.st.style.background = '#e3e6ef'; r.st.dataset.s = 'p'; }
+    const pop = done ? 1 + 0.25 * Math.sin(prog(t, r[3], r[3] + 0.25) * Math.PI) : 1;
+    r.st.style.transform = `scale(${pop})`;
+  });
+}
+sfx(17.98, 'whoosh', 0.8);
+
+// ---------------- 06 idea -> product ----------------
+const sksEl = $('sks');
+const SK = [[28, 78, 220, 26], [28, 120, 140, 18], [28, 170, 464, 120], [28, 310, 140, 44], [184, 310, 140, 44]];
+SK.forEach(([x, y, w, h], i) => { const d = document.createElement('div'); d.className = 'sk'; Object.assign(d.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); if (i === 3) d.style.background = '#3d5afe'; sksEl.appendChild(d); });
+const arrow = document.createElementNS(NS, 'path');
+arrow.setAttribute('d', 'M720,660 C850,600 960,720 1070,660');
+arrow.setAttribute('fill', 'none'); arrow.setAttribute('stroke', '#3d5afe'); arrow.setAttribute('stroke-width', 5); arrow.setAttribute('stroke-linecap', 'round');
+linesSvg.appendChild(arrow);
+const arrowLen = arrow.getTotalLength(); arrow.setAttribute('stroke-dasharray', arrowLen);
+const head = document.createElementNS(NS, 'path'); head.setAttribute('d', 'M-14,-12 L0,0 L-14,12'); head.setAttribute('fill', 'none'); head.setAttribute('stroke', '#3d5afe'); head.setAttribute('stroke-width', 5); head.setAttribute('stroke-linecap', 'round'); head.setAttribute('stroke-linejoin', 'round');
+linesSvg.appendChild(head);
+function renderIdea(t) {
+  place($('idea'), t, 24.5, 27.05, { dy: 80 });
+  place($('ideaCap'), t, 24.65, 27.05, { dy: 20 });
+  const glow = eOut(prog(t, 24.62, 25.0));
+  $('bulb').setAttribute('fill', `rgba(255,200,40,${glow * 0.9})`);
+  const a = eIO(prog(t, 25.0, 25.75));
+  arrow.setAttribute('stroke-dashoffset', arrowLen * (1 - a));
+  const vis = t > 24.9 && t < 27.35;
+  const ao = 1 - prog(t, 27.05, 27.35);
+  arrow.style.opacity = vis ? ao : 0;
+  const p = arrow.getPointAtLength(arrowLen * a), p2 = arrow.getPointAtLength(Math.max(0, arrowLen * a - 2));
+  head.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${Math.atan2(p.y - p2.y, p.x - p2.x) * 180 / Math.PI})`);
+  head.style.opacity = vis && a > 0.02 ? ao : 0;
+  place($('prod'), t, 25.85, 27.05, { dy: 80, sc: 0.7 });
+  place($('prodCap'), t, 26.05, 27.05, { dy: 20 });
+  [...sksEl.children].forEach((d, i) => { const k = eOutQ(prog(t, 26.0 + i * 0.07, 26.35 + i * 0.07)); d.style.opacity = k; d.style.transform = `translateY(${(1 - k) * 16}px)`; });
+}
+sfx(24.5, 'pop', 0.8); sfx(25.0, 'swoosh', 0.7); sfx(25.85, 'pop', 0.9); sfx(26.4, 'ding', 0.5);
+
+// ---------------- 07 finale ----------------
+sfx(26.6, 'riser', 0.9); sfx(27.27, 'impact', 1.1);
+function renderFlash(t) {
+  $('flash').style.opacity = 0.85 * (1 - eOut(prog(t, 27.27, 27.6))) * (t >= 27.27 ? 1 : 0);
+}
+
+// scene whooshes
+[5.8, 8.95, 15.65, 20.85, 22.55].forEach(t => sfx(t, 'whoosh', 0.75));
+
+// ---------------- background, camera, HUD, grain ----------------
+function renderBg(t) {
+  const b = [['b1', 300, 200, 0.11, 0], ['b2', 1400, 650, 0.08, 2], ['b3', 1100, 100, 0.07, 4]];
+  b.forEach(([id, x, y, sp, ph]) => {
+    const el = $(id);
+    el.style.transform = `translate(${x + Math.sin(t * sp * 2 + ph) * 180 - 380}px, ${y + Math.cos(t * sp * 1.6 + ph) * 120 - 380}px) scale(${1 + 0.06 * env(t)})`;
+  });
+}
+function renderCamera(t) {
+  let sc = 1, rot = 0;
+  SCENES.forEach(([s], i) => {
+    const end = (SCENES[i + 1] || [DURATION])[0];
+    if (t >= s && t < end) {
+      const k = prog(t, s, end);
+      sc = 1 + 0.04 * k + (i > 0 ? 0.03 * (1 - eOut(prog(t, s, s + 0.5))) : 0);
+      rot = (i % 2 ? -1 : 1) * 0.25 * (1 - k);
+    }
+  });
+  // impact shakes
+  [7.98, 27.27].forEach(ti => { const s = Math.max(0, 1 - (t - ti) * 5) * (t >= ti ? 1 : 0); sc += 0.02 * s; rot += Math.sin(t * 70) * 0.4 * s; });
+  $('world').style.transform = `scale(${sc}) rotate(${rot}deg)`;
+  $('stage').style.opacity = Math.min(eOut(prog(t, 0, 0.25)), 1 - prog(t, 28.0, 28.26));
+}
+function renderHud(t) {
+  let label = SCENES[0][1]; SCENES.forEach(([s, l]) => { if (t >= s) label = l; });
+  $('hudScene').textContent = label;
+  const s = Math.floor(t), cs = Math.floor((t - s) * 100);
+  $('hudTc').textContent = `00:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+  $('hudDot').style.opacity = Math.floor(t * 2) % 2 ? 1 : 0.3;
+}
+const gctx = $('grain').getContext('2d');
+const GRAIN = [];
+for (let n = 0; n < 6; n++) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d'), img = x.createImageData(256, 256), r = rnd(n + 7);
+  for (let p = 0; p < img.data.length; p += 4) { const v = r() * 255; img.data[p] = img.data[p + 1] = img.data[p + 2] = v; img.data[p + 3] = 255; }
+  x.putImageData(img, 0, 0); GRAIN.push(c);
+}
+function renderGrain(t) {
+  const f = Math.floor(t * FPS);
+  gctx.clearRect(0, 0, 1920, 1080);
+  gctx.globalAlpha = 0.07;
+  gctx.globalCompositeOperation = 'source-over';
+  gctx.fillStyle = gctx.createPattern(GRAIN[f % GRAIN.length], 'repeat');
+  gctx.fillRect(0, 0, 1920, 1080);
+}
+
+window.render = function (t) {
+  renderBg(t); renderCamera(t); renderTexts(t); renderPrompt(t); renderModel(t);
+  renderPipeline(t); renderApp(t); renderIdea(t); renderFlash(t); renderHud(t); renderGrain(t);
+};
+window.DURATION = DURATION;
+
+if (!location.search.includes('render')) {
+  document.fonts.ready.then(() => {
+    const audio = new Audio('intro-mix.m4a');
+    let t0 = performance.now();
+    const loop = () => { window.render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+    document.addEventListener('click', () => { audio.currentTime = 0; audio.play().catch(() => {}); t0 = performance.now(); });
+    loop();
+  });
+}
+</script>
+</body>
+</html>
