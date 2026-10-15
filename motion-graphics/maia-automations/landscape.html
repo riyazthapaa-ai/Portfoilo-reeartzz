@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Automations Landscape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0716; --ink:#ffffff; --mute:#a59bc4; --card:#15102a; --card2:#1d1638; --line:#2e2552;
+  --vio:#8b5cf6; --mag:#e040fb; --pink:#ff4fa3; --teal:#14b8a6; --amber:#f5a524; --blue:#3b82f6; --green:#22c55e; --red:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#05030c;color:var(--ink);font-family:Inter,system-ui,sans-serif;height:100%;overflow:hidden}
+#viewport{position:fixed;inset:0 0 64px 0;display:flex;align-items:center;justify-content:center}
+#scaler{width:1920px;height:1080px;flex:none;transform-origin:center center}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+body.render #viewport{inset:0;display:block}
+body.render #scaler{transform:none!important}
+body.render #controls{display:none}
+
+/* background */
+.glow{position:absolute;border-radius:50%;filter:blur(120px);opacity:.55}
+#dots{position:absolute;inset:-60px;background-image:radial-gradient(rgba(255,255,255,.07) 2px,transparent 2.5px);background-size:44px 44px}
+.abs{position:absolute}
+.scene{position:absolute;inset:0;opacity:0}
+.center{left:0;right:0;text-align:center}
+
+/* type */
+.h1{font-weight:900;letter-spacing:-.04em;line-height:.95}
+.h2{font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.eyebrow{font-weight:700;font-size:30px;letter-spacing:.18em;text-transform:uppercase;color:var(--mag)}
+.grad{background:linear-gradient(90deg,#c084fc,#e040fb 50%,#ff6fb5);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* timer */
+#timer{position:absolute;top:50px;right:60px;height:92px;padding:0 34px 0 26px;border-radius:46px;background:rgba(21,16,42,.9);border:2px solid var(--line);display:flex;align-items:center;gap:16px;font-weight:800;font-size:46px;font-variant-numeric:tabular-nums;opacity:0}
+#timer svg{width:44px;height:44px}
+
+/* prompt bubble */
+.prompt{position:absolute;left:100px;width:800px;min-height:150px;padding:30px 36px 30px 124px;border-radius:36px;background:var(--card);border:2px solid var(--line);font-size:34px;font-weight:500;line-height:1.3;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.prompt .orb{position:absolute;left:30px;top:30px;width:70px;height:70px}
+.prompt .ph{color:var(--mute);font-size:24px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.caret{display:inline-block;width:4px;height:40px;background:var(--mag);vertical-align:-7px;margin-left:3px}
+
+/* orb */
+.orbball{border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0,#f0abfc 12%,#c026d3 42%,#6d28d9 75%,#2e1065 100%);box-shadow:0 0 60px rgba(224,64,251,.6),inset -10px -14px 30px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+.orbball svg{width:46%;height:46%}
+
+/* flow canvas */
+.canvas{position:absolute;left:100px;width:800px;border-radius:40px;background:rgba(21,16,42,.75);border:2px solid var(--line);overflow:visible}
+.canvas .grid{position:absolute;inset:0;border-radius:40px;background-image:radial-gradient(rgba(165,155,196,.18) 1.6px,transparent 2px);background-size:28px 28px}
+.canvas .tag{position:absolute;left:28px;top:22px;font-size:22px;font-weight:700;letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+.line{position:absolute;height:0;border-top:6px dotted rgba(200,190,240,.55);transform-origin:left center}
+.node{position:absolute;width:0;height:0}
+.node .c{position:absolute;left:-66px;top:-66px;width:132px;height:132px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.node .c svg{width:60px;height:60px}
+.node .ring{position:absolute;left:-66px;top:-66px;width:132px;height:132px;border-radius:50%;border:5px solid #fff;opacity:0}
+.node .lb{position:absolute;left:-100px;width:200px;top:84px;text-align:center;font-size:26px;font-weight:700;line-height:1.15}
+.node .lb small{display:block;font-size:21px;font-weight:500;color:var(--mute);margin-top:4px}
+.badge{position:absolute;left:30px;top:-74px;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:4px solid var(--bg);opacity:0}
+.badge svg{width:28px;height:28px}
+.packet{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#fff;box-shadow:0 0 24px 8px rgba(224,64,251,.9);opacity:0}
+
+/* cards */
+.card{position:absolute;border-radius:32px;background:var(--card);border:2px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.row{display:flex;align-items:center;gap:20px}
+.pill{display:inline-flex;align-items:center;gap:12px;padding:12px 26px;border-radius:999px;font-weight:700;font-size:28px}
+.ic{display:inline-flex;align-items:center;justify-content:center;border-radius:18px;flex:none}
+.ic svg{width:55%;height:55%}
+table.sheet{width:100%;border-collapse:collapse;font-size:30px}
+table.sheet td,table.sheet th{padding:18px 22px;text-align:left;border-bottom:2px solid var(--line)}
+table.sheet th{font-size:22px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:700}
+table.sheet td:last-child,table.sheet th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.bubble{position:absolute;max-width:760px;padding:28px 34px;border-radius:34px;font-size:34px;line-height:1.3;font-weight:500}
+
+/* captions */
+#cap{position:absolute;left:200px;right:200px;top:950px;text-align:center;font-size:48px;font-weight:800;letter-spacing:-.01em;line-height:1.25;text-shadow:0 4px 18px rgba(0,0,0,.6)}
+#cap span{display:inline-block;margin:0 7px;padding:0 10px;border-radius:14px}
+#cap span.on{background:var(--mag);color:#fff}
+#cap span.past{color:#fff}
+#cap span.fut{color:rgba(255,255,255,.55)}
+
+/* controls */
+#controls{position:fixed;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;gap:14px;padding:0 16px;background:#0e0b1c;border-top:1px solid #241d40;font:500 14px Inter,sans-serif;color:#cfc7ea}
+#controls button{background:#8b5cf6;color:#fff;border:0;border-radius:10px;padding:10px 18px;font:700 14px Inter,sans-serif;cursor:pointer}
+#controls input{flex:1;accent-color:#e040fb}
+#tc{font-variant-numeric:tabular-nums;min-width:96px;text-align:right}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="scaler"><div id="stage">
+  <div class="glow" id="g1" style="width:900px;height:900px;left:-300px;top:-200px;background:#6d28d9"></div>
+  <div class="glow" id="g2" style="width:800px;height:800px;right:-300px;bottom:100px;background:#c026d3"></div>
+  <div id="dots"></div>
+  <div id="scenes"></div>
+  <div id="timer"><svg viewBox="0 0 24 24" fill="none" stroke="#e040fb" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="tt">1:00</span></div>
+  <div id="cap"></div>
+</div></div></div>
+<div id="controls"><button id="play">Play</button><input id="scrub" type="range" min="0" max="84.32" step="0.01" value="0"><span id="tc">0.00s</span></div>
+<audio id="vo" src="vo.mp3" preload="auto"></audio>
+
+<script>
+/* ---------- helpers ---------- */
+const DUR = 84.32;
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const P=(t,a,d)=>clamp((t-a)/d);
+const eo=x=>1-Math.pow(1-x,3);
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eb=x=>{const c1=1.9,c3=c1+1;return x<=0?0:x>=1?1:1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const lerp=(a,b,u)=>a+(b-a)*u;
+function inOut(t,a,b,fi=.45,fo=.4){return Math.min(eo(P(t,a,fi)),1-P(t,b-fo,fo))}
+function S(e,o,x=0,y=0,s=1,r=0){e.style.opacity=o;e.style.transform=`translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`;e.style.visibility=o<=0.001?'hidden':'visible'}
+function mk(tag,cls,parent,html='',css=''){const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;if(css)e.style.cssText=css;parent.appendChild(e);return e}
+const $=id=>document.getElementById(id);
+function typed(e,text,t,a,b){const n=Math.round(text.length*clamp((t-a)/(b-a)));const blink=(Math.floor(t*2.4)%2===0)||n<text.length;e.innerHTML=text.slice(0,n)+(t>=a-.6?`<span class="caret" style="opacity:${blink?1:0}"></span>`:'')}
+
+const I={
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+ folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ sheet:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/>',
+ form:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+ ai:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>',
+ bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ chart:'<path d="M4 4v16h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+ send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',
+ filter:'<path d="M3 4h18l-7 8v6l-4 2v-8z"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+ x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ alert:'<path d="M12 6v8M12 18v.5"/>',
+ doc:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h6"/>',
+ cursor:'<path d="M4 3l7 18 2.5-7.5L21 11z"/>',
+ repeat:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>'
+};
+const svg=(k,c='#fff',w=2.4)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${I[k]}</svg>`;
+const orb=(size)=>`<div class="orbball" style="width:${size}px;height:${size}px">${svg('ai','#fff',2)}</div>`;
+
+/* ---------- flow component ---------- */
+function Flow(parent,top,nodes,h=340,tag='Canvas',opts={}){
+  const W=opts.w||800, c=mk('div','canvas',parent,'',`top:${top}px;height:${h}px;left:${opts.l||100}px;width:${W}px`);
+  mk('div','grid',c); const tg=mk('div','tag',c,tag);
+  const cy=h/2-28, gap=W/nodes.length;
+  nodes.forEach((n,i)=>n.x=gap*(i+.5));
+  const lines=[];
+  for(let i=0;i<nodes.length-1;i++){lines.push(mk('div','line',c,'',`left:${nodes[i].x}px;top:${cy-3}px;width:${nodes[i+1].x-nodes[i].x}px`))}
+  const N=nodes.map(n=>{
+    const e=mk('div','node',c,'',`left:${n.x}px;top:${cy}px`);
+    const ring=mk('div','ring',e);
+    const ci=mk('div','c',e,svg(n.icon),`background:${n.col}`);
+    const lb=mk('div','lb',e,`${n.label}<small>${n.sub||''}</small>`);
+    const bd=mk('div','badge',e);
+    return {e,ci,lb,bd,ring,x:n.x,col:n.col,state:''};
+  });
+  const pk=mk('div','packet',c,'',`top:${cy}px`);
+  return {c,tg,N,lines,pk,cy};
+}
+function flowBuild(F,t,t0,step){
+  F.N.forEach((n,i)=>{const u=P(t,t0+i*step,.5);S(n.e,clamp(u*3),0,0,eb(u));S(n.lb,eo(P(t,t0+i*step+.15,.4)),0,lerp(16,0,eo(P(t,t0+i*step+.15,.4))))});
+  F.lines.forEach((l,i)=>{const u=eio(P(t,t0+i*step+.25,step*.9));l.style.transform=`scaleX(${u})`;l.style.opacity=u>0?1:0});
+}
+// moves packet through nodes [from..to]; returns float position index or -1
+function flowRun(F,t,t0,seg,from=0,to=F.N.length-1){
+  const u=(t-t0)/seg; if(u<0||u>(to-from)+.35){F.pk.style.opacity=0;return -1}
+  const k=clamp(u,0,to-from), i=Math.min(Math.floor(k)+from,to-1>=from?to-1:from), f=k-(i-from);
+  const x=to===from?F.N[from].x:lerp(F.N[i].x,F.N[Math.min(i+1,to)].x,eio(clamp(f)));
+  F.pk.style.left=x+'px'; F.pk.style.opacity=Math.min(P(t,t0,.12),1-P(t,t0+seg*(to-from)+.15,.2)); return k+from;
+}
+function badge(n,type,t,at){
+  const u=P(t,at,.35);
+  if(u<=0){n.bd.style.opacity=0;return}
+  const col={ok:'#22c55e',err:'#ef4444',fix:'#8b5cf6'}[type];
+  if(n.bd.dataset.k!==type){n.bd.innerHTML=svg(type==='err'?'alert':'check','#fff',3.2);n.bd.dataset.k=type}
+  n.bd.style.background=col; S(n.bd,clamp(u*3),0,0,eb(u));
+}
+function hit(n,t,at){const u=P(t,at,.55);S(n.ring,u>0&&u<1?1-u:0,0,0,1+u*.7)}
+
+/* ---------- build DOM ---------- */
+const SC=$('scenes');
+const scenes=[];
+
+/* ===== 1. HOOK 0 – 6.48 ===== */
+{
+  const s=mk('div','scene',SC);
+  const top=mk('div','abs center h2',s,'I’m giving this AI','left:960px;right:auto;text-align:left;top:300px;font-size:64px;color:var(--mute)');
+  const ringBox=mk('div','abs',s,`<svg width="620" height="620" viewBox="0 0 620 620"><circle cx="310" cy="310" r="282" fill="none" stroke="#2e2552" stroke-width="22"/><circle id="hr" cx="310" cy="310" r="282" fill="none" stroke="url(#hg)" stroke-width="22" stroke-linecap="round" transform="rotate(-90 310 310)" stroke-dasharray="1772" stroke-dashoffset="1772"/><defs><linearGradient id="hg" x1="0" x2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ff4fa3"/></linearGradient></defs></svg>`,'left:250px;top:230px;width:620px;height:620px');
+  const sixty=mk('div','abs h1 center',ringBox,'60','top:150px;font-size:280px');
+  const secs=mk('div','abs center eyebrow',ringBox,'seconds','top:440px;font-size:40px;color:#fff');
+  const three=mk('div','abs center h2',s,'to build <span class="grad">3 automations</span>','left:960px;right:auto;text-align:left;top:400px;font-size:84px');
+  const biz=mk('div','abs center',s,'<span class="pill" style="background:#1d1638;border:2px solid #2e2552;font-size:36px">I’d actually use in my business</span>','left:960px;right:auto;text-align:left;top:560px');
+  const go=mk('div','abs center h1',s,'GO!','top:380px;font-size:240px;color:#fff');
+  scenes.push(t=>{
+    if(t>6.9){s.style.opacity=0;return}
+    s.style.opacity=1;
+    const out=eio(P(t,5.6,.85));
+    S(top,eo(P(t,0,.4))*(1-out),0,lerp(30,0,eo(P(t,0,.5))));
+    const ru=eb(P(t,.7,.6));
+    S(ringBox,clamp(P(t,.7,.25))*(1-eo(P(t,5.06,.35))),lerp(0,1200,eio(P(t,5.06,.5))),lerp(0,-450,eio(P(t,5.06,.5))),ru*lerp(1,.15,eio(P(t,5.06,.5))));
+    $('hr').setAttribute('stroke-dashoffset',1772*(1-eio(P(t,1,1.4))));
+    S(three,eo(P(t,2.2,.4))*(1-out),0,lerp(40,0,eo(P(t,2.2,.5))));
+    S(biz,eo(P(t,3.3,.4))*(1-out),0,lerp(40,0,eo(P(t,3.3,.5))),lerp(.9,1,eb(P(t,3.3,.5))));
+    S(go,eo(P(t,5.15,.2))*(1-P(t,5.9,.45)),0,0,eb(P(t,5.15,.4))*lerp(1,1.25,P(t,5.4,1)));
+    S(top,top.style.opacity*(1-P(t,5.06,.3)));
+    S(three,three.style.opacity*(1-P(t,5.06,.3)),0,0);
+    S(biz,biz.style.opacity*(1-P(t,5.06,.3)));
+  });
+}
+
+/* ===== 2. MEET MAIA 6.48 – 15.0 ===== */
+{
+  const s=mk('div','scene',SC);
+  const o=mk('div','abs',s,orb(240),'left:840px;top:150px');
+  const t1=mk('div','abs center h1',s,'Meet <span class="grad">Maia</span>','top:420px;font-size:150px');
+  const t2=mk('div','abs center',s,'Make’s AI-powered building companion','top:600px;font-size:44px;font-weight:600;color:var(--mute)');
+  const pr=mk('div','prompt',s,`<div class="orb">${orb(70)}</div><div class="ph">Plain English</div><div class="tx"></div>`,'top:290px;left:410px;width:1100px');
+  const prTx=pr.querySelector('.tx');
+  const F=Flow(s,520,[{icon:'form',col:'#8b5cf6',label:'New lead'},{icon:'ai',col:'#c026d3',label:'Qualify'},{icon:'sheet',col:'#14b8a6',label:'Add to CRM'},{icon:'mail',col:'#f5a524',label:'Email me'}],340,'Visual canvas',{l:410,w:1100});
+  scenes.push(t=>{
+    const a=inOut(t,6.48,15.25,.4,.45); s.style.opacity=a; if(a<=0)return;
+    const up=eio(P(t,9.3,.7));
+    S(o,eo(P(t,6.55,.3))*(1-up),0,lerp(0,-300,up),eb(P(t,6.55,.6))*lerp(1,.6,up)*(1+.03*Math.sin(t*3)));
+    S(t1,eo(P(t,6.8,.4)),0,lerp(40,0,eo(P(t,6.8,.5)))+lerp(0,-400,up),lerp(1,.6,up));
+    S(t2,eo(P(t,7.6,.4)),0,lerp(30,0,eo(P(t,7.6,.5)))+lerp(0,-430,up),lerp(1,.9,up));
+    S(pr,eo(P(t,9.5,.4)),0,lerp(40,0,eo(P(t,9.5,.5))));
+    typed(prTx,'When someone fills my form, qualify the lead, add it to my CRM and email me.',t,9.8,12.3);
+    S(F.c,eo(P(t,12.3,.4)),0,lerp(60,0,eo(P(t,12.3,.5))));
+    flowBuild(F,t,12.5,.42);
+    const k=flowRun(F,t,14.1,.28); F.N.forEach((n,i)=>hit(n,t,14.1+i*.28));
+  });
+}
+
+/* ===== workflow scene scaffold ===== */
+function WFHead(s,num,title){
+  const big=mk('div','abs',s,`<div class="eyebrow">Workflow ${num}</div><div class="h2" style="font-size:80px;margin-top:10px">${title}</div>`,'left:100px;top:70px;transform-origin:left top');
+  const ghost=mk('div','abs h1',s,num,'right:40px;top:-30px;font-size:300px;color:rgba(139,92,246,.10)');
+  return (t,a,settle)=>{
+    const u=eio(P(t,settle,.7));
+    S(big,eo(P(t,a,.35)),lerp(0,0,u),lerp(330,0,u)+lerp(40,0,eo(P(t,a,.5))),lerp(1.12,1,u));
+    S(ghost,eo(P(t,a,.6)),lerp(80,0,eo(P(t,a,.9))),0);
+  };
+}
+
+/* ===== 3. WORKFLOW 01 · invoices 15.27 – 30.6 ===== */
+{
+  const s=mk('div','scene',SC);
+  const head=WFHead(s,'01','Invoice management');
+  const pr=mk('div','prompt',s,`<div class="orb">${orb(70)}</div><div class="ph">You → Maia</div><div class="tx"></div>`,'top:250px');
+  const prTx=pr.querySelector('.tx');
+  const F=Flow(s,520,[{icon:'mail',col:'#3b82f6',label:'New invoice',sub:'Email attachment'},{icon:'folder',col:'#f5a524',label:'Save file',sub:'Invoices folder'},{icon:'sheet',col:'#22c55e',label:'Log amount',sub:'Spreadsheet'}],360,'Built by Maia');
+  const inv=mk('div','card',s,`<div class="row" style="justify-content:space-between"><div class="row"><div class="ic" style="width:72px;height:72px;background:#3b82f6">${svg('doc')}</div><div><div style="font-size:24px;color:var(--mute);font-weight:700;letter-spacing:.1em">SAMPLE INVOICE</div><div style="font-size:36px;font-weight:800">INV-0042 · Acme Co.</div></div></div></div><div style="margin-top:26px;font-size:24px;color:var(--mute);font-weight:600">Amount due</div><div class="h1" style="font-size:96px;margin-top:4px">$1,240.00</div>`,'left:1070px;top:300px;width:680px;padding:36px 40px;transform-origin:center');
+  const saved=mk('div','card',s,`<div class="row"><div class="ic" style="width:72px;height:72px;background:#f5a524">${svg('folder')}</div><div style="flex:1"><div style="font-size:22px;color:var(--mute);font-weight:700;letter-spacing:.1em">INVOICES /</div><div style="font-size:34px;font-weight:700">INV-0042.pdf</div></div><span class="pill" style="background:rgba(34,197,94,.15);color:#4ade80">${svg('check','#4ade80',3).replace('<svg','<svg width="30" height="30"')} Saved</span></div>`,'left:1000px;top:250px;width:820px;padding:26px 32px');
+  const sh=mk('div','card',s,`<table class="sheet"><tr><th>Invoice</th><th>Vendor</th><th>Amount</th></tr><tr><td>INV-0040</td><td>Lumen</td><td>$860.00</td></tr><tr><td>INV-0041</td><td>Northwind</td><td>$2,315.50</td></tr><tr class="nr"><td>INV-0042</td><td>Acme Co.</td><td>$1,240.00</td></tr></table>`,'left:1000px;top:410px;width:820px;padding:10px 14px;overflow:hidden');
+  const nr=sh.querySelector('.nr');
+  const noCopy=mk('div','abs center',s,`<span class="pill" style="background:#1d1638;border:2px solid #2e2552;font-size:32px"><span style="text-decoration:line-through;text-decoration-thickness:4px;text-decoration-color:#ff4fa3;color:var(--mute)">Manual copy &amp; paste</span> <span style="color:#4ade80">0 min</span></span>`,'top:760px;left:1000px;width:820px;right:auto');
+  scenes.push(t=>{
+    const a=inOut(t,15.27,30.6,.35,.4); s.style.opacity=a; if(a<=0)return;
+    head(t,15.27,16.8);
+    S(pr,eo(P(t,17.0,.4)),0,lerp(40,0,eo(P(t,17,.5))));
+    typed(prTx,'Save every incoming invoice and record the amount in a spreadsheet.',t,17.3,21.6);
+    S(F.c,eo(P(t,22.2,.4)),0,lerp(60,0,eo(P(t,22.2,.5))));
+    flowBuild(F,t,22.45,.55);
+    // sample invoice enters then flies into node 1
+    const fly=eio(P(t,25.7,.6));
+    S(inv,eo(P(t,24.4,.4))*(1-P(t,26.05,.25)),lerp(0,100+F.N[0].x-1410,fly),lerp(40,0,eo(P(t,24.4,.5)))+lerp(0,520+F.cy-300-inv.offsetHeight/2,fly),lerp(1,.2,fly));
+    const k=flowRun(F,t,26.3,.8);
+    F.N.forEach((n,i)=>{hit(n,t,26.3+i*.8);badge(n,'ok',t,26.35+i*.8)});
+    S(saved,eo(P(t,27.2,.4)),0,lerp(40,0,eo(P(t,27.2,.5))));
+    S(sh,eo(P(t,27.8,.4)),0,lerp(40,0,eo(P(t,27.8,.5))));
+    const ru=P(t,28.3,.5); nr.style.opacity=eo(ru); nr.style.background=`rgba(34,197,94,${.22*(1-P(t,29.6,.8))+.06})`;
+    S(noCopy,eo(P(t,29.0,.35)),0,0,eb(P(t,29,.45)));
+  });
+}
+
+/* ===== 4. WORKFLOW 02 · sorting 30.97 – 46.4 ===== */
+{
+  const s=mk('div','scene',SC);
+  const head=WFHead(s,'02','Sorting messages');
+  const pr=mk('div','prompt',s,`<div class="orb">${orb(70)}</div><div class="ph">You → Maia</div><div class="tx"></div>`,'top:250px');
+  const prTx=pr.querySelector('.tx');
+  const F=Flow(s,520,[{icon:'form',col:'#8b5cf6',label:'Form',sub:'New submission'},{icon:'ai',col:'#c026d3',label:'AI classify',sub:'Label intent'},{icon:'filter',col:'#ff4fa3',label:'Filter',sub:'Sponsorship only'},{icon:'bell',col:'#f5a524',label:'Notify me',sub:'Push alert'}],360,'Built by Maia');
+  const msgs=[['Checkout page keeps crashing','Support','#3b82f6'],['Sponsorship: Q4 campaign with Nova Studio','Sponsorship','#e040fb'],['Love your videos, keep going!','General','#6b6390']];
+  const M=msgs.map((m,i)=>{
+    const c=mk('div','card',s,`<div class="row" style="justify-content:space-between;gap:16px"><div class="row" style="gap:18px;min-width:0"><div class="ic" style="width:60px;height:60px;background:#2a2150">${svg('user','#c9bff0')}</div><div style="font-size:30px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px">${m[0]}</div></div><span class="pill tg" style="background:${m[2]};font-size:24px;padding:10px 20px">${m[1]}</span></div>`,`left:1000px;top:${250+i*130}px;width:820px;padding:20px 26px`);
+    return {c,tg:c.querySelector('.tg'),out:mk('div','abs',c,`<span class="pill" style="background:#2a2150;color:var(--mute);font-size:22px;padding:8px 16px">${svg('x','#a59bc4',3).replace('<svg','<svg width="22" height="22"')} filtered</span>`,'right:215px;top:30px')};
+  });
+  const toast=mk('div','card',s,`<div class="row"><div class="ic" style="width:84px;height:84px;background:#f5a524;border-radius:24px">${svg('bell')}</div><div><div style="font-size:24px;font-weight:700;color:var(--mute);letter-spacing:.08em">NOTIFICATION · now</div><div style="font-size:36px;font-weight:800">New sponsorship inquiry</div><div style="font-size:28px;color:var(--mute)">Nova Studio · Q4 campaign</div></div></div>`,'left:1000px;top:250px;width:820px;padding:28px 32px;border-color:#f5a524;background:#211836');
+  const less=mk('div','abs center',s,`<span class="pill" style="background:rgba(34,197,94,.15);color:#4ade80;font-size:38px;padding:18px 34px">${svg('check','#4ade80',3).replace('<svg','<svg width="38" height="38"')} One less inbox task</span>`,'top:500px;left:1000px;width:820px;right:auto');
+  const inbox=mk('div','abs center',s,'','top:610px;left:1000px;width:820px;right:auto;font-size:34px;font-weight:700;color:var(--mute)');
+  scenes.push(t=>{
+    const a=inOut(t,30.97,46.4,.35,.4); s.style.opacity=a; if(a<=0)return;
+    head(t,30.97,32.5);
+    S(pr,eo(P(t,33.1,.4)),0,lerp(40,0,eo(P(t,33.1,.5))));
+    typed(prTx,'Classify every form submission. Only notify me about sponsorship inquiries.',t,33.4,38.4);
+    S(F.c,eo(P(t,34.6,.4)),0,lerp(60,0,eo(P(t,34.6,.5))));
+    flowBuild(F,t,34.9,.65);
+    // test: messages
+    const msgOut=P(t,42.1,.4);
+    M.forEach((m,i)=>{
+      S(m.c,eo(P(t,39.4+i*.15,.4))*(1-msgOut)*(i===1?1:lerp(1,.35,P(t,41.4,.4))),lerp(-80,0,eo(P(t,39.4+i*.15,.5))),0);
+      S(m.tg,eo(P(t,40.2+i*.3,.3)),0,0,eb(P(t,40.2+i*.3,.4)));
+      S(m.out,i===1?0:eo(P(t,41.5,.3)));
+      m.c.style.borderColor=i===1&&t>41.4?'#e040fb':'';
+    });
+    flowRun(F,t,39.6,.75);
+    F.N.forEach((n,i)=>{hit(n,t,39.6+i*.75);badge(n,'ok',t,39.65+i*.75)});
+    const bell=F.N[3].ci; bell.style.transform=`rotate(${t>41.9&&t<43?Math.sin((t-41.9)*28)*14*(1-P(t,41.9,1.1)):0}deg)`;
+    S(toast,eo(P(t,42.3,.4)),0,lerp(60,0,eo(P(t,42.3,.5))),lerp(.92,1,eb(P(t,42.3,.5))));
+    S(less,eo(P(t,43.7,.35)),0,0,eb(P(t,43.7,.45)));
+    const cnt=t<44.5?7:6; inbox.innerHTML=`Inbox to-dos: <span style="color:#fff">${cnt}</span>${t>=44.5?' <span style="color:#4ade80">(−1)</span>':''}`;
+    S(inbox,eo(P(t,44.0,.35)));
+  });
+}
+
+/* ===== 5. WORKFLOW 03 · weekly report 46.55 – 61.1 ===== */
+{
+  const s=mk('div','scene',SC);
+  const head=WFHead(s,'03','Weekly channel report');
+  const pr=mk('div','prompt',s,`<div class="orb">${orb(70)}</div><div class="ph">You → Maia</div><div class="tx"></div>`,'top:250px');
+  const prTx=pr.querySelector('.tx');
+  const F=Flow(s,520,[{icon:'clock',col:'#3b82f6',label:'Every Monday',sub:'9:00 AM'},{icon:'chart',col:'#14b8a6',label:'Channel stats',sub:'Latest numbers'},{icon:'ai',col:'#c026d3',label:'Summarize',sub:'AI summary'},{icon:'send',col:'#f5a524',label:'Send to me',sub:'Email'}],360,'Built by Maia');
+  const err=mk('div','card',s,`<div class="row"><div class="ic" style="width:68px;height:68px;background:#ef4444;border-radius:50%">${svg('alert','#fff',3.2)}</div><div><div style="font-size:34px;font-weight:800;color:#fca5a5">Run failed</div><div style="font-size:28px;color:var(--mute)">Error at step 2 · Channel stats</div></div></div>`,'left:1000px;top:250px;width:820px;padding:26px 32px;border-color:#ef4444;background:#241226');
+  const q=mk('div','bubble',s,'What went wrong?','right:100px;top:420px;background:#8b5cf6;border-bottom-right-radius:10px;font-weight:700');
+  const ans=mk('div','bubble',s,`<div class="row" style="gap:16px;margin-bottom:12px;font-size:24px;font-weight:700;color:var(--mute);letter-spacing:.1em">${orb(44)} MAIA</div><div class="tx"></div>`,'left:1000px;top:560px;background:var(--card2);border:2px solid var(--line);border-bottom-left-radius:10px;width:760px');
+  const ansTx=ans.querySelector('.tx');
+  const rep=mk('div','card',s,`<div class="row" style="justify-content:space-between"><div><div style="font-size:24px;font-weight:700;color:var(--mute);letter-spacing:.1em">MONDAY · 9:00 AM</div><div style="font-size:42px;font-weight:800">Your weekly channel report</div></div><span class="pill" style="background:rgba(34,197,94,.15);color:#4ade80">${svg('check','#4ade80',3).replace('<svg','<svg width="30" height="30"')} Sent</span></div>
+  <div class="row" style="margin-top:30px;gap:22px">
+   <div style="flex:1;background:#0f0b20;border-radius:22px;padding:22px"><div style="font-size:22px;color:var(--mute);font-weight:600">Views</div><div style="font-size:52px;font-weight:900">48.2K</div><div style="color:#4ade80;font-weight:700;font-size:24px">▲ 12%</div></div>
+   <div style="flex:1;background:#0f0b20;border-radius:22px;padding:22px"><div style="font-size:22px;color:var(--mute);font-weight:600">Subscribers</div><div style="font-size:52px;font-weight:900">+1,340</div><div style="color:#4ade80;font-weight:700;font-size:24px">▲ 8%</div></div>
+   <div style="flex:1.2;background:#0f0b20;border-radius:22px;padding:22px;display:flex;align-items:flex-end;gap:10px;height:170px" class="bars"></div>
+  </div>`,'left:1000px;top:250px;width:820px;padding:32px 34px');
+  const bars=rep.querySelector('.bars'); const BV=[.35,.5,.42,.62,.55,.78,.95];
+  const B=BV.map((v,i)=>mk('div','',bars,'',`flex:1;height:${v*120}px;border-radius:8px;background:${i===6?'linear-gradient(#ff4fa3,#e040fb)':'#3a2f66'};transform-origin:bottom`));
+  scenes.push(t=>{
+    const a=inOut(t,46.55,61.15,.35,.45); s.style.opacity=a; if(a<=0)return;
+    head(t,46.55,48.2);
+    S(pr,eo(P(t,48.5,.4)),0,lerp(40,0,eo(P(t,48.5,.5))));
+    typed(prTx,'Summarize my latest channel stats and send them to me every Monday.',t,48.8,51.7);
+    S(F.c,eo(P(t,49.4,.4)),0,lerp(60,0,eo(P(t,49.4,.5))));
+    flowBuild(F,t,49.7,.5);
+    // first run -> error at node 1
+    const fixed=t>=57.4;
+    flowRun(F,t,52.4,.6,0,1);
+    hit(F.N[0],t,52.4); badge(F.N[0],'ok',t,52.45);
+    const errOn=t>=53.0&&!fixed;
+    F.N[1].ci.style.background=errOn?'#ef4444':'#14b8a6';
+    const shake=t>53&&t<53.6?Math.sin((t-53)*60)*10*(1-P(t,53,.6)):0;
+    F.N[1].ci.style.transform=`translateX(${shake}px)`;
+    if(t<57.4) badge(F.N[1],'err',t,53.0); else badge(F.N[1],'fix',t,57.4);
+    // second run
+    if(t>=58.7){F.N.forEach((n,i)=>{hit(n,t,58.7+i*.45);badge(n,'ok',t,58.75+i*.45)})}
+    else {F.N.slice(2).forEach(n=>badge(n,'ok',t,999)); if(t<52.45)badge(F.N[0],'ok',t,999)}
+    if(t>=58.6) flowRun(F,t,58.7,.45);
+    S(err,eo(P(t,53.1,.35))*(1-P(t,57.5,.35)),0,lerp(40,0,eo(P(t,53.1,.45))));
+    const chatOut=P(t,58.4,.35);
+    S(q,eo(P(t,54.6,.3))*(1-chatOut),0,lerp(30,0,eo(P(t,54.6,.4))),lerp(.9,1,eb(P(t,54.6,.4))));
+    S(ans,eo(P(t,56.2,.3))*(1-chatOut),0,lerp(30,0,eo(P(t,56.2,.4))));
+    ansTx.innerHTML='Step 2 had no date range set. I added “last 7 days” — fixed! ✅'.slice(0,Math.round(70*clamp((t-56.4)/1.6)));
+    S(rep,eo(P(t,59.6,.4)),0,lerp(60,0,eo(P(t,59.6,.5))));
+    B.forEach((b,i)=>b.style.transform=`scaleY(${eo(P(t,59.9+i*.07,.4))})`);
+  });
+}
+
+/* ===== 6. OVERVIEW 61.05 – 69.2 ===== */
+{
+  const s=mk('div','scene',SC);
+  const h=mk('div','abs',s,`<div class="h1" style="font-size:96px">Three workflows.</div><div class="h2 grad" style="font-size:64px;margin-top:12px">Every step on the canvas.</div>`,'left:100px;top:300px;width:840px');
+  const defs=[['Invoice management',[['mail','#3b82f6'],['folder','#f5a524'],['sheet','#22c55e']]],['Sorting messages',[['form','#8b5cf6'],['ai','#c026d3'],['filter','#ff4fa3'],['bell','#f5a524']]],['Weekly channel report',[['clock','#3b82f6'],['chart','#14b8a6'],['ai','#c026d3'],['send','#f5a524']]]];
+  const cards=defs.map((d,i)=>{
+    const c=mk('div','card',s,'',`left:1000px;top:${150+i*235}px;width:820px;height:220px;padding:24px 32px`);
+    mk('div','row',c,`<div style="font-size:30px;font-weight:800;flex:1">${d[0]}</div><span class="pill" style="background:rgba(34,197,94,.15);color:#4ade80;font-size:22px;padding:8px 18px">● Active</span>`,'');
+    const row=mk('div','abs',c,'','left:40px;right:40px;top:100px;height:90px');
+    const n=d[1].length, gap=740/n;
+    d[1].forEach((nd,j)=>{
+      if(j<n-1) mk('div','line',row,'',`left:${gap*(j+.5)}px;top:42px;width:${gap}px;border-top-width:5px`);
+      mk('div','ic',row,svg(nd[0]),`position:absolute;left:${gap*(j+.5)-44}px;top:0;width:88px;height:88px;border-radius:50%;background:${nd[1]}`);
+    });
+    return {c,row,gap};
+  });
+  const cur=mk('div','abs',s,svg('cursor','#fff',2).replace('<svg','<svg width="70" height="70" style="filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))"').replace('fill="none"','fill="#111"'),'left:0;top:0');
+  const sel=mk('div','abs',s,'','width:116px;height:116px;border-radius:50%;border:5px solid #fff;left:0;top:0');
+  const panel=mk('div','card',s,`<div class="row" style="gap:18px"><div class="ic" style="width:64px;height:64px;background:#ff4fa3;border-radius:50%">${svg('filter')}</div><div style="font-size:34px;font-weight:800">Filter settings</div></div>
+   <div style="margin-top:24px;font-size:24px;color:var(--mute);font-weight:700;letter-spacing:.1em">CONDITION</div>
+   <div class="row" style="margin-top:12px;gap:14px;font-size:32px;font-weight:600"><span style="padding:14px 20px;background:#0f0b20;border-radius:16px">Category</span><span style="color:var(--mute)">equals</span><span class="val" style="padding:14px 20px;background:#0f0b20;border-radius:16px;border:2px solid #e040fb"></span></div>`,'left:100px;top:560px;width:820px;padding:30px 34px;border-color:#ff4fa3');
+  const val=panel.querySelector('.val');
+  scenes.push(t=>{
+    const a=inOut(t,61.05,69.3,.35,.4); s.style.opacity=a; if(a<=0)return;
+    S(h,eo(P(t,61.1,.4)),0,lerp(40,0,eo(P(t,61.1,.5))));
+    cards.forEach((c,i)=>S(c.c,eo(P(t,61.5+i*.25,.4)),lerp(120,0,eo(P(t,61.5+i*.25,.55))),0));
+    // cursor path to filter node of card 2 (x = 80+32... approximate centre)
+    const fx=1000+40+cards[1].gap*2.5, fy=385+100+44;
+    const cu=eio(P(t,65.3,.9));
+    S(cur,eo(P(t,65.2,.3)),lerp(1500,fx+10,cu),lerp(900,fy+10,cu),t>66.2&&t<66.4?.85:1);
+    S(sel,eo(P(t,66.25,.2)),fx-58,fy-58,eb(P(t,66.25,.35)));
+    S(panel,eo(P(t,66.4,.35)),0,lerp(60,0,eo(P(t,66.4,.45))));
+    const v1='Sponsorship', v2='Sponsorship or Brand deal';
+    val.textContent=t<67.4?v1:v2.slice(0,v1.length+Math.round((v2.length-v1.length)*clamp((t-67.4)/1.0)));
+  });
+}
+
+/* ===== 7. YOUR TURN 69.3 – 74.8 ===== */
+{
+  const s=mk('div','scene',SC);
+  const h=mk('div','abs',s,`<div class="eyebrow">Your turn</div><div class="h1" style="font-size:84px;margin-top:14px">Pick one task you repeat every week.</div>`,'left:100px;width:820px;top:150px');
+  const tasks=['Logging receipts','Answering FAQs','Updating my CRM','Posting to socials'];
+  const T=tasks.map((x,i)=>mk('div','card',s,`<div class="row" style="justify-content:space-between"><div style="font-size:36px;font-weight:700">${x}</div><span class="pill" style="background:#2a2150;color:#c9bff0;font-size:22px;padding:8px 18px">${svg('repeat','#c9bff0').replace('<svg','<svg width="24" height="24"')} weekly</span></div>`,`left:1000px;top:${120+i*120}px;width:820px;padding:24px 32px`));
+  const pr=mk('div','prompt',s,`<div class="orb">${orb(70)}</div><div class="ph">Describe it to Maia</div><div class="tx"></div>`,'top:640px;left:1000px;width:820px');
+  const prTx=pr.querySelector('.tx');
+  const first=mk('div','abs center h2',s,'That’s your <span class="grad">first automation.</span>','left:100px;right:auto;width:820px;text-align:left;top:560px;font-size:64px');
+  scenes.push(t=>{
+    const a=inOut(t,69.3,74.85,.35,.35); s.style.opacity=a; if(a<=0)return;
+    S(h,eo(P(t,69.35,.4)),0,lerp(40,0,eo(P(t,69.35,.5))));
+    T.forEach((c,i)=>{
+      const chosen=i===2;
+      S(c,eo(P(t,69.8+i*.18,.35))*(chosen?1:1-.7*P(t,71.0,.3)),lerp(-80,0,eo(P(t,69.8+i*.18,.5))),0,chosen?lerp(1,1.04,eb(P(t,71,.4))):1);
+      c.style.borderColor=chosen&&t>71?'#e040fb':'';
+    });
+    S(pr,eo(P(t,71.3,.4)),0,lerp(40,0,eo(P(t,71.3,.5))));
+    typed(prTx,'Every time I close a deal, update my CRM and send a thank-you email.',t,71.5,73.6);
+    S(first,eo(P(t,72.9,.4)),0,lerp(30,0,eo(P(t,72.9,.5))),lerp(.9,1,eb(P(t,72.9,.5))));
+  });
+}
+
+/* ===== 8. CTA 74.7 – 81.95 ===== */
+{
+  const s=mk('div','scene',SC);
+  const card=mk('div','card',s,`<div class="eyebrow" style="color:#c9bff0">Make Pro</div>
+   <div class="h1" style="font-size:150px;margin-top:20px">1 month</div>
+   <div class="h1 grad" style="font-size:180px;margin-top:-6px">FREE</div>
+   <div class="r1 row" style="margin-top:46px;font-size:46px;font-weight:700">${'<div class="ic" style="width:66px;height:66px;background:#22c55e;border-radius:50%">'+svg('check','#fff',3.2)+'</div>'}10,000 operations</div>
+   <div class="r2 row" style="margin-top:26px;font-size:46px;font-weight:700">${'<div class="ic" style="width:66px;height:66px;background:#22c55e;border-radius:50%">'+svg('check','#fff',3.2)+'</div>'}No credit card required</div>`,'left:160px;top:110px;width:900px;padding:56px 64px 60px;background:linear-gradient(160deg,#1f1640,#130d27);border-color:#4c3a8a');
+  const r1=card.querySelector('.r1'), r2=card.querySelector('.r2');
+  const link=mk('div','abs center',s,`<span class="pill" style="background:#fff;color:#0a0716;font-size:44px;padding:22px 44px">Link in the description</span><div style="margin-top:18px">${svg('send','#e040fb',2.4).replace('<svg','<svg width="70" height="70" style="transform:rotate(135deg)"')}</div>`,'top:400px;left:1140px;width:640px;right:auto');
+  scenes.push(t=>{
+    const a=inOut(t,74.7,82.0,.35,.4); s.style.opacity=a; if(a<=0)return;
+    S(card,eo(P(t,74.75,.4)),0,lerp(80,0,eo(P(t,74.75,.55))),lerp(.94,1,eb(P(t,74.75,.6))));
+    S(r1,eo(P(t,77.25,.3)),lerp(-50,0,eo(P(t,77.25,.45))),0);
+    S(r2,eo(P(t,78.15,.3)),lerp(-50,0,eo(P(t,78.15,.45))),0);
+    S(link,eo(P(t,75.2,.4)),0,lerp(40,0,eo(P(t,75.2,.5)))+(t>76?Math.abs(Math.sin((t-76)*3))*-16:0));
+  });
+}
+
+/* ===== 9. OUTRO 81.9 – end ===== */
+{
+  const s=mk('div','scene',SC);
+  const o=mk('div','abs',s,orb(200),'left:860px;top:170px');
+  const t1=mk('div','abs center h1',s,'Start building','top:420px;font-size:130px');
+  const t2=mk('div','abs center h2 grad',s,'your own workflows today.','top:580px;font-size:72px');
+  scenes.push(t=>{
+    const a=Math.min(eo(P(t,81.85,.35)),1-P(t,DUR-.25,.25)); s.style.opacity=a; if(a<=0)return;
+    S(o,eo(P(t,81.9,.3)),0,0,eb(P(t,81.9,.55))*(1+.04*Math.sin(t*4)));
+    S(t1,eo(P(t,82.0,.35)),0,lerp(40,0,eo(P(t,82,.45))));
+    S(t2,eo(P(t,82.4,.35)),0,lerp(40,0,eo(P(t,82.4,.45))));
+  });
+}
+
+/* ---------- timer ---------- */
+function timer(t){
+  const T0=5.06,T1=61.05, tm=$('timer');
+  const vis=Math.min(eo(P(t,5.3,.35)),1-P(t,68.8,.4));
+  S(tm,vis,0,0,lerp(.6,1,eb(P(t,5.3,.45)))*(t>61.05&&t<61.6?1+.12*Math.sin(P(t,61.05,.55)*Math.PI):1));
+  if(vis<=0)return;
+  if(t<T1){const rem=Math.ceil(60-(t-T0)*60/(T1-T0));$('tt').textContent=`0:${String(clamp(rem,0,60)).padStart(2,'0')}`.replace('0:60','1:00');tm.style.borderColor='#2e2552';tm.style.color='#fff'}
+  else {$('tt').textContent='0:00 ✓';tm.style.borderColor='#22c55e';tm.style.color='#4ade80'}
+}
+
+/* ---------- captions ---------- */
+const SEG=[[0,4.86,"I'm giving this AI 60 seconds to build three automations I could actually use in my business."],[5.06,6.06,"Timer starts now."],[6.48,9.3,"This is Maia, Make's AI-powered building companion."],[9.47,14.79,"I describe what I want in plain English, and Maia builds the automation directly on the visual canvas."],[15.28,16.58,"First, invoice management."],[17.17,21.86,"I want every incoming invoice saved automatically, with the amount recorded in a spreadsheet."],[22.37,25.9,"Maia is building the steps for me, so let's test it with a sample invoice."],[26.2,30.32,"Now the invoice is saved, and the amount is logged without manually copying everything."],[31,32.78,"Second, sorting incoming messages."],[33.41,39.06,"I want AI to classify every form submission, but only sponsorship inquiries should trigger a notification."],[39.38,43.53,"Let's test it. The inquiry is classified, and the relevant notification comes through."],[43.68,46.15,"That's one less inbox task to handle manually."],[46.58,48.15,"Third, a weekly channel report."],[48.77,52,"I want the latest statistics summarized and sent to me every Monday."],[52.38,54.47,"The first run hit an error."],[54.59,55.79,"So I asked Maia what went wrong."],[56.22,60.54,"Maia identified the issue and helped me fix the workflow. Now let's test it again."],[61.06,64.57,"Three useful workflows, and I can see every step on the canvas."],[65.3,68.93,"I can inspect how they work and refine the logic whenever I need to."],[69.31,72.61,"Pick one task you repeat every week and describe it to Maia."],[72.87,74.7,"That can be your first automation."],[74.7,81.19,"Use the link in the description to get one month of Make Pro free, with 10,000 operations and no credit card required."],[81.9,84.02,"Start building your own workflows today."]];
+// split into word timings (weighted by length) then chunk to ≤5 words
+const CH=[];
+SEG.forEach(([a,b,txt])=>{
+  const w=txt.split(' '), wt=w.map(x=>x.length+2+(/[,.]$/.test(x)?3:0)), tot=wt.reduce((p,c)=>p+c,0);
+  let acc=a; const W=w.map((x,i)=>{const s=acc;acc+=(b-a)*wt[i]/tot;return {x,s,e:acc}});
+  let cur=[];
+  W.forEach((wd,i)=>{cur.push(wd);if(cur.length>=6||/[,.]$/.test(wd.x)&&cur.length>=2||i===W.length-1){CH.push(cur);cur=[]}});
+});
+const capEl=$('cap'); let lastChunk=-1;
+function captions(t){
+  let ci=-1; for(let i=0;i<CH.length;i++){const c=CH[i],s=c[0].s-.05,e=(CH[i+1]&&CH[i+1][0].s-.05<c[c.length-1].e+.6)?CH[i+1][0].s-.05:c[c.length-1].e+.35;if(t>=s&&t<e){ci=i;break}}
+  if(ci<0){capEl.style.opacity=0;return}
+  const c=CH[ci];
+  capEl.style.opacity=1;
+  capEl.innerHTML=c.map(w=>`<span class="${t>=w.s&&t<w.e?'on':t>=w.e?'past':'fut'}">${w.x}</span>`).join('');
+  const u=eb(P(t,c[0].s-.05,.25)); capEl.style.transform=`translateY(${lerp(20,0,u)}px) scale(${lerp(.92,1,u)})`;
+}
+
+/* ---------- background ---------- */
+function bg(t){
+  $('g1').style.transform=`translate(${Math.sin(t*.35)*120}px,${Math.cos(t*.27)*90}px)`;
+  $('g2').style.transform=`translate(${Math.cos(t*.3)*-110}px,${Math.sin(t*.22)*120}px)`;
+  $('dots').style.transform=`translateY(${-(t*12)%44}px)`;
+}
+
+function renderAt(t){bg(t);scenes.forEach(f=>f(t));timer(t);captions(t)}
+window.renderAt=renderAt; window.DUR=DUR;
+
+/* ---------- preview player ---------- */
+const vo=$('vo'),scrub=$('scrub'),tc=$('tc'),btn=$('play');
+function fit(){const vp=$('viewport').getBoundingClientRect();const s=Math.min(vp.width/1920,vp.height/1080);$('scaler').style.transform=`scale(${s})`;$('scaler').style.margin=`${(1080*s-1080)/2}px ${(1920*s-1920)/2}px`}
+if(new URLSearchParams(location.search).has('render')){document.body.classList.add('render');renderAt(0)}
+else{
+  addEventListener('resize',fit);fit();renderAt(0);
+  btn.onclick=()=>{if(vo.paused){vo.play();btn.textContent='Pause'}else{vo.pause();btn.textContent='Play'}};
+  scrub.oninput=()=>{vo.currentTime=+scrub.value;renderAt(+scrub.value)};
+  vo.onended=()=>btn.textContent='Play';
+  (function loop(){if(!vo.paused){renderAt(vo.currentTime);scrub.value=vo.currentTime}tc.textContent=vo.currentTime.toFixed(2)+'s';requestAnimationFrame(loop)})();
+}
+</script>
+</body>
+</html>

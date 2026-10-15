@@ -1,6 +1,6 @@
 # Three Automations in 60 Seconds: Motion Graphic Script
 
-**Format:** 1080×1920 (9:16), 30 fps, 84.3 s · **Audio:** `vo.mp3` (voiceover)
+**Formats:** 1080×1920 (9:16) and 1920×1080 (16:9), 30 fps, 84.3 s. Both use the same timing; the 16:9 cut puts header, prompt and canvas on the left and results on the right · **Audio:** `vo.mp3` (voiceover)
 **Look:** Deep violet night (`#0A0716`), drifting purple/magenta glows, dot grid. Inter Black headlines, magenta gradient accents. Circular workflow nodes joined by dotted lines, in the style of a visual canvas.
 **Persistent elements:** a countdown chip (top right) runs 1:00 → 0:00 from "Timer starts now" until the recap. Captions sit at the bottom, show 4 words at a time, and highlight the current word in magenta.
 
@@ -92,7 +92,8 @@ Timecodes come from pauses detected in the VO.
 
 ### Files
 - `index.html`: the animation. Open it in a browser and press **Play** to watch it synced to the VO, or scrub the timeline. Every frame is a pure function of time, so it renders frame-exact.
-- `maia-automations-9x16.mp4`: final render with the VO.
+- `landscape.html`: the 16:9 version of the animation, with the same controls.
+- `maia-automations-9x16.mp4` and `maia-automations-16x9.mp4`: final renders with the VO.
 - `vo.mp3`: source voiceover.
 
 ### Notes before publishing
