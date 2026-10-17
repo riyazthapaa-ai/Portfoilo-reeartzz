@@ -1,0 +1,260 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{--bg:#07090e;--ink:#eef2f8;--muted:#8a94a6;--cyan:#38c8f0;--blue:#4a7dff;--red:#ff3b4e;--green:#2bd47d;--card:#111723;--line:rgba(255,255,255,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+body{font-family:Inter,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden}
+.bg{position:absolute;inset:0}
+.glow{background:radial-gradient(ellipse 48% 46% at 50% 52%,rgba(30,62,140,.62),rgba(16,30,70,.25) 55%,transparent 78%)}
+.grid{background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:64px 64px;background-position:-8px -8px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 30%,transparent 85%)}
+.vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%)}
+.rays{position:absolute;left:50%;top:50%;width:3000px;height:3000px;margin:-1500px 0 0 -1500px;
+  background:repeating-conic-gradient(from 0deg,rgba(40,90,210,.30) 0deg 4deg,transparent 4deg 12deg);
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,transparent 4%,#000 12%,rgba(0,0,0,.6) 22%,transparent 36%);opacity:0}
+.scene{position:absolute;inset:0;visibility:hidden}
+.inner{position:absolute;inset:0}
+.abs{position:absolute;left:0;right:0;display:flex;justify-content:center;align-items:center;flex-wrap:wrap}
+.w{display:inline-block;white-space:pre;will-change:transform,filter,opacity}
+.sm{font:800 38px/1.1 Inter;letter-spacing:.01em;text-transform:uppercase;gap:0 14px}
+.md{font:400 64px/1 'Archivo Black';text-transform:uppercase;gap:0 26px}
+.big{font:400 150px/1 'Archivo Black';text-transform:uppercase;gap:0 40px;letter-spacing:-.005em}
+.c{color:var(--cyan)} .b{color:var(--blue)} .r{color:var(--red)} .mu{color:var(--muted)}
+.gw{background:linear-gradient(180deg,#fff 30%,#b9c6dc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gb{background:linear-gradient(180deg,#7fb0ff 0%,#3f6ff5 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gc{background:linear-gradient(90deg,#4a7dff,#38c8f0);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.card{position:relative;background:linear-gradient(180deg,#141b29,#0f1520);border:1.5px solid var(--line);border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.card .ic{width:96px;height:96px;border-radius:22px;display:grid;place-items:center;background:rgba(56,200,240,.08);border:1.5px solid rgba(56,200,240,.18)}
+.card .ic svg{width:52px;height:52px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.card .lb{font:800 25px/1.15 Inter;letter-spacing:.02em;text-transform:uppercase;text-align:center}
+.card .sub{font:500 17px/1.2 'JetBrains Mono';color:var(--muted);text-align:center}
+.card .hl{position:absolute;inset:-1.5px;border-radius:22px;border:2px solid var(--cyan);box-shadow:0 0 34px rgba(56,200,240,.45),inset 0 0 30px rgba(56,200,240,.12);opacity:0}
+
+/* SD card graphic */
+.sd{position:absolute;width:250px;height:320px;border-radius:18px 54px 18px 18px;background:linear-gradient(160deg,#3b7bff,#1d48c8);box-shadow:0 30px 70px rgba(20,60,200,.45),inset 0 2px 0 rgba(255,255,255,.25);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sd .pins{position:absolute;top:22px;left:40px;display:flex;gap:9px}.sd .pins i{width:16px;height:44px;border-radius:4px;background:#f2c94c}
+.sd b{font:400 92px/1 'Archivo Black';margin-top:50px}.sd span{font:800 22px Inter;opacity:.85;letter-spacing:.1em}
+/* film strip */
+.film{position:absolute;display:flex;gap:10px;padding:18px 14px;background:#0d121c;border-radius:10px;border:1.5px solid var(--line)}
+.film::before,.film::after{content:"";position:absolute;left:10px;right:10px;height:8px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.35) 0 10px,transparent 10px 22px)}
+.film::before{top:5px}.film::after{bottom:5px}
+.film i{width:120px;height:80px;border-radius:5px}
+
+/* logo */
+.logo{position:absolute;left:50%;top:50%;display:flex;flex-direction:column;align-items:center}
+.logo .row{display:flex;align-items:center;gap:22px}
+.logo .name{font:800 150px/1 Inter;letter-spacing:-.045em}
+.logo .ver{font:400 104px/1 'Archivo Black';padding:12px 26px 14px;border-radius:24px;background:linear-gradient(135deg,#2f6bff,#38bdf8);box-shadow:0 0 60px rgba(56,140,255,.55),inset 0 2px 0 rgba(255,255,255,.3)}
+.logo .by{font:700 24px Inter;letter-spacing:.55em;color:#7f93c0;margin-top:26px}
+
+/* viewfinder */
+.vf{position:absolute;inset:0;opacity:0}
+.vf .cn{position:absolute;width:90px;height:90px;border:4px solid rgba(255,255,255,.85)}
+.vf .tl{left:70px;top:70px;border-right:0;border-bottom:0}.vf .tr{right:70px;top:70px;border-left:0;border-bottom:0}
+.vf .bl{left:70px;bottom:70px;border-right:0;border-top:0}.vf .br{right:70px;bottom:70px;border-left:0;border-top:0}
+.vf .rec{position:absolute;left:110px;top:108px;font:500 26px 'JetBrains Mono';display:flex;align-items:center;gap:12px}
+.vf .rec i{width:18px;height:18px;border-radius:50%;background:var(--red);box-shadow:0 0 14px var(--red)}
+.vf .spec{position:absolute;right:110px;top:110px;font:500 24px 'JetBrains Mono';color:#cfd6e2}
+.vf .tc{position:absolute;left:0;right:0;bottom:100px;text-align:center;font:500 34px 'JetBrains Mono';letter-spacing:.08em}
+.vf .cross{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;opacity:.5}
+.vf .cross::before,.vf .cross::after{content:"";position:absolute;background:#fff}
+.vf .cross::before{left:22px;top:0;width:2px;height:46px}.vf .cross::after{top:22px;left:0;height:2px;width:46px}
+
+/* chips */
+.chip{position:absolute;font:500 26px 'JetBrains Mono';color:#aab3c2;padding:12px 20px;border-radius:10px;background:rgba(30,38,54,.7);border:1.5px solid rgba(255,255,255,.08)}
+.strike{position:absolute;height:20px;background:var(--red);box-shadow:0 0 24px rgba(255,59,78,.6);border-radius:3px;transform-origin:left center}
+.fcard{position:absolute;width:250px;height:300px;border-radius:20px;background:linear-gradient(180deg,#151c2a,#0f1520);border:1.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+
+/* media cards */
+.media{width:300px;height:330px;padding:16px;justify-content:flex-start;gap:16px}
+.media .th{position:relative;width:100%;height:190px;border-radius:14px;overflow:hidden}
+.media .th .gl{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 3px,transparent 3px 11px);mix-blend-mode:overlay}
+.media .th svg{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+.media .fn{font:500 18px 'JetBrains Mono';color:var(--muted)}
+.badge{position:absolute;top:28px;right:28px;font:800 15px Inter;letter-spacing:.08em;padding:7px 12px;border-radius:30px;background:var(--green);color:#03140a;box-shadow:0 0 20px rgba(43,212,125,.6)}
+.bar{position:absolute;left:50%;width:720px;margin-left:-360px;height:14px;border-radius:10px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#3b6cff,#38c8f0);box-shadow:0 0 18px rgba(56,200,240,.6)}
+.barlb{position:absolute;left:0;right:0;text-align:center;font:500 24px 'JetBrains Mono';color:#9db3dc}
+
+/* feature tiles */
+.tiles{position:absolute;left:50%;top:190px;width:1500px;margin-left:-750px;display:grid;grid-template-columns:repeat(3,1fr);gap:30px;transform-origin:50% 0}
+.tile{height:230px;flex-direction:row;justify-content:flex-start;gap:28px;padding:0 34px}
+.tile .tx{display:flex;flex-direction:column;gap:12px}
+.tile .lb{text-align:left;font-size:29px}
+.tile .sub{text-align:left}
+.tile .ic{flex:none}
+</style></head>
+<body><div id="stage">
+  <div class="bg glow"></div><div class="bg grid"></div><div class="rays" id="rays"></div>
+  <div id="scenes"></div>
+  <div class="bg vig"></div>
+</div>
+<script>
+// ---------- icons ----------
+const I={
+camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/>',
+video:'<path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+clap:'<path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+sd:'<path d="M6 22a2 2 0 0 1-2-2V6l4-4h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2Z"/><path d="M8 10V7"/><path d="M12 10V6"/><path d="M16 10V6"/>',
+play:'<circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4Z"/>',
+image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+folder:'<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M7 12h10"/><path d="M7 16h6"/>',
+film:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
+gauge:'<path d="m12 14 4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/>',
+wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+drive:'<path d="M22 12H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z"/><path d="M6 16h.01"/><path d="M10 16h.01"/>',
+filex:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m14.5 12.5-5 5"/><path d="m9.5 12.5 5 5"/>',
+};
+const svg=k=>`<svg viewBox="0 0 24 24">${I[k]}</svg>`;
+
+// ---------- authoring helpers ----------
+// T = word onset in seconds relative to section start (VO 4:16.9)
+const root=document.getElementById('scenes');
+function scene(t0,t1,html){const s=document.createElement('div');s.className='scene';s.dataset.t0=t0;s.dataset.t1=t1;s.innerHTML=`<div class="inner">${html}</div>`;root.appendChild(s);return s}
+// words: "TEXT@t|cls" separated by spaces in array form
+const L=(cls,top,words,extra='')=>`<div class="abs ${cls}" style="top:${top}px;${extra}">${words.map(([w,t,c=''])=>`<span class="w ${c}" data-t="${t}">${w}</span>`).join('')}</div>`;
+const card=(ic,lb,t,a='card',w=300,h=300,sub='',id='')=>`<div class="card" ${id?`id="${id}"`:''} data-t="${t}" data-a="${a}" style="width:${w}px;height:${h}px"><div class="hl"></div><div class="ic">${svg(ic)}</div><div class="lb">${lb}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
+
+// S1a — FOR PHOTOGRAPHERS, VIDEOGRAPHERS, FILMMAKERS
+scene(0,3.28,
+ L('sm',250,[['FOR',.30]])+
+ `<div class="abs" style="top:370px;gap:40px">`+
+   card('camera','Photographers',.54,'card',330,330,'','c1')+
+   card('video','Videographers',1.50,'card',330,330,'','c2')+
+   card('clap','Filmmakers',2.38,'card',330,330,'','c3')+`</div>`);
+
+// S1b — AND ANYONE REGULARLY WORKING WITH SD CARDS AND CAMERA FOOTAGE
+scene(3.30,7.24,
+ L('sm',300,[['AND',3.34],['ANYONE',3.58,'c'],['REGULARLY',4.06],['WORKING',4.70],['WITH',5.02]])+
+ L('big',380,[['SD',5.26,'gb'],['CARDS',5.74,'gb']])+
+ L('md',575,[['AND',6.06,'mu'],['CAMERA',6.22,'gw'],['FOOTAGE',6.54,'c']])+
+ `<div class="sd" id="sdg" style="left:1520px;top:330px"><div class="pins"><i></i><i></i><i></i><i></i><i></i></div><b>128</b><span>GB · V30</span></div>`+
+ `<div class="film" id="film" style="left:-40px;top:720px"><i style="background:linear-gradient(135deg,#ff7a59,#c2367a)"></i><i style="background:linear-gradient(135deg,#2bc0e4,#2f5fd0)"></i><i style="background:linear-gradient(135deg,#f6b73c,#e2622d)"></i><i style="background:linear-gradient(135deg,#43e0a8,#1b8c8c)"></i><i style="background:linear-gradient(135deg,#b06ab3,#4568dc)"></i></div>`);
+
+// S2 — THE BIGGEST ADVANTAGE OF RECOVERIT V15 ... CREATOR'S PERSPECTIVE
+scene(7.26,12.98,
+ L('sm',300,[['THE',7.34],['BIGGEST',7.50,'c'],['ADVANTAGE',7.90],['OF',8.38]],'' ) .replace('class="abs sm"','id="s2top" class="abs sm"')+
+ `<div class="logo" id="logo"><div class="row"><span class="name w" data-t="8.54">Recoverit</span><span class="ver w" data-t="9.26" data-a="slam">V15</span></div><div class="by w" data-t="9.40" data-a="fade">BY WONDERSHARE</div></div>`+
+ L('sm',470,[['IS',9.90],['THAT',10.06],['IT',10.14],['APPROACHES',10.30,'c'],['RECOVERY',10.86],['FROM',11.42],['A',11.58]])+
+ L('big',560,[["CREATOR'S",11.74,'gw'],['PERSPECTIVE',12.38,'gc']],'font-size:112px;gap:0 30px')+
+ `<div class="vf" id="vf"><div class="cn tl"></div><div class="cn tr"></div><div class="cn bl"></div><div class="cn br"></div>
+   <div class="rec"><i id="recdot"></i>REC</div><div class="spec">4K · 24P · ISO 800</div><div class="tc" id="tc">00:00:00:00</div></div>`);
+
+// S3 — YOU'RE NOT JUST LOOKING FOR A DELETED FILE
+const chips=[['IMG_0412.JPG',230,170,-4],['C0031.MP4',1450,150,3],['DSC_8890.ARW',140,800,2],['A001_C014.MXF',1380,820,-3],['~$tmp.bak',820,110,1],['GH5_0193.MOV',1560,330,4],['proxy_04.mp4',110,690,-2],['thumbs.db',760,900,-1]];
+scene(13.02,15.40,
+ chips.map(([n,x,y,r],i)=>`<div class="chip" data-t="${13.1+i*.09}" data-a="chip" style="left:${x}px;top:${y}px;--r:${r}deg">${n}</div>`).join('')+
+ L('sm',395,[["YOU'RE",13.10],['NOT',13.34,'r'],['JUST',13.50,'r'],['LOOKING',13.66],['FOR',13.98],['A',14.06]])+
+ L('big',470,[['DELETED',14.22,'gw'],['FILE',14.70,'gw']],'font-size:170px')+
+ `<div class="strike" id="strike" style="left:250px;width:1420px;top:552px"></div>`);
+
+// S4 — YOU'RE TRYING TO GET AN ACTUAL PHOTO, VIDEO, PROJECT, OR PIECE OF FOOTAGE BACK INTO A USABLE STATE
+const media=(ic,lb,fn,g,t,id)=>`<div class="card media" id="${id}" data-t="${t}" data-a="card"><div class="hl"></div><div class="th" style="background:${g}"><div class="gl"></div>${svg(ic)}</div><div class="lb">${lb}</div><div class="fn">${fn}</div><div class="badge" style="opacity:0">✓ RECOVERED</div></div>`;
+scene(15.42,21.12,
+ L('sm',150,[["YOU'RE",15.50],['TRYING',15.82],['TO',15.98],['GET',16.14],['AN',16.30],['ACTUAL',16.46,'c']])+
+ `<div class="abs" style="top:245px;gap:34px">`+
+   media('image','Photo','DSC_8890.ARW','linear-gradient(135deg,#ff8a5b,#c2367a)',16.86,'m1')+
+   media('play','Video','C0031.MP4','linear-gradient(135deg,#2bc0e4,#2f5fd0)',17.42,'m2')+
+   media('folder','Project','Edit_v3.fcpbundle','linear-gradient(135deg,#f6b73c,#e2622d)',17.98,'m3')+
+   media('film','Footage','A001_C014.MXF','linear-gradient(135deg,#43e0a8,#1b8c8c)',18.70,'m4')+`</div>`+
+ L('sm',640,[['OR',18.54,'mu'],['PIECE',18.70],['OF',18.94],['FOOTAGE',19.10,'c'],['BACK',19.50],['INTO',19.66],['A',19.90]])+
+ L('big',705,[['USABLE',20.06,'gc'],['STATE',20.54,'gw']],'font-size:120px')+
+ `<div class="bar" id="bar" style="top:872px;opacity:0"><i id="barfill" style="width:0"></i></div><div class="barlb" id="barlb" style="top:902px;opacity:0">Recovering… 0%</div>`);
+
+// S5 — AND THE NEW TOOLS AROUND ... MAKE THAT WORKFLOW MUCH MORE COMPREHENSIVE
+const tl=(ic,lb,sub,t,id)=>`<div class="card tile" id="${id}" data-t="${t}" data-a="card"><div class="hl"></div><div class="ic">${svg(ic)}</div><div class="tx"><div class="lb">${lb}</div><div class="sub">${sub}</div></div></div>`;
+scene(21.14,99,
+ L('sm',95,[['AND',21.26],['THE',21.42],['NEW',21.58,'c'],['TOOLS',21.74,'c'],['AROUND',22.14]]).replace('class="abs sm"','id="s5top" class="abs sm"')+
+ `<div class="tiles" id="tiles">`+
+   tl('sd','SD Card Pro','Device-aware scans',22.38,'t1')+
+   tl('eye','Video Preview','High-bitrate, mid-scan',23.66,'t2')+
+   tl('search','AI Media Search','Find it in a sentence',24.62,'t3')+
+   tl('gauge','Recovery Quality<br>Assessment','Check before you recover',25.82,'t4')+
+   tl('wrench','Corrupted File<br>Repair','Fixed in the preview',27.66,'t5')+
+   tl('drive','Partition<br>Recovery','Lost partitions & file systems',29.34,'t6')+`</div>`+
+ L('sm',640,[['MAKE',30.38],['THAT',30.62],['WORKFLOW',30.78,'c']])+
+ L('md',705,[['MUCH',31.42,'gw'],['MORE',31.66,'gw']],'font-size:78px')+
+ L('big',800,[['COMPREHENSIVE',31.82,'gc']],'font-size:160px'));
+
+// ---------- engine ----------
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const eo=x=>1-Math.pow(1-x,4);           // easeOutQuart
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const lerp=(a,b,p)=>a+(b-a)*p;
+const LEAD=0.04; // land text a hair before the syllable
+const $=id=>document.getElementById(id);
+const scenes=[...document.querySelectorAll('.scene')];
+const animEls=[...document.querySelectorAll('[data-t]')];
+
+function animate(el,t){
+  const t0=+el.dataset.t-LEAD, a=el.dataset.a||'w';
+  if(a==='w'){const p=eo(cl((t-t0)/.30));
+    el.style.opacity=cl((t-t0)/.12);el.style.filter=`blur(${(1-p)*12}px)`;
+    el.style.transform=`translateY(${(1-p)*-10}px) scale(${lerp(1.28,1,p)})`;}
+  else if(a==='slam'){const p=cl((t-t0)/.34);const s=p<1?lerp(1.9,1,back(p)):1;
+    el.style.opacity=cl((t-t0)/.08);el.style.filter=`blur(${(1-eo(p))*14}px)`;el.style.transform=`scale(${s})`;}
+  else if(a==='fade'){const p=eo(cl((t-t0)/.5));el.style.opacity=p;el.style.transform=`translateY(${(1-p)*14}px)`;el.style.letterSpacing=`${lerp(.9,.55,p)}em`;}
+  else if(a==='card'){const p=cl((t-t0)/.42);const e=back(p);
+    el.style.opacity=cl((t-t0)/.15);el.style.filter=`blur(${(1-eo(p))*10}px)`;
+    el.style.transform=`translateY(${(1-e)*60}px) scale(${lerp(.86,1,e)})`;}
+  else if(a==='chip'){const p=eo(cl((t-t0)/.4));const d=(t-t0)*6;
+    el.style.opacity=p*.9;el.style.filter=`blur(${(1-p)*8}px)`;
+    el.style.transform=`translateY(${(1-p)*20-d}px) rotate(var(--r)) scale(${lerp(.8,1,p)})`;}
+}
+// how "lit" a card is: rises on its cue, settles after the next one comes in
+function lit(t,on,off){return cl((t-on+LEAD)/.15)*(off==null?1:1-cl((t-off)/.3))}
+function setHl(id,v){const h=$(id).querySelector('.hl');h.style.opacity=v;const ic=$(id).querySelector('.ic');if(ic)ic.style.background=`rgba(56,200,240,${.08+.14*v})`}
+
+function render(t){
+  // scenes: visibility, slow push-in, blurred exit
+  for(const s of scenes){const t0=+s.dataset.t0,t1=+s.dataset.t1;
+    const vis=t>=t0-.05&&t<t1+.26;s.style.visibility=vis?'visible':'hidden';if(!vis)continue;
+    const x=cl((t-t1)/.24),ex=eio(x),drift=(t-t0)*.006;
+    s.style.opacity=1-ex;s.style.filter=ex>0?`blur(${ex*16}px)`:'none';
+    s.firstChild.style.transform=`scale(${1+drift+ex*.06})`;}
+  for(const el of animEls)animate(el,t);
+
+  // background energy: rays bloom behind logo
+  const rays=$('rays');const ro=cl((t-8.4)/.35)*(1-cl((t-9.9)/.6))*1+cl((t-9.9)/.6)*(1-cl((t-12.95)/.3))*.25;
+  rays.style.opacity=ro;rays.style.transform=`rotate(${t*4}deg) scale(${1+cl((t-8.4)/.5)*.08})`;
+
+  // S1a: the active role card glows
+  setHl('c1',lit(t,.54,1.50));setHl('c2',lit(t,1.50,2.38));setHl('c3',lit(t,2.38));
+  // S1b: SD card + film strip slide in
+  {const p=eo(cl((t-5.22)/.55));$('sdg').style.transform=`translateX(${(1-p)*520}px) rotate(${lerp(30,12,p)+Math.sin(t*1.4)*1.5}deg) translateY(${Math.sin(t*1.8)*8}px)`;
+   const f=eo(cl((t-6.5)/.6));$('film').style.transform=`translateX(${lerp(-760,0,f)-(t-6.5)*30}px) rotate(-6deg)`;$('film').style.opacity=f;}
+  // S2: logo lifts to the top when the sentence continues
+  {const p=eio(cl((t-9.82)/.5));$('logo').style.transform=`translate(-50%,-50%) translateY(${lerp(30,-335,p)}px) scale(${lerp(1,.52,p)})`;
+   $('s2top').style.opacity=1-p;$('s2top').style.filter=`blur(${p*10}px)`;
+   const v=eo(cl((t-11.70)/.4));const vf=$('vf');vf.style.opacity=v;vf.style.transform=`scale(${lerp(1.12,1,v)})`;
+   $('recdot').style.opacity=(Math.floor(t*2)%2)?.25:1;
+   const fr=Math.floor(t*24),tc=n=>String(n).padStart(2,'0');const T=fr+3*3600*24+41*60*24;
+   $('tc').textContent=`${tc(Math.floor(T/86400))}:${tc(Math.floor(T/1440)%60)}:${tc(Math.floor(T/24)%60)}:${tc(T%24)}`;}
+  // S3: strike through "DELETED FILE"
+  {const p=eio(cl((t-15.0)/.22));$('strike').style.transform=`scaleX(${p}) rotate(-1.2deg)`;$('strike').style.opacity=p>0?1:0;}
+  // S4: media cards go from corrupted -> recovered
+  {const bp=cl((t-19.45)/1.15);$('bar').style.opacity=eo(cl((t-19.4)/.3));$('barlb').style.opacity=eo(cl((t-19.4)/.3));
+   $('barfill').style.width=`${eio(bp)*100}%`;$('barlb').textContent=bp<1?`Recovering… ${Math.round(eio(bp)*100)}%`:'Recovered ✓ 100%';
+   ['m1','m2','m3','m4'].forEach((id,i)=>{const c=$(id),r=cl((t-(20.06+i*.12))/.4);
+     const th=c.querySelector('.th');const jit=r<1&&Math.floor(t*30+i*7)%5===0?(i%2?6:-6):0;
+     th.style.filter=`grayscale(${1-r}) brightness(${lerp(.45,1,r)}) contrast(${lerp(1.3,1,r)})`;th.style.transform=`translateX(${jit*(1-r)}px)`;
+     th.querySelector('.gl').style.opacity=1-r;
+     const b=c.querySelector('.badge'),bp2=cl((t-(20.3+i*.12))/.3);b.style.opacity=bp2;b.style.transform=`scale(${bp2<1?lerp(.4,1,back(bp2)):1})`;
+     setHl(id,lit(t,[16.86,17.42,17.98,18.70][i],[17.42,17.98,18.70,19.5][i]));});}
+  // S5: each tool lights on its cue; all light together on "comprehensive"
+  {const cues=[22.38,23.66,24.62,25.82,27.66,29.34,30.30];
+   const all=cl((t-31.80)/.3);
+   cues.slice(0,6).forEach((c,i)=>setHl('t'+(i+1),Math.max(lit(t,c,cues[i+1]),all)));
+   const p=eio(cl((t-30.25)/.55));$('tiles').style.transform=`translateY(${lerp(0,-60,p)}px) scale(${lerp(1,.72,p)})`;
+   $('s5top').style.opacity=1-p;$('s5top').style.filter=`blur(${p*8}px)`;}
+}
+window.render=render;window.DURATION=33.6;
+render(+(location.hash.slice(1)||0));
+</script></body></html>
