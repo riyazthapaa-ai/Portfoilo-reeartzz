@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>5 Free AI Tools</title>
+<style>
+@font-face{font-family:'Space Grotesk';src:url(fonts/space-grotesk.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:'JetBrains Mono';src:url(fonts/jetbrains-mono.woff2) format('woff2');font-weight:100 800}
+:root{--bg:#07070c;--fg:#f5f5f8;--mut:#8f8fa6;--card:#12121b;--card2:#191925;--line:#2a2a3d;--ac:#ff8a3d;--good:#4ade80;--bad:#f87171;--warn:#fbbf24}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;background:var(--bg);overflow:hidden;font-family:Inter,sans-serif;color:var(--fg);transform-origin:0 0}
+.a{position:absolute}
+.scene{position:absolute;inset:0;display:none}
+.disp{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.02em}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* background */
+#grid{position:absolute;inset:-80px;background-image:radial-gradient(circle,rgba(255,255,255,.07) 1.5px,transparent 1.6px);background-size:44px 44px}
+.glow{position:absolute;border-radius:50%;filter:blur(40px);opacity:.33}
+#vign{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.65) 100%)}
+#bignum{position:absolute;right:-40px;bottom:-150px;font:700 760px/1 'Space Grotesk';color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.06);letter-spacing:-.06em}
+
+/* hud */
+#hud{position:absolute;left:120px;right:120px;top:56px;height:40px}
+#hud .lbl{position:absolute;left:0;top:6px;font:600 20px 'JetBrains Mono';letter-spacing:.14em;color:var(--mut)}
+#hud .lbl b{color:var(--fg)}
+#dots{position:absolute;right:0;top:8px;display:flex;gap:10px}
+#dots div{width:64px;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;position:relative}
+#dots i{position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(0)}
+
+/* wipe */
+.wipe{position:absolute;top:-100px;height:1280px;width:2400px;left:0;transform:skewX(-14deg)}
+
+/* captions */
+#cap{position:absolute;left:0;right:0;bottom:64px;text-align:center;font:700 46px/1.2 'Space Grotesk';letter-spacing:-.01em;text-shadow:0 4px 24px rgba(0,0,0,.8)}
+#cap span{display:inline-block;padding:2px 10px;border-radius:10px;margin:0 1px}
+
+/* left column */
+.left{position:absolute;left:120px;top:200px;width:700px}
+.num{font:700 150px/1 'Space Grotesk';letter-spacing:-.05em;color:var(--ac)}
+.tname{margin-top:18px;font:700 84px/1 'Space Grotesk';letter-spacing:-.035em;white-space:nowrap}
+.tsub{margin-top:16px;font:500 28px/1.3 Inter;color:var(--mut)}
+.pill{position:absolute;left:0;display:flex;align-items:center;gap:16px;height:64px;padding:0 26px 0 18px;border-radius:32px;background:var(--card2);border:1.5px solid var(--line);font:600 28px Inter;white-space:nowrap}
+.pill .d{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 18px Inter;color:#07070c;background:var(--ac)}
+.pill.bad .d{background:var(--bad)}
+.pill.warn .d{background:var(--warn)}
+
+/* generic */
+.card{position:absolute;background:var(--card);border:1.5px solid var(--line);border-radius:28px;overflow:hidden}
+.win-bar{height:52px;border-bottom:1.5px solid var(--line);display:flex;align-items:center;gap:9px;padding:0 22px}
+.win-bar i{width:13px;height:13px;border-radius:50%;background:#2e2e44}
+.win-bar span{margin-left:14px;font:500 18px 'JetBrains Mono';color:var(--mut)}
+.right{position:absolute;left:900px;top:190px;width:900px;height:720px}
+.chip{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 18px;border-radius:22px;font:600 21px Inter;background:var(--card2);border:1.5px solid var(--line);white-space:nowrap}
+.badge{position:absolute;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font:800 46px Inter;color:#07070c;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.caret{display:inline-block;width:3px;height:1em;background:var(--ac);vertical-align:-.12em;margin-left:3px}
+.icon{border-radius:26%;display:grid;place-items:center}
+.icon svg{width:58%;height:58%}
+
+/* intro */
+.tcard{position:absolute;top:0;width:300px;height:250px;border-radius:30px;background:var(--card);border:1.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.tcard .nm{font:700 30px 'Space Grotesk';letter-spacing:-.02em}
+.tcard .no{position:absolute;left:20px;top:16px;font:700 22px 'JetBrains Mono';color:var(--mut)}
+
+/* goblin */
+.gi-row{position:absolute;left:28px;right:28px;height:62px;display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--line);font:500 27px Inter}
+.gi-row .cb{width:32px;height:32px;border-radius:9px;border:2.5px solid #4a4a66;display:grid;place-items:center;flex:none}
+.gi-row .tm{margin-left:auto;font:600 21px 'JetBrains Mono';color:var(--ac);background:rgba(74,222,128,.12);padding:6px 14px;border-radius:12px}
+
+/* posters */
+.poster{position:absolute;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.plabel{position:absolute;font:600 22px 'JetBrains Mono';letter-spacing:.1em;color:var(--mut);text-transform:uppercase}
+
+/* mascot frames */
+.mframe{position:absolute;width:280px;height:210px;border-radius:22px;overflow:hidden;border:1.5px solid var(--line)}
+.mframe svg.m{position:absolute;left:50%;bottom:6px;width:150px;height:150px;margin-left:-75px}
+.mframe .tag{position:absolute;left:12px;top:12px;font:600 15px 'JetBrains Mono';background:rgba(0,0,0,.45);padding:4px 10px;border-radius:8px}
+
+/* controls (preview only) */
+#ctl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:12px;align-items:center;padding:10px 16px;background:rgba(10,10,16,.92);color:#ddd;font:14px Inter;z-index:10}
+#ctl button{background:#ff8a3d;border:0;border-radius:8px;padding:8px 16px;font:700 14px Inter;cursor:pointer}
+#ctl input[type=range]{flex:1}
+body.render #ctl{display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+  <div class="glow" id="g1" style="width:900px;height:900px"></div>
+  <div class="glow" id="g2" style="width:700px;height:700px"></div>
+  <div id="bignum"></div>
+  <div id="vign"></div>
+
+  <!-- scenes are injected here -->
+  <div id="scenes"></div>
+
+  <div id="hud"><div class="lbl"><b>5</b> FREE AI TOOLS</div><div id="dots"></div></div>
+  <div id="cap"></div>
+  <div class="wipe" id="w1"></div>
+  <div class="wipe" id="w2"></div>
+</div>
+
+<div id="ctl"><button id="play">Play</button><input id="scrub" type="range" min="0" max="118" step="0.01" value="0"><span id="tc" class="mono">0.00</span><label><input type="checkbox" id="capt" checked> captions</label></div>
+<audio id="vo" src="voiceover.mp3" preload="auto"></audio>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- original mascot used in the Nano Banana scene -->
+    <symbol id="mascot" viewBox="0 0 200 200">
+      <line x1="100" y1="38" x2="100" y2="12" stroke="#e8e8f0" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="100" cy="12" r="11" fill="#facc15"/>
+      <ellipse cx="100" cy="190" rx="58" ry="8" fill="rgba(0,0,0,.25)"/>
+      <path d="M38 118 Q20 128 26 146" stroke="#2dd4bf" stroke-width="16" stroke-linecap="round" fill="none"/>
+      <path d="M162 118 Q182 104 176 84" stroke="#2dd4bf" stroke-width="16" stroke-linecap="round" fill="none"/>
+      <rect x="36" y="36" width="128" height="148" rx="62" fill="#2dd4bf"/>
+      <rect x="52" y="56" width="96" height="66" rx="33" fill="#0f2f35"/>
+      <circle cx="80" cy="89" r="13" fill="#fff"/><circle cx="120" cy="89" r="13" fill="#fff"/>
+      <circle cx="83" cy="91" r="6" fill="#0f2f35"/><circle cx="123" cy="91" r="6" fill="#0f2f35"/>
+      <path d="M86 108 Q100 118 114 108" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <path d="M50 138 Q100 160 150 138 L150 150 Q100 172 50 150Z" fill="#facc15"/>
+      <circle cx="100" cy="168" r="6" fill="#0f2f35" opacity=".5"/>
+    </symbol>
+  </defs>
+</svg>
+
+<script src="data.js"></script>
+<script>
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,k)=>a+(b-a)*k;
+const E={
+  lin:t=>t,
+  out:t=>1-Math.pow(1-t,3),
+  inOut:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,
+  expo:t=>t>=1?1:1-Math.pow(2,-10*t),
+  back:t=>{const c=1.9;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)},
+};
+let T=0;
+const pr=(a,d=.5,e=E.out)=>e(clamp((T-a)/d));
+// fade/slide/scale an element in at `a`, optionally out at `o`
+function inn(el,a,{d=.55,x=0,y=34,s=1,r=0,blur=0,e=E.back,o=null,od=.35,ox=0,oy=-20,op=1}={}){
+  if(!el)return;
+  const k=pr(a,d,e), f=clamp((T-a)/(d*.5));
+  let q=o==null?0:E.inOut(clamp((T-o)/od));
+  el.style.opacity=f*(1-q)*op;
+  el.style.visibility=(f*(1-q)>0.001)?'visible':'hidden';
+  const tx=x*(1-k)+ox*q, ty=y*(1-k)+oy*q, sc=lerp(s,1,k), rot=r*(1-k);
+  el.style.transform=`translate(${tx}px,${ty}px) scale(${sc}) rotate(${rot}deg)`;
+  if(blur)el.style.filter=`blur(${blur*(1-pr(a,d,E.out))}px)`;
+}
+function type(el,text,a,cps=22,caret=true,until=1e9){
+  const n=Math.floor(clamp((T-a)*cps,0,text.length));
+  const blink=caret&&T<until&&(T<a+text.length/cps+.1||Math.floor(T*2.4)%2===0);
+  el.innerHTML=esc(text.slice(0,n))+(blink?'<span class="caret"></span>':'');
+}
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function h(html){const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstElementChild}
+function vis(el,on){el.style.display=on?'block':'none'}
+
+/* ---------- icons (generic glyphs, not product logos) ---------- */
+const ICON={
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="#07070c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l2 2 3-3"/><path d="M12 7h8"/><path d="M4 13l2 2 3-3"/><path d="M12 14h8"/><path d="M12 20h8"/><circle cx="6.5" cy="20" r="1.4" fill="#07070c"/></svg>`,
+  type:`<svg viewBox="0 0 24 24"><text x="12" y="18" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="17" fill="#07070c">Aa</text></svg>`,
+  book:`<svg viewBox="0 0 24 24" fill="none" stroke="#07070c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M5 3h11a3 3 0 013 3v15H8a3 3 0 01-3-3z"/><path d="M5 18a3 3 0 013-3h11"/><path d="M12 6.5l.9 1.8 1.8.9-1.8.9-.9 1.8-.9-1.8-1.8-.9 1.8-.9z" fill="#07070c"/></svg>`,
+  slides:`<svg viewBox="0 0 24 24" fill="none" stroke="#07070c" stroke-width="2.4" stroke-linejoin="round"><rect x="3" y="7" width="14" height="11" rx="2"/><path d="M7 4h12a2 2 0 012 2v9"/><path d="M6 14l3-3 2 2 3-3"/></svg>`,
+  banana:`<svg viewBox="0 0 24 24" fill="none" stroke="#07070c" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"><path d="M4 13c3 5 11 6 16-2-1 0-2-.5-2.5-1.5C15 14 9 14 6 10z" fill="#07070c" fill-opacity=".18"/><path d="M18 9.5l1-3.5"/></svg>`,
+  doc:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h8M9 17h8M9 9h3"/></svg>`,
+  play:`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`,
+  lock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>`,
+  refill:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v5h-5"/></svg>`,
+  headphones:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="3" y="14" width="5" height="7" rx="2" fill="currentColor"/><rect x="16" y="14" width="5" height="7" rx="2" fill="currentColor"/></svg>`,
+  chat:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>`,
+};
+const TOOLS=[
+  {n:'Goblin.tools',c:'#4ade80',i:'check'},
+  {n:'Ideogram',c:'#a78bfa',i:'type'},
+  {n:'Gemini Notebook',c:'#60a5fa',i:'book'},
+  {n:'Gamma',c:'#f472b6',i:'slides'},
+  {n:'Nano Banana',c:'#facc15',i:'banana'},
+];
+const icon=(k,size,c)=>`<div class="icon" style="width:${size}px;height:${size}px;background:${c}">${ICON[k]}</div>`;
+
+/* ---------- scene timeline (from forced alignment of the voiceover) ---------- */
+const SC=[
+  {id:'intro',s:0,e:9.6,c:'#ff8a3d'},
+  {id:'s1',s:9.6,e:26.7,c:TOOLS[0].c},
+  {id:'s2',s:26.7,e:47.45,c:TOOLS[1].c},
+  {id:'s3',s:47.45,e:69.7,c:TOOLS[2].c},
+  {id:'s4',s:69.7,e:86.8,c:TOOLS[3].c},
+  {id:'s5',s:86.8,e:105.85,c:TOOLS[4].c},
+  {id:'outro',s:105.85,e:118,c:'#ff8a3d'},
+];
+const DUR=118;
+const root=$('#scenes');
+const S={}; // scene element refs
+function scene(id,html){const el=h(`<div class="scene" id="${id}">${html}</div>`);root.appendChild(el);S[id]=el;return el}
+
+/* left column for tool scenes */
+function leftCol(i,sub,pills){
+  return `<div class="left">
+    <div class="num" data-k="num">0${i+1}</div>
+    <div style="display:flex;align-items:center;gap:22px;margin-top:18px" data-k="name">${icon(TOOLS[i].i,78,TOOLS[i].c)}<div class="tname" style="margin:0">${TOOLS[i].n}</div></div>
+    <div class="tsub" data-k="sub">${sub}</div>
+    ${pills.map((p,j)=>`<div class="pill ${p.k||''}" data-k="p${j}" style="top:${400+j*84}px"><div class="d">${p.k==='bad'?'✕':p.k==='warn'?'!':'✓'}</div>${p.t}</div>`).join('')}
+  </div>`;
+}
+function leftAnim(el,start,subT,pillTimes){
+  const q=k=>$(`[data-k="${k}"]`,el);
+  inn(q('num'),start+.15,{x:-60,y:0});
+  inn(q('name'),start+.3,{x:-60,y:0});
+  inn(q('sub'),subT,{y:20});
+  pillTimes.forEach((t,j)=>inn(q('p'+j),t,{x:-40,y:0,s:.9}));
+}
+
+/* ================= INTRO ================= */
+scene('intro',`
+  <div class="a disp" id="i-h1" style="left:0;right:0;top:170px;text-align:center;font-size:150px;line-height:1">
+    <span id="i-5" style="display:inline-block;color:var(--ac)">5</span> <span id="i-ai" style="display:inline-block">AI TOOLS</span>
+  </div>
+  <div class="a" id="i-free" style="left:0;right:0;top:350px;text-align:center"><span class="chip" style="height:62px;font-size:30px;padding:0 30px;border-color:var(--ac);color:var(--ac)">FREE TO START</span></div>
+  <div class="a" id="i-never" style="left:0;right:0;top:350px;text-align:center;font:600 34px Inter;color:var(--mut)">most people have <span style="color:var(--fg)">never</span> used them</div>
+  <div class="a" id="i-row" style="left:130px;top:470px;width:1660px;height:260px">
+    ${TOOLS.map((t,j)=>`<div class="tcard" id="i-c${j}" style="left:${j*340}px"><div class="no">#${j+1}</div><div class="ic">${icon(t.i,104,t.c)}</div><div class="nm">${t.n}</div></div>`).join('')}
+  </div>
+  <div class="a" id="i-pdf" style="left:560px;top:790px;width:800px;height:150px;display:flex;align-items:center;justify-content:center;gap:40px">
+    <div id="i-doc" style="display:flex;align-items:center;gap:16px;color:var(--fg)"><div style="width:74px;height:74px;color:#60a5fa">${ICON.doc}</div><div><div class="disp" style="font-size:40px">50-page PDF</div></div></div>
+    <div id="i-arrow" class="disp" style="font-size:60px;color:var(--ac)">→</div>
+    <div id="i-pod" style="display:flex;align-items:center;gap:16px"><div style="width:70px;height:70px;color:#60a5fa">${ICON.headphones}</div><div><div class="disp" style="font-size:40px">Podcast</div><div id="i-wave" style="display:flex;gap:5px;height:34px;align-items:center;margin-top:4px"></div></div></div>
+  </div>
+`);
+const iWave=$('#i-wave');for(let j=0;j<22;j++)iWave.appendChild(h('<i style="display:block;width:6px;border-radius:3px;background:#60a5fa"></i>'));
+
+function upIntro(){
+  inn($('#i-5'),0.05,{s:.3,y:0,d:.6});
+  inn($('#i-ai'),0.45,{y:60,d:.6});
+  inn($('#i-free'),1.45,{s:.7,y:0,o:2.35,oy:-10});
+  inn($('#i-never'),2.5,{y:20});
+  const unblur=[3.0,3.6,4.55,8.0,8.55];
+  TOOLS.forEach((t,j)=>{
+    const c=$('#i-c'+j);
+    inn(c,2.4+j*.09,{y:120,d:.7,e:E.back});
+    const ub=pr(unblur[j],.45,E.out);
+    const ic=$('.ic',c),nm=$('.nm',c);
+    ic.style.filter=nm.style.filter=`blur(${(1-ub)*16}px)`;
+    // focus on #3 while the PDF->podcast line plays
+    const focus=pr(4.5,.5)*(1-pr(7.8,.5));
+    if(j===2){c.style.transform+=` translateY(${-24*focus}px) scale(${1+.12*focus})`;c.style.borderColor=focus>.1?'#60a5fa':'';c.style.boxShadow=`0 0 ${70*focus}px rgba(96,165,250,${.45*focus})`;c.style.zIndex=5}
+    else c.style.opacity=parseFloat(c.style.opacity)*(1-.6*focus);
+    c.style.borderColor=(j!==2&&ub>.99&&T<unblur[j]+.6)?t.c:(j===2&&focus>.1?'#60a5fa':'');
+  });
+  inn($('#i-doc'),5.75,{x:-40,y:0,o:9.2});
+  inn($('#i-arrow'),6.7,{x:-30,y:0,o:9.2});
+  inn($('#i-pod'),7.25,{x:-30,y:0,o:9.2});
+  $$('i',iWave).forEach((b,j)=>{const env=VO.env[Math.floor(T*30)]||0;b.style.height=(6+28*env*(.5+.5*Math.abs(Math.sin(j*1.7+T*9))))+'px'});
+}
+
+/* ================= #1 GOBLIN.TOOLS ================= */
+const G_ITEMS=[['Pick a domain name','15 min'],['Choose a site builder','30 min'],['Write the homepage copy','45 min'],['Add photos & a logo','20 min'],['Set up a contact form','25 min'],['Hit publish','10 min']];
+scene('s1',leftCol(0,'Turns overwhelming tasks into tiny steps',[{t:'Completely free'},{t:'Estimates time for each step'},{t:'Beats procrastination'}])+`
+  <div class="card right" id="g-app">
+    <div class="win-bar"><i></i><i></i><i></i><span>magic to-do</span></div>
+    <div class="a" style="left:28px;right:28px;top:78px;height:84px;border-radius:18px;background:#0b0b12;border:1.5px solid var(--line);display:flex;align-items:center;padding:0 24px" id="g-input">
+      <div id="g-text" style="font:600 32px Inter;flex:1;white-space:nowrap"></div>
+      <div id="g-btn" class="chip" style="background:var(--ac);color:#07070c;border:0;height:52px;font-size:22px;padding:0 22px">Break it down ✦</div>
+    </div>
+    <div class="a" id="g-list" style="left:0;right:0;top:186px">
+      ${G_ITEMS.map((it,j)=>`<div class="gi-row" id="g-r${j}" style="top:${j*64}px"><div class="cb"></div><span class="tx">${it[0]}</span><span class="tm">${it[1]}</span></div>`).join('')}
+    </div>
+    <div class="a" id="g-foot" style="left:28px;right:28px;top:600px">
+      <div style="display:flex;justify-content:space-between;font:600 22px 'JetBrains Mono';color:var(--mut)"><span id="g-pct">0% done</span><span id="g-total">≈ 2h 25m total</span></div>
+      <div style="margin-top:14px;height:16px;border-radius:8px;background:#20202f;overflow:hidden"><div id="g-bar" style="height:100%;width:0;background:var(--ac);border-radius:8px"></div></div>
+    </div>
+    <div class="a disp" id="g-stamp" style="left:520px;top:300px;padding:10px 26px;border:6px solid var(--ac);color:var(--ac);border-radius:18px;font-size:64px;transform:rotate(-10deg)">DONE ✓</div>
+  </div>`);
+
+function upGoblin(){
+  const el=S.s1;
+  leftAnim(el,9.6,10.6,[11.35,20.1,24.9]);
+  inn($('#g-app',el),10.1,{x:80,y:0,d:.7,e:E.out});
+  inn($('#g-input',el),12.3,{y:20});
+  const tx=$('#g-text',el);
+  if(T<14.4){tx.style.color='var(--mut)';tx.innerHTML='Type something overwhelming…';}
+  else if(T<15.55){tx.style.color='';type(tx,'Clean my apartment',14.4,26);}
+  else if(T<15.9){tx.style.color='';const n=Math.round(18*(1-clamp((T-15.55)/.3)));tx.innerHTML=esc('Clean my apartment'.slice(0,n))+'<span class="caret"></span>';}
+  else {tx.style.color='';type(tx,'Launch my website',15.92,24,true,17.4);}
+  const press=pr(17.35,.12)*(1-pr(17.5,.25));
+  $('#g-btn',el).style.transform=`scale(${1-.08*press})`;
+  $('#g-btn',el).style.boxShadow=`0 0 ${40*press}px var(--ac)`;
+  G_ITEMS.forEach((_,j)=>{
+    const r=$('#g-r'+j,el);
+    inn(r,18.1+j*.17,{x:50,y:0,d:.45,e:E.out});
+    inn($('.tm',r),20.05+j*.2,{s:.5,y:0,d:.4});
+    const done=T>=22.55+j*.46;
+    const cb=$('.cb',r);
+    cb.style.background=done?'var(--ac)':'';cb.style.borderColor=done?'var(--ac)':'';
+    cb.innerHTML=done?'<span style="color:#07070c;font:900 20px Inter">✓</span>':'';
+    $('.tx',r).style.color=done?'var(--mut)':'';
+    $('.tx',r).style.textDecoration=done?'line-through':'';
+  });
+  const nd=G_ITEMS.filter((_,j)=>T>=22.55+j*.46).length;
+  inn($('#g-foot',el),21.4,{y:20});
+  $('#g-pct',el).textContent=Math.round(nd/6*100)+'% done';
+  $('#g-bar',el).style.width=(nd/6*100)+'%';
+  inn($('#g-stamp',el),25.35,{s:2.2,y:0,r:-10,d:.35,e:E.out});
+  if(T>25.35)$('#g-stamp',el).style.transform+=' rotate(-10deg)';
+}
+
+/* ================= #2 IDEOGRAM ================= */
+const posterCSS='background:linear-gradient(160deg,#1e1b4b,#7c3aed 55%,#f472b6);';
+scene('s2',leftCol(1,'The image generator that gets text right',[{t:'Readable lettering'},{t:'Ideogram 4.5: edit again & again'},{t:'Free weekly slow credits'}])+`
+  <div class="right" id="d-a">
+    <div class="poster" id="d-bad" style="left:0;top:40px;width:420px;height:580px;${posterCSS}filter:saturate(.7)">
+      <div class="a" style="left:40px;top:60px;width:340px;height:200px;border-radius:50%;background:radial-gradient(#fde68a,#f59e0b 60%,transparent 62%)"></div>
+      <div class="a disp" id="d-badtx" style="left:30px;right:30px;top:290px;font-size:66px;line-height:.95;text-align:center;color:#fff">GRNAD<br>OPEIMNG</div>
+      <div class="a disp" style="left:0;right:0;top:470px;text-align:center;font-size:32px;color:#fde68a;filter:blur(1.2px)">SAEL · 5O% OFFF</div>
+    </div>
+    <div class="plabel" id="d-badl" style="left:0;top:640px">Typical AI image</div>
+    <div class="badge" id="d-x" style="left:360px;top:0;background:var(--bad)">✕</div>
+    <div class="poster" id="d-good" style="left:480px;top:40px;width:420px;height:580px;${posterCSS}">
+      <div class="a" style="left:40px;top:60px;width:340px;height:200px;border-radius:50%;background:radial-gradient(#fde68a,#f59e0b 60%,transparent 62%)"></div>
+      <div class="a disp" style="left:30px;right:30px;top:290px;font-size:66px;line-height:.95;text-align:center;color:#fff">GRAND<br>OPENING</div>
+      <div class="a disp" style="left:0;right:0;top:470px;text-align:center;font-size:32px;color:#fde68a">SALE · 50% OFF</div>
+    </div>
+    <div class="plabel" id="d-goodl" style="left:480px;top:640px;color:var(--ac)">Ideogram</div>
+    <div class="badge" id="d-ok" style="left:840px;top:0;background:var(--good)">✓</div>
+  </div>
+  <div class="right" id="d-b">
+    <div class="poster" id="d-p1" style="left:0;top:30px;width:300px;height:430px;background:linear-gradient(180deg,#0f172a,#1d4ed8)">
+      <div class="a disp" style="left:24px;right:24px;top:40px;font-size:54px;line-height:.95;color:#fff">JAZZ<br>NIGHT</div>
+      <div class="a" style="left:24px;top:180px;width:252px;height:150px;border-radius:14px;background:repeating-linear-gradient(90deg,#fbbf24 0 10px,transparent 10px 22px)"></div>
+      <div class="a mono" style="left:24px;bottom:30px;font-size:18px;color:#bfdbfe">FRI · 9PM · LIVE</div>
+    </div>
+    <div class="plabel" style="left:0;top:480px" id="d-p1l">Posters</div>
+    <div class="poster" id="d-p2" style="left:330px;top:30px;width:570px;height:320px;background:linear-gradient(120deg,#facc15,#f97316)">
+      <div class="a disp" style="left:30px;top:40px;font-size:58px;line-height:.95;color:#111;width:320px">I TRIED 5 AI TOOLS</div>
+      <div class="a" style="right:30px;top:40px;width:180px;height:240px;border-radius:90px 90px 20px 20px;background:#111"></div>
+      <div class="a disp" style="left:30px;bottom:30px;font-size:30px;background:#111;color:#facc15;padding:4px 14px;border-radius:8px">FREE!</div>
+    </div>
+    <div class="plabel" style="left:330px;top:370px" id="d-p2l">Thumbnails</div>
+    <div class="poster" id="d-p3" style="left:330px;top:420px;width:570px;height:220px;background:#f5f0e6;display:flex;align-items:center;gap:26px;padding:0 40px">
+      <div style="width:130px;height:130px;border-radius:50%;background:#3f2a1d;display:grid;place-items:center;color:#f5f0e6;font:700 52px 'Space Grotesk'">B</div>
+      <div><div class="disp" style="font-size:62px;color:#3f2a1d;line-height:1">BREW&nbsp;&amp;&nbsp;CO.</div><div class="mono" style="font-size:20px;color:#8a6a4f;margin-top:8px;letter-spacing:.3em">COFFEE ROASTERS</div></div>
+    </div>
+    <div class="plabel" style="left:330px;top:660px" id="d-p3l">Logo ideas</div>
+  </div>
+  <div class="right" id="d-c">
+    <div class="chip a" id="d-ver" style="left:0;top:0;border-color:var(--ac);color:var(--ac);height:52px;font-size:24px">Ideogram 4.5</div>
+    <div class="poster" id="d-img" style="left:0;top:80px;width:560px;height:440px">
+      <div class="a" id="d-sky" style="inset:0"></div>
+      <div class="a" id="d-sun" style="left:330px;top:70px;width:120px;height:120px;border-radius:50%"></div>
+      <div class="a" style="left:-40px;right:-40px;bottom:0;height:220px;background:#0b1020;clip-path:polygon(0 100%,0 55%,18% 20%,32% 50%,50% 5%,68% 45%,82% 25%,100% 60%,100% 100%)"></div>
+      <div class="a disp" id="d-imgtx" style="left:28px;bottom:26px;font-size:46px;color:#fff">SUMMIT</div>
+    </div>
+    <div class="a" id="d-edits" style="left:600px;top:80px;width:300px"></div>
+    <div class="a" id="d-q" style="left:0;top:560px;width:560px">
+      <div style="display:flex;justify-content:space-between;font:600 22px 'JetBrains Mono'"><span style="color:var(--mut)">QUALITY</span><span id="d-qv" style="color:var(--good)">100%</span></div>
+      <div style="margin-top:12px;height:16px;border-radius:8px;background:#20202f;overflow:hidden"><div style="height:100%;width:100%;background:var(--good)"></div></div>
+      <div class="mono" id="d-qn" style="margin-top:14px;font-size:20px;color:var(--mut)">no quality loss between edits</div>
+    </div>
+  </div>
+  <div class="card right" id="d-d" style="height:600px">
+    <div class="a mono" style="left:44px;top:40px;font-size:22px;letter-spacing:.14em;color:var(--mut)">FREE PLAN</div>
+    <div class="a disp" style="left:44px;top:80px;font-size:58px">Weekly slow credits</div>
+    <div class="a" id="d-week" style="left:44px;top:200px;display:flex;gap:16px">
+      ${['M','T','W','T','F','S','S'].map((d,j)=>`<div style="width:96px;height:120px;border-radius:18px;background:var(--card2);border:1.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px"><span class="mono" style="font-size:20px;color:var(--mut)">${d}</span><span class="coin" style="width:40px;height:40px;border-radius:50%;background:${j===0?'var(--ac)':'#2a2a3d'}"></span></div>`).join('')}
+    </div>
+    <div class="a mono" id="d-refill" style="left:44px;top:340px;font-size:22px;color:var(--ac)">↻ credits refresh every week</div>
+    <div class="a" id="d-slow" style="left:44px;top:400px;width:810px">
+      <div style="display:flex;justify-content:space-between;font:600 22px 'JetBrains Mono';color:var(--mut)"><span>slow queue · generating…</span><span id="d-slowp">0%</span></div>
+      <div style="margin-top:12px;height:14px;border-radius:7px;background:#20202f;overflow:hidden"><div id="d-slowb" style="height:100%;width:0;background:var(--ac)"></div></div>
+    </div>
+    <div class="a" id="d-enough" style="left:44px;top:490px"><span class="chip" style="height:56px;font-size:26px;border-color:var(--good);color:var(--good)">✓ Enough to try it properly</span></div>
+  </div>`);
+const EDITS=[['make it sunset',[ '#f97316','#7c2d12'],'#fde68a'],['add a night sky',['#1e1b4b','#020617'],'#e2e8f0'],['make it winter',['#bae6fd','#64748b'],'#ffffff'],['neon style',['#db2777','#4c1d95'],'#22d3ee'],['golden hour',['#fbbf24','#b45309'],'#fff7ed'],['misty morning',['#cbd5e1','#475569'],'#f8fafc']];
+const EDIT_T=[39.15,39.65,40.0,40.45,40.8,41.2];
+EDITS.forEach((e,j)=>$('#d-edits').appendChild(h(`<div class="chip" style="position:absolute;left:0;top:${j*68}px;height:52px;font-size:20px"><span class="mono" style="color:var(--ac)">#${j+1}</span>${e[0]}</div>`)));
+
+function upIdeo(){
+  const el=S.s2;
+  leftAnim(el,26.7,27.6,[31.2,37.3,44.3]);
+  // A: bad vs good
+  const aOut=32.3;
+  inn($('#d-bad'),27.0,{y:60,d:.6,o:aOut,ox:-80,oy:0});
+  inn($('#d-badl'),27.2,{o:aOut});
+  if(T>27&&T<aOut+.4){const j=Math.sin(T*37)*3,k=Math.cos(T*29)*2;$('#d-badtx').style.transform=`skewX(${j}deg) translate(${k}px,${j}px)`;$('#d-badtx').style.filter=`blur(${1+Math.abs(j)*.3}px)`}
+  inn($('#d-x'),29.15,{s:.2,y:0,d:.45,o:aOut});
+  inn($('#d-good'),29.8,{y:60,d:.6,o:aOut,ox:80,oy:0});
+  inn($('#d-goodl'),30.0,{o:aOut});
+  inn($('#d-ok'),31.65,{s:.2,y:0,d:.45,o:aOut});
+  vis($('#d-a'),T<aOut+.5);
+  // B: posters / thumbnails / logos
+  const bOut=36.0;
+  vis($('#d-b'),T>32&&T<bOut+.5);
+  [['#d-p1',33.15],['#d-p2',33.85],['#d-p3',34.85]].forEach(([s,t])=>{inn($(s),t,{s:.8,y:40,o:bOut});inn($(s+'l'),t+.1,{o:bOut})});
+  // C: repeated edits
+  const cOut=42.75;
+  vis($('#d-c'),T>36&&T<cOut+.5);
+  inn($('#d-ver'),36.3,{s:.7,o:cOut});
+  inn($('#d-img'),36.5,{y:50,o:cOut});
+  let k=EDIT_T.filter(t=>T>=t).length;
+  const pal=k? EDITS[k-1]:[null,['#38bdf8','#0c4a6e'],'#fef9c3'];
+  $('#d-sky').style.background=`linear-gradient(180deg,${pal[1][0]},${pal[1][1]})`;
+  $('#d-sun').style.background=pal[2];
+  const flash=k?1-clamp((T-EDIT_T[k-1])/.25):0;
+  $('#d-img').style.boxShadow=`0 0 0 ${6*flash}px var(--ac),0 30px 80px rgba(0,0,0,.55)`;
+  $$('#d-edits .chip').forEach((c,j)=>inn(c,EDIT_T[j]-.05,{x:40,y:0,d:.35,e:E.out,o:cOut}));
+  inn($('#d-q'),40.9,{y:20,o:cOut});
+  // D: free plan
+  vis($('#d-d'),T>42.8);
+  inn($('#d-d'),43.0,{y:60,d:.6,e:E.out});
+  $$('#d-week .coin').forEach((c,j)=>{const on=T>44.25+j*.08;c.style.background=on?'var(--ac)':'#2a2a3d';c.style.transform=`scale(${on?1+.3*(1-clamp((T-44.25-j*.08)/.25)):1})`});
+  inn($('#d-refill'),44.4,{x:-20,y:0});
+  inn($('#d-slow'),44.6,{y:16});
+  const sp=clamp((T-44.6)/3)*.92;
+  $('#d-slowb').style.width=(sp*100)+'%';$('#d-slowp').textContent=Math.round(sp*100)+'%';
+  inn($('#d-enough'),45.9,{s:.7,y:0});
+}
+
+/* ================= #3 GEMINI NOTEBOOK ================= */
+scene('s3',`<div class="left">
+    <div class="num" data-k="num">03</div>
+    <div style="display:flex;align-items:center;gap:22px;margin-top:18px" data-k="name">${icon('book',78,TOOLS[2].c)}<div class="tname" style="margin:0;font-size:76px">Gemini Notebook</div></div>
+    <div class="tsub" data-k="sub">formerly NotebookLM</div>
+    <div class="pill" data-k="p0" style="top:400px"><div class="d">✓</div>Underrated &amp; free</div>
+    <div class="pill" data-k="p1" style="top:484px"><div class="d">✓</div>Answers only from your sources</div>
+    <div class="pill" data-k="p2" style="top:568px"><div class="d">✓</div>Summaries, mind maps, overviews</div>
+  </div>
+  <div class="right" id="n-a">
+    <div class="a disp" id="n-old" style="left:0;right:0;top:110px;text-align:center;font-size:96px;color:var(--mut)">NotebookLM<div id="n-strike" class="a" style="left:120px;right:120px;top:52%;height:8px;border-radius:4px;background:var(--bad);transform-origin:0 50%"></div></div>
+    <div class="a disp" id="n-arrow" style="left:0;right:0;top:250px;text-align:center;font-size:80px;color:var(--ac)">↓</div>
+    <div class="a disp" id="n-new" style="left:0;right:0;top:370px;text-align:center;font-size:96px;background:linear-gradient(90deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;color:transparent">Gemini Notebook</div>
+    <div class="a" id="n-july" style="left:0;right:0;top:520px;text-align:center"><span class="chip" style="height:56px;font-size:26px">Renamed in July</span></div>
+    <div class="a" id="n-free" style="left:0;right:0;top:600px;text-align:center"><span class="chip" style="height:56px;font-size:26px;border-color:var(--good);color:var(--good)">Still free · still underrated</span></div>
+  </div>
+  <div class="card right" id="n-b" style="height:640px">
+    <div class="win-bar"><i></i><i></i><i></i><span>my notebook</span></div>
+    <div class="a" style="left:0;top:52px;width:300px;bottom:0;border-right:1.5px solid var(--line)">
+      <div class="mono" style="margin:24px 0 0 24px;font-size:18px;letter-spacing:.14em;color:var(--mut)">SOURCES <span id="n-cnt">0</span></div>
+      ${[['PDF','#f87171','Q3 report.pdf'],['Notes','#fbbf24','meeting notes'],['Web','#4ade80','article.com'],['YouTube','#f43f5e','lecture video']].map((s,j)=>`<div class="a" id="n-s${j}" style="left:18px;right:18px;top:${70+j*84}px;height:70px;border-radius:14px;background:var(--card2);border:1.5px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 14px"><span class="mono" style="font-size:15px;font-weight:700;background:${s[1]};color:#07070c;padding:4px 8px;border-radius:6px">${s[0]}</span><span style="font:500 19px Inter;color:#cfcfe0">${s[2]}</span></div>`).join('')}
+    </div>
+    <div class="a" id="n-q" style="left:340px;right:30px;top:110px;display:flex;justify-content:flex-end"><div style="background:#1e3a8a;padding:18px 24px;border-radius:22px 22px 6px 22px;font:500 26px Inter;max-width:460px">What were the key findings?</div></div>
+    <div class="a" id="n-ans" style="left:340px;right:30px;top:230px"><div style="background:var(--card2);border:1.5px solid var(--line);padding:22px 26px;border-radius:22px 22px 22px 6px;font:500 25px/1.45 Inter">Revenue grew 18%, driven by the new app <span class="cite">1</span>. Churn fell after the pricing change <span class="cite">2</span>.</div>
+      <div id="n-only" class="mono" style="margin-top:22px;font-size:20px;color:var(--ac)">◆ grounded in your sources only</div></div>
+  </div>
+  <div class="right" id="n-c">
+    ${[['Summary','≡'],['Mind map','⋔'],['Audio overview','♫'],['Video overview','▶']].map((o,j)=>`<div class="card" id="n-o${j}" style="left:${j*230}px;top:0;width:210px;height:190px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px"><div style="width:68px;height:68px;border-radius:18px;background:rgba(96,165,250,.15);color:var(--ac);display:grid;place-items:center;font:700 38px Inter">${o[1]}</div><div style="font:600 23px Inter">${o[0]}</div></div>`).join('')}
+    <div class="card" id="n-rep" style="left:0;top:250px;width:250px;height:330px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f1f5f9;color:#0f172a;border:0">
+      <div style="width:90px;height:90px;color:#1d4ed8">${ICON.doc}</div><div class="disp" style="font-size:36px">Report</div><div class="mono" style="font-size:18px;color:#475569">50 pages</div>
+    </div>
+    <div class="a disp" id="n-arr" style="left:282px;top:360px;font-size:80px;color:var(--ac)">→</div>
+    <div class="card" id="n-player" style="left:380px;top:250px;width:520px;height:330px;padding:34px">
+      <div style="display:flex;align-items:center;gap:18px"><div style="width:64px;height:64px;color:var(--ac)">${ICON.headphones}</div><div><div style="font:700 28px Inter">Audio overview</div><div class="mono" style="font-size:18px;color:var(--mut)">for your commute</div></div></div>
+      <div id="n-wave" style="display:flex;gap:6px;align-items:center;height:110px;margin-top:18px"></div>
+      <div style="height:8px;border-radius:4px;background:#2a2a3d;margin-top:10px;overflow:hidden"><div id="n-prog" style="height:100%;width:0;background:var(--ac)"></div></div>
+    </div>
+  </div>`);
+{const w=$('#n-wave');for(let j=0;j<40;j++)w.appendChild(h('<i style="display:block;width:7px;border-radius:4px;background:var(--ac)"></i>'));}
+$$('.cite').forEach((c,j)=>{c.style.cssText='display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#60a5fa;color:#07070c;font:800 17px Inter;vertical-align:2px'});
+
+function upNote(){
+  const el=S.s3;
+  leftAnim(el,47.45,49.9,[52.8,59.4,62.6]);
+  $('[data-k="name"]',el).style.opacity*=pr(49.75,.4); // name appears with "Gemini Notebook"
+  // A rename
+  const aOut=54.5;
+  vis($('#n-a'),T<aOut+.5);
+  inn($('#n-old'),47.6,{y:30,o:aOut});
+  $('#n-strike').style.transform=`scaleX(${pr(48.05,.35,E.inOut)})`;
+  inn($('#n-arrow'),49.4,{y:-30,o:aOut});
+  inn($('#n-new'),49.7,{s:.7,y:0,d:.6,o:aOut});
+  inn($('#n-july'),50.8,{y:20,o:aOut});
+  inn($('#n-free'),53.35,{y:20,o:aOut});
+  // B sources + grounded answer
+  const bOut=61.55;
+  vis($('#n-b'),T>54.4&&T<bOut+.5);
+  inn($('#n-b'),54.65,{y:60,d:.6,e:E.out,o:bOut});
+  const st=[55.3,56.25,56.8,57.9];
+  st.forEach((t,j)=>inn($('#n-s'+j),t,{x:420,y:0,d:.55,e:E.out}));
+  $('#n-cnt').textContent=st.filter(t=>T>=t).length;
+  inn($('#n-q'),58.9,{y:20});
+  inn($('#n-ans'),59.4,{y:20});
+  $$('#n-ans .cite').forEach((c,j)=>{const k=pr(60.6+j*.15,.3);c.style.transform=`scale(${1+.35*Math.sin(k*Math.PI)})`});
+  inn($('#n-only'),60.6,{x:-20,y:0});
+  // C outputs + report -> audio
+  vis($('#n-c'),T>61.5);
+  [62.6,63.35,64.35,64.95].forEach((t,j)=>inn($('#n-o'+j),t,{y:50,s:.85}));
+  inn($('#n-rep'),66.6,{x:-50,y:0});
+  inn($('#n-arr'),67.85,{x:-30,y:0});
+  inn($('#n-player'),68.0,{x:40,y:0});
+  const env=VO.env;
+  $$('#n-wave i').forEach((b,j)=>{const e=env[Math.max(0,Math.floor(T*30)-j)]||0;b.style.height=(8+100*e)+'px';b.style.opacity=.35+.65*e});
+  $('#n-prog').style.width=(clamp((T-68)/12)*100)+'%';
+}
+
+/* ================= #4 GAMMA ================= */
+const SLIDES=[['Brew Box','#f472b6','#7c3aed'],['The problem','#1e1b4b','#312e81'],['Our solution','#fdf2f8','#fbcfe8'],['Market size','#0f172a','#1e293b'],['Business model','#fce7f3','#f9a8d4'],['Thank you','#7c3aed','#db2777']];
+scene('s4',leftCol(3,'Decks, docs &amp; web pages from one prompt',[{t:'400 free credits ≈ 10 decks'},{t:"Credits don't refill",k:'warn'},{t:'Free decks carry branding',k:'warn'}])+`
+  <div class="right" id="m-a">
+    <div class="a disp" id="m-q" style="left:0;right:0;top:220px;text-align:center;font-size:92px;line-height:1">Need a presentation<br><span style="color:var(--ac)">fast?</span></div>
+    <div class="a" id="m-clock" style="left:390px;top:80px;width:120px;height:120px;border-radius:50%;border:8px solid var(--ac)"><div id="m-hand" class="a" style="left:48px;top:10px;width:8px;height:44px;border-radius:4px;background:var(--fg);transform-origin:50% 100%"></div></div>
+  </div>
+  <div class="right" id="m-b">
+    <div class="card" id="m-prompt" style="left:0;top:0;width:900px;height:90px;display:flex;align-items:center;padding:0 16px 0 28px;border-radius:45px">
+      <span style="color:var(--ac);font:700 30px Inter;margin-right:16px">✦</span><div id="m-ptx" style="flex:1;font:500 27px Inter;white-space:nowrap"></div>
+      <div class="chip" id="m-gen" style="background:var(--ac);color:#07070c;border:0;height:58px;font-size:22px;border-radius:29px">Generate</div>
+    </div>
+    ${SLIDES.map((s,j)=>`<div class="poster" id="m-s${j}" style="left:${(j%3)*305}px;top:${130+Math.floor(j/3)*185}px;width:290px;height:165px;background:linear-gradient(135deg,${s[1]},${s[2]});border-radius:14px">
+      <div class="a disp" style="left:18px;top:16px;font-size:26px;color:${j===2||j===4?'#3b0764':'#fff'}">${s[0]}</div>
+      <div class="a" style="left:18px;top:62px;width:120px;height:8px;border-radius:4px;background:${j===2||j===4?'#3b076455':'#ffffff55'}"></div>
+      <div class="a" style="left:18px;top:80px;width:90px;height:8px;border-radius:4px;background:${j===2||j===4?'#3b076455':'#ffffff55'}"></div>
+      <div class="a" style="right:18px;bottom:16px;width:${60+j*8}px;height:${50+(j%3)*14}px;border-radius:10px;background:${j===2||j===4?'#db277755':'#ffffff33'}"></div></div>`).join('')}
+    <div class="card" id="m-doc" style="left:0;top:510px;width:440px;height:190px;padding:26px 30px"><div class="mono" style="font-size:18px;color:var(--mut);letter-spacing:.12em">DOCUMENT</div><div class="disp" style="font-size:34px;margin-top:10px">Brew Box one-pager</div><div style="margin-top:18px;height:8px;width:90%;border-radius:4px;background:#2a2a3d"></div><div style="margin-top:12px;height:8px;width:70%;border-radius:4px;background:#2a2a3d"></div></div>
+    <div class="card" id="m-web" style="left:460px;top:510px;width:440px;height:190px"><div class="win-bar" style="height:40px"><i></i><i></i><i></i><span style="font-size:15px">brewbox.site</span></div><div style="padding:20px 28px"><div class="disp" style="font-size:34px">Coffee, delivered.</div><div class="chip" style="margin-top:14px;height:38px;font-size:17px;background:var(--ac);color:#07070c;border:0">Subscribe</div></div></div>
+  </div>
+  <div class="right" id="m-c">
+    <div class="a" style="left:0;right:0;top:40px;text-align:center"><div class="mono" style="font-size:24px;letter-spacing:.14em;color:var(--mut)">FREE PLAN</div>
+      <div class="disp" id="m-400" style="font-size:220px;line-height:1;color:var(--ac)">0</div>
+      <div id="m-once" style="font:600 34px Inter">one-time credits</div></div>
+    <div class="a" id="m-decks" style="left:0;right:0;top:480px;display:flex;justify-content:center;gap:16px">${Array.from({length:10},()=>`<div style="width:70px;height:52px;border-radius:9px;background:linear-gradient(135deg,#f472b6,#7c3aed)"></div>`).join('')}</div>
+    <div class="a disp" id="m-ten" style="left:0;right:0;top:570px;text-align:center;font-size:44px">≈ 10 full decks</div>
+  </div>
+  <div class="right" id="m-d">
+    <div class="a disp" id="m-catch" style="left:0;top:20px;font-size:72px">The catch <span style="color:var(--warn)">⚠</span></div>
+    <div class="card" id="m-c1" style="left:0;top:160px;width:420px;height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:30px;text-align:center">
+      <div style="position:relative;width:130px;height:130px;color:var(--mut)">${ICON.refill}<div id="m-xline" class="a" style="left:-10px;top:60px;width:150px;height:10px;border-radius:5px;background:var(--warn);transform:rotate(-45deg)"></div></div>
+      <div class="disp" style="font-size:40px">Credits don't refill</div></div>
+    <div class="card" id="m-c2" style="left:460px;top:160px;width:440px;height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:30px;text-align:center">
+      <div class="poster" style="position:relative;width:340px;height:192px;background:linear-gradient(135deg,#f472b6,#7c3aed);border-radius:14px;box-shadow:none"><div class="a disp" style="left:20px;top:18px;font-size:30px">Brew Box</div><div id="m-brand" class="a" style="right:12px;bottom:12px;background:#fff;color:#111;font:700 15px Inter;padding:6px 12px;border-radius:8px">Made with Gamma</div></div>
+      <div class="disp" style="font-size:40px">Free decks carry branding</div></div>
+  </div>`);
+
+function upGamma(){
+  const el=S.s4;
+  leftAnim(el,71.5,72.2,[78.3,83.7,85.6]);
+  const aOut=71.5;
+  vis($('#m-a'),T<aOut+.5);
+  inn($('#m-q'),69.8,{s:.85,y:0,o:aOut});
+  inn($('#m-clock'),70.0,{s:.4,y:0,o:aOut});
+  $('#m-hand').style.transform=`rotate(${(T-69.7)*540}deg)`;
+  const bOut=77.0;
+  vis($('#m-b'),T>71.4&&T<bOut+.5);
+  inn($('#m-prompt'),71.75,{y:-30,o:bOut});
+  type($('#m-ptx'),'Pitch deck for a coffee subscription startup',71.9,40,true,72.75);
+  const press=pr(72.5,.1)*(1-pr(72.65,.25));
+  $('#m-gen').style.transform=`scale(${1-.08*press})`;
+  const glow=pr(76.0,.2)*(1-pr(76.5,.4));
+  $('#m-prompt').style.boxShadow=`0 0 0 ${4*glow}px var(--ac),0 0 ${60*glow}px var(--ac)`;
+  SLIDES.forEach((_,j)=>inn($('#m-s'+j),72.75+j*.11,{s:.6,y:30,d:.5,o:bOut}));
+  inn($('#m-doc'),73.6,{y:40,o:bOut});
+  inn($('#m-web'),75.1,{y:40,o:bOut});
+  const cOut=81.8;
+  vis($('#m-c'),T>77&&T<cOut+.5);
+  inn($('#m-c').firstElementChild,77.3,{y:30,o:cOut});
+  $('#m-400').textContent=Math.round(400*pr(78.25,.75,E.out));
+  inn($('#m-once'),79.0,{y:16,o:cOut});
+  $$('#m-decks div').forEach((d,j)=>inn(d,80.4+j*.1,{s:.3,y:0,d:.4,o:cOut}));
+  inn($('#m-ten'),80.8,{y:16,o:cOut});
+  vis($('#m-d'),T>81.8);
+  inn($('#m-catch'),82.0,{x:-40,y:0});
+  inn($('#m-c1'),82.9,{y:50});
+  $('#m-xline').style.transform=`rotate(-45deg) scaleX(${pr(83.75,.3)})`;
+  inn($('#m-c2'),84.6,{y:50});
+  inn($('#m-brand'),85.65,{s:2,y:0,d:.35,e:E.out});
+}
+
+/* ================= #5 NANO BANANA ================= */
+const MS=[['Beach','linear-gradient(180deg,#38bdf8 0 60%,#fde68a 60%)'],['City at night','linear-gradient(180deg,#0f172a,#312e81)'],['Outer space','radial-gradient(circle at 75% 25%,#a78bfa 0 14%,transparent 15%),linear-gradient(180deg,#020617,#1e1b4b)'],['Forest','linear-gradient(180deg,#86efac,#166534)'],['Coffee shop','linear-gradient(180deg,#d6a77a,#7c4a2a)']];
+const msvg=`<svg class="m" viewBox="0 0 200 200"><use href="#mascot"/></svg>`;
+scene('s5',leftCol(4,'The image model inside the Gemini app',[{t:'Superpower: consistency'},{t:'Basic version free in Gemini'},{t:'Nano Banana 2.1 on paid plans',k:'warn'}])+`
+  <div class="card right" id="b-a" style="height:640px">
+    <div class="win-bar"><i></i><i></i><i></i><span>gemini app</span></div>
+    <div class="a" id="b-p" style="right:34px;top:84px"><div style="background:#3f3f1a;border:1.5px solid #6b6b2a;padding:16px 24px;border-radius:22px 22px 6px 22px;font:500 25px Inter">Make a friendly mascot for my coffee brand</div></div>
+    <div class="a" id="b-img" style="left:34px;top:180px;width:440px;height:420px;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#fef3c7,#fcd34d)">
+      <svg class="a" viewBox="0 0 200 200" style="left:60px;top:40px;width:320px;height:320px"><use href="#mascot"/></svg>
+    </div>
+    <div class="a" id="b-chip" style="left:500px;top:190px"><span class="chip" style="border-color:var(--ac);color:var(--ac)">◆ Nano Banana</span></div>
+    <div class="a" id="b-super" style="left:500px;top:260px;width:360px;font:700 46px/1.1 'Space Grotesk'">Superpower:<br><span style="color:var(--ac)">consistency</span></div>
+  </div>
+  <div class="right" id="b-b">
+    ${MS.map((m,j)=>`<div class="mframe" id="b-f${j}" style="left:${j<3?j*310:155+(j-3)*310}px;top:${j<3?20:270}px;background:${m[1]}">${j===1?'<div class="a" style="left:20px;bottom:0;width:240px;height:110px;background:repeating-linear-gradient(90deg,#1e293b 0 34px,transparent 34px 46px)"></div>':''}${j===3?'<div class="a" style="left:0;right:0;bottom:0;height:120px;background:repeating-linear-gradient(90deg,transparent 0 10px,#14532d 10px 40px);clip-path:polygon(0 100%,0 40%,10% 0,20% 40%,30% 5%,40% 40%,50% 0,60% 40%,70% 5%,80% 40%,90% 0,100% 40%,100% 100%)"></div>':''}${msvg}<div class="tag">${m[0]}</div><div class="ok badge" style="right:10px;top:10px;left:auto;width:40px;height:40px;font-size:22px;background:var(--good)">✓</div></div>`).join('')}
+    <div class="a" id="b-same" style="left:0;right:0;top:560px;text-align:center"><span class="chip" style="height:60px;font-size:28px;border-color:var(--good);color:var(--good)">Same character · every edit</span></div>
+  </div>
+  <div class="right" id="b-c">
+    <div class="card" id="b-free" style="left:0;top:60px;width:430px;height:520px;padding:40px">
+      <div class="chip" style="border-color:var(--good);color:var(--good)">FREE</div>
+      <div class="disp" style="font-size:52px;margin-top:30px;line-height:1">Nano Banana</div>
+      <div style="font:500 26px Inter;color:var(--mut);margin-top:16px">Basic version in the Gemini app</div>
+      <svg viewBox="0 0 200 200" style="width:170px;height:170px;margin-top:30px"><use href="#mascot"/></svg>
+    </div>
+    <div class="card" id="b-paid" style="left:470px;top:60px;width:430px;height:520px;padding:40px;border-color:var(--ac)">
+      <div class="chip" style="border-color:var(--ac);color:var(--ac)"><span style="width:22px;height:22px;display:inline-block">${ICON.lock}</span>PAID</div>
+      <div class="disp" style="font-size:52px;margin-top:30px;line-height:1">Nano Banana <span style="color:var(--ac)">2.1</span></div>
+      <div style="font:500 26px Inter;color:var(--mut);margin-top:16px">Comes with paid Google&nbsp;AI plans</div>
+      <svg viewBox="0 0 200 200" style="width:170px;height:170px;margin-top:30px;filter:drop-shadow(0 0 24px #facc15)"><use href="#mascot"/></svg>
+    </div>
+  </div>`);
+
+function upNano(){
+  const el=S.s5;
+  leftAnim(el,86.8,87.9,[91.05,99.6,102.6]);
+  const aOut=92.3;
+  vis($('#b-a'),T<aOut+.5);
+  inn($('#b-a'),87.0,{x:80,y:0,d:.7,e:E.out,o:aOut});
+  inn($('#b-p'),87.9,{y:20});
+  inn($('#b-img'),88.6,{s:.85,y:0,blur:20,d:.7,e:E.out});
+  inn($('#b-chip'),89.0,{x:-20,y:0});
+  inn($('#b-super'),90.9,{y:20});
+  const bOut=97.85;
+  vis($('#b-b'),T>92.2&&T<bOut+.5);
+  const ft=[92.95,93.3,93.85,94.65,95.25];
+  ft.forEach((t,j)=>{const f=$('#b-f'+j);inn(f,t,{s:.6,y:40,o:bOut});inn($('.ok',f),95.7+j*.12,{s:.3,y:0,d:.35});
+    const ring=pr(95.7+j*.12,.2)*(1-pr(96.2+j*.12,.5));f.style.boxShadow=`0 0 0 ${5*ring}px var(--good)`;
+    const bob=Math.sin(T*3+j)*4;$('svg.m',f).style.transform=`translateY(${bob}px)`});
+  inn($('#b-same'),96.8,{y:20,o:bOut});
+  vis($('#b-c'),T>97.8);
+  inn($('#b-free'),98.5,{y:60});
+  inn($('#b-paid'),101.55,{y:60});
+}
+
+/* ================= OUTRO ================= */
+scene('outro',`
+  <div class="a disp" id="o-q" style="left:0;right:0;top:210px;text-align:center;font-size:110px;line-height:1">Which one are you<br>trying <span style="color:var(--ac)">first?</span></div>
+  <div class="a" id="o-row" style="left:0;right:0;top:520px;display:flex;justify-content:center;gap:24px">
+    ${TOOLS.map((t,j)=>`<div class="chip" id="o-t${j}" style="height:76px;font-size:28px;padding:0 26px 0 12px;gap:14px">${icon(t.i,54,t.c)}${t.n}</div>`).join('')}
+  </div>
+  <div class="card" id="o-com" style="left:560px;top:680px;width:800px;height:120px;display:flex;align-items:center;gap:22px;padding:0 30px">
+    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#ff8a3d,#f472b6);flex:none"></div>
+    <div style="flex:1"><div class="mono" style="font-size:17px;color:var(--mut)">@you · just now</div><div id="o-ctx" style="font:600 30px Inter;margin-top:4px"></div></div>
+    <div style="width:44px;height:44px;color:var(--ac)">${ICON.chat}</div>
+  </div>
+  <div id="o-end" class="a" style="inset:0">
+    <div class="a mono" id="o-wn" style="left:900px;top:205px;font-size:24px;letter-spacing:.16em;color:var(--ac)">WATCH NEXT →</div>
+    <div class="card" id="o-vid" style="left:900px;top:250px;width:900px;height:506px;border:3px dashed #3a3a55;background:rgba(18,18,27,.6)">
+      <div class="a" style="inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 70px">
+        <div class="mono" style="font-size:22px;color:var(--mut);letter-spacing:.14em">NEXT VIDEO</div>
+        <div class="disp" style="font-size:78px;line-height:1;margin-top:16px">Paid AI tools<br><span id="o-worth" style="color:var(--ac)">actually worth<br>the money</span></div>
+      </div>
+      <div class="a" style="right:50px;bottom:50px;width:110px;height:110px;border-radius:50%;background:var(--ac);color:#07070c;display:grid;place-items:center"><div style="width:52px;height:52px;margin-left:8px">${ICON.play}</div></div>
+    </div>
+    <div class="a" id="o-sub" style="left:180px;top:300px;width:400px;height:400px;border-radius:50%;border:3px dashed #3a3a55;display:grid;place-items:center">
+      <div style="text-align:center"><div class="disp" style="font-size:44px">Subscribe</div><div class="mono" style="font-size:20px;color:var(--mut);margin-top:10px">for more AI tools</div></div>
+    </div>
+  </div>`);
+
+function upOutro(){
+  const qOut=109.15;
+  inn($('#o-q'),105.9,{y:50,d:.6,o:qOut});
+  TOOLS.forEach((_,j)=>{const c=$('#o-t'+j);inn(c,106.2+j*.1,{y:40,s:.8,o:qOut});
+    const b=Math.sin(clamp((T-106.9-j*.18)/.35)*Math.PI);c.style.transform+=` translateY(${-18*b}px)`;c.style.borderColor=b>.2?TOOLS[j].c:''});
+  inn($('#o-com'),107.55,{y:40,o:qOut});
+  type($('#o-ctx'),'Trying #3 first 🎧',107.9,16,true,qOut);
+  vis($('#o-end'),T>qOut-.1);
+  inn($('#o-wn'),109.3,{x:-20,y:0});
+  inn($('#o-vid'),109.35,{x:80,y:0,d:.7,e:E.out});
+  inn($('#o-sub'),109.6,{s:.7,y:0,d:.7});
+  const w=pr(111.4,.3)*(1-pr(112.4,.4));
+  $('#o-worth').style.textShadow=`0 0 ${40*w}px var(--ac)`;
+}
+
+/* ---------- global layers ---------- */
+const dots=$('#dots');TOOLS.forEach(t=>dots.appendChild(h(`<div><i style="background:${t.c}"></i></div>`)));
+// captions: map display words onto aligned tokens
+const CAP_TXT=[
+"These five AI tools are free to start, most people have never used them, and number three can turn a fifty-page PDF into a podcast you can listen to on your commute.",
+"Goblin.tools is completely free.",
+"Type in a task that feels overwhelming, like ‘clean my apartment’ or ‘launch my website,’ and it breaks it into small, doable steps.",
+"It can even estimate how long each one will take.",
+"It’s simple, but it’s one of the best tools out there for beating procrastination.",
+"Most AI image generators still mess up text.",
+"Ideogram is the one that gets lettering right, which makes it perfect for posters, thumbnails and rough logo ideas.",
+"The new Ideogram 4.5 also lets you keep editing an image over and over without the quality falling apart.",
+"Free users get weekly slow credits, which is enough to try it properly.",
+"Google renamed NotebookLM to Gemini Notebook in July, and it’s still one of the most underrated free tools around.",
+"Upload PDFs, notes, websites or even YouTube videos, and it answers only from your sources.",
+"It can also make summaries, mind maps, and audio or video overviews, so that fifty-page report becomes something you can listen to.",
+"Need a presentation fast?",
+"Gamma builds full slide decks, documents or even simple web pages from a single prompt.",
+"The free plan gives you 400 one-time credits, which is roughly ten full decks.",
+"The catch is that those credits don’t refill, and free decks carry Gamma branding.",
+"Nano Banana is the image model inside Gemini, and its superpower is consistency.",
+"It keeps the same character, mascot or product looking identical across a whole set of edits.",
+"The basic version is free in the Gemini app, and the newer Nano Banana 2.1 comes with paid Google AI plans.",
+"Which one are you trying first?",
+"Let me know in the comments.",
+"And if you want the paid tools that are actually worth the money, watch this one next."];
+const NTOK={'ai':2,'pdf':3,'pdfs':3,'goblin.tools':3,'ideogram':2,'4.5':3,'notebooklm':3,'400':2,'2.1':3,'thumbnails':2};
+const CHUNKS=[];
+CAP_TXT.forEach((txt,si)=>{
+  const toks=VO.sentences[si].w;let k=0;let cur=[];
+  const words=txt.split(' ');
+  words.forEach((w,wi)=>{
+    const key=w.toLowerCase().replace(/[^a-z0-9.\-]/g,'').replace(/\.$/,'');
+    const n=NTOK[key]||key.split('-').length;
+    cur.push({w,s:toks[k][1]});k+=n;
+    if(cur.length>=6||/[,.?]$|’$/.test(w)&&cur.length>=3||wi===words.length-1){CHUNKS.push(cur);cur=[]}
+  });
+  if(k!==toks.length)console.warn('caption token mismatch',si,k,toks.length);
+});
+CHUNKS.forEach((c,i)=>{c.s=c[0].s;c.e=i+1<CHUNKS.length?Math.min(CHUNKS[i+1][0].s,c[c.length-1].s+1.4):c[c.length-1].s+1.4});
+let showCaps=new URLSearchParams(location.search).get('captions')!=='0';
+function upCaps(ac){
+  const cap=$('#cap');
+  if(!showCaps){cap.innerHTML='';return}
+  const c=CHUNKS.find(c=>T>=c.s-.05&&T<c.e);
+  if(!c){cap.innerHTML='';return}
+  cap.innerHTML=c.map((w,i)=>{const on=T>=w.s&&(i+1>=c.length||T<c[i+1].s);return `<span style="${on?`background:${ac};color:#07070c`:''}">${esc(w.w)}</span>`}).join(' ');
+}
+
+function seek(t){
+  T=t;
+  const cur=SC.find(s=>t>=s.s&&t<s.e)||SC[SC.length-1];
+  const st=$('#stage');st.style.setProperty('--ac',cur.c);
+  SC.forEach(s=>vis(S[s.id],s===cur));
+  // background
+  $('#grid').style.transform=`translate(${(t*6)%44}px,${(t*3)%44}px)`;
+  const g1=$('#g1'),g2=$('#g2');
+  g1.style.background=`radial-gradient(circle,${cur.c},transparent 65%)`;g2.style.background=`radial-gradient(circle,${cur.c},transparent 65%)`;
+  g1.style.left=(1250+Math.sin(t*.3)*120)+'px';g1.style.top=(-250+Math.cos(t*.25)*80)+'px';
+  g2.style.left=(-250+Math.cos(t*.27)*90)+'px';g2.style.top=(620+Math.sin(t*.33)*70)+'px';
+  const ti=SC.indexOf(cur)-1;
+  $('#bignum').textContent=(ti>=0&&ti<5)?'0'+(ti+1):'';
+  // hud
+  const hud=$('#hud');hud.style.opacity=(t>9.4&&t<105.85)?1:0;
+  $$('#dots i').forEach((d,j)=>{const s=SC[j+1];d.style.transform=`scaleX(${clamp((t-s.s)/(s.e-s.s))})`});
+  // scene updaters
+  ({intro:upIntro,s1:upGoblin,s2:upIdeo,s3:upNote,s4:upGamma,s5:upNano,outro:upOutro})[cur.id]();
+  upCaps(cur.c);
+  // wipe transitions at each scene boundary
+  const w1=$('#w1'),w2=$('#w2');let shown=false;
+  for(let i=1;i<SC.length;i++){
+    const B=SC[i].s,k=(t-(B-.35))/.7;
+    if(k>=0&&k<=1){shown=true;
+      w1.style.background=SC[i].c;w2.style.background='#0e0e16';
+      const x1=lerp(-2700,2400,E.inOut(k)),x2=lerp(-2700,2400,E.inOut(clamp(k*1.12-.12)));
+      w1.style.transform=`translateX(${x1}px) skewX(-14deg)`;w2.style.transform=`translateX(${x2-140}px) skewX(-14deg)`;
+    }
+  }
+  if(!shown){w1.style.transform=w2.style.transform='translateX(-4000px)'}
+  // end fade
+  $('#stage').style.filter=t>117.3?`brightness(${1-clamp((t-117.3)/.7)})`:'';
+}
+window.seek=seek;window.DUR=DUR;
+
+/* ---------- preview player ---------- */
+const params=new URLSearchParams(location.search);
+if(params.get('render')){document.body.classList.add('render');}
+function fit(){if(document.body.classList.contains('render'))return;const s=Math.min(innerWidth/1920,(innerHeight-56)/1080);const st=$('#stage');st.style.transform=`scale(${s})`;st.style.left=((innerWidth-1920*s)/2)+'px'}
+addEventListener('resize',fit);fit();
+const au=$('#vo'),sc=$('#scrub'),tc=$('#tc');let playing=false,clock0=0,t0=0;
+function now(){if(!playing)return parseFloat(sc.value);return au.duration&&!au.ended&&au.currentTime<au.duration-.05?au.currentTime:t0+(performance.now()-clock0)/1000}
+function loop(){const t=now();if(t>=DUR){playing=false;$('#play').textContent='Play'}seek(Math.min(t,DUR-.001));if(playing)sc.value=t;tc.textContent=t.toFixed(2);requestAnimationFrame(loop)}
+$('#play').onclick=()=>{playing=!playing;$('#play').textContent=playing?'Pause':'Play';if(playing){t0=parseFloat(sc.value);if(t0>=DUR-.1)t0=0;au.currentTime=t0;clock0=performance.now();au.play().catch(()=>{})}else au.pause()};
+sc.oninput=()=>{if(playing){au.currentTime=parseFloat(sc.value);t0=parseFloat(sc.value);clock0=performance.now()}};
+$('#capt').onchange=e=>{showCaps=e.target.checked};
+addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();$('#play').click()}if(e.key==='c'){showCaps=!showCaps;$('#capt').checked=showCaps}});
+if(params.get('t'))sc.value=params.get('t');
+seek(parseFloat(sc.value));
+if(!params.get('render'))requestAnimationFrame(loop);
+</script>
+</body>
+</html>
