@@ -1,0 +1,556 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Eleven v4 Motion</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#F4F3EF}
+body{font-family:'Inter',sans-serif;color:#0B0B0C;-webkit-font-smoothing:antialiased}
+#root{position:absolute;inset:0;overflow:hidden}
+.bg{position:absolute;inset:0}
+.scene{position:absolute;inset:0}
+.c{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.stack{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.disp{font-family:'Inter Display','Inter',sans-serif}
+.w{display:inline-block;white-space:pre}
+.h1{font-family:'Inter Display';font-weight:700;font-size:168px;line-height:1;letter-spacing:-0.05em}
+.h2{font-family:'Inter Display';font-weight:650;font-size:92px;line-height:1.05;letter-spacing:-0.04em;text-align:center}
+.h3{font-family:'Inter Display';font-weight:600;font-size:60px;line-height:1.1;letter-spacing:-0.03em;text-align:center}
+.sub{font-size:34px;font-weight:450;color:#6B6A66;letter-spacing:-0.01em;text-align:center}
+.g{color:#A3A19B}
+.pill{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border-radius:999px;background:#fff;border:1.5px solid rgba(0,0,0,.08);font-size:28px;font-weight:500;letter-spacing:-0.01em;box-shadow:0 8px 30px rgba(0,0,0,.05)}
+.dot{width:12px;height:12px;border-radius:50%;background:#0B0B0C}
+.card{position:absolute;background:#fff;border-radius:32px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 2px 0 rgba(0,0,0,.02),0 30px 80px rgba(20,20,30,.08)}
+.dark .card{background:#161618;border-color:rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.mono{font-family:'DejaVu Sans Mono',monospace}
+.tag{display:inline-block;font-family:'DejaVu Sans Mono',monospace;font-size:30px;padding:6px 14px;border-radius:12px;font-weight:600}
+.kicker{font-size:26px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8A8882}
+.grad{background:linear-gradient(90deg,#3E6BFF,#9B5CFF 45%,#FF7A59);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand{position:absolute;left:64px;top:52px;display:flex;align-items:center;gap:14px;font-size:26px;font-weight:600;letter-spacing:-0.01em}
+.brand i{width:30px;height:30px;border-radius:50%;background:conic-gradient(from 0deg,#7AA2FF,#C9A7FF,#FFC3A0,#9FE6D6,#7AA2FF)}
+.prog{position:absolute;left:64px;right:64px;bottom:48px;height:3px;border-radius:3px;background:rgba(0,0,0,.07)}
+.prog b{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:#0B0B0C}
+.check{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:#0B0B0C;color:#fff;font-size:30px;font-weight:700}
+.x{background:#FF4D3D}
+</style></head>
+<body><div id="root"></div>
+<script src="env.js"></script>
+<script>
+// ---------- helpers ----------
+const FPS=30, DUR=171.5;
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const E={
+  out:p=>1-Math.pow(1-p,3),
+  expo:p=>p>=1?1:1-Math.pow(2,-10*p),
+  io:p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,
+  back:p=>{const c=1.70158,c3=c+1;return 1+c3*Math.pow(p-1,3)+c*Math.pow(p-1,2)},
+  lin:p=>p
+};
+let T=0;
+const P=(s,d=.6,e=E.expo)=>e(clamp((T-s)/d));
+function env(t){const i=t*FPS, a=Math.floor(i), f=i-a; const A=window.ENV[a]||0,B=window.ENV[a+1]||0; return A+(B-A)*f;}
+// reveal style
+function R(p,{y=46,blur=14,s=1,x=0}={}){
+  const sc=s===1?1:lerp(s,1,p);
+  return `opacity:${p};transform:translate(${(1-p)*x}px,${(1-p)*y}px) scale(${sc});filter:blur(${(1-p)*blur}px);`;
+}
+// word-by-word text; *x* = accent gradient, ~x~ = gray. times: array of start times or (start,stagger)
+function words(str,start,stagger=.07,o={}){
+  const parts=str.split(' ');
+  return parts.map((w,i)=>{
+    const st=Array.isArray(start)?(start[i]??start[start.length-1]):start+i*stagger;
+    let cls='w';
+    if(/^\*.*\*[.,!?]?$/.test(w)){cls+=' grad';w=w.replace(/\*/g,'')}
+    else if(/^~.*~[.,!?]?$/.test(w)){cls+=' g';w=w.replace(/~/g,'')}
+    const p=P(st,o.d||.55);
+    return `<span class="${cls}" style="${R(p,{y:o.y??50,blur:o.blur??16})}">${w}${i<parts.length-1?' ':''}</span>`;
+  }).join('');
+}
+// count-up number
+function count(a,b,s,d,dec=0){const p=P(s,d,E.out);return (a+(b-a)*p).toFixed(dec);}
+// noise
+function hash(n){const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);}
+function smoothNoise(x){const i=Math.floor(x),f=x-i,u=f*f*(3-2*f);return lerp(hash(i),hash(i+1),u);}
+// orb
+function orb(size,t,{hue=0,level=0,c=['#6E97FF','#B892FF','#FFB38A','#8EE3CF']}={}){
+  const sc=1+level*0.06;
+  const r=t*38+hue;
+  return `<div style="position:relative;width:${size}px;height:${size}px;transform:scale(${sc});">
+   <div style="position:absolute;inset:-14%;border-radius:50%;background:radial-gradient(circle,${c[1]}55,transparent 62%);filter:blur(${size*.08}px);opacity:${.55+level*.4}"></div>
+   <div style="position:absolute;inset:0;border-radius:50%;overflow:hidden;box-shadow:inset 0 -${size*.06}px ${size*.12}px rgba(0,0,0,.10), 0 ${size*.08}px ${size*.2}px rgba(60,60,120,.18);">
+     <div style="position:absolute;inset:-30%;background:conic-gradient(from ${r}deg,${c[0]},${c[1]},${c[2]},${c[3]},${c[0]});filter:blur(${size*.09}px);"></div>
+     <div style="position:absolute;width:70%;height:70%;left:${15+Math.sin(t*.9+hue)*14}%;top:${10+Math.cos(t*.7+hue)*12}%;border-radius:50%;background:${c[3]};filter:blur(${size*.14}px);opacity:.8"></div>
+     <div style="position:absolute;width:60%;height:60%;left:${30+Math.cos(t*1.1+hue)*16}%;top:${35+Math.sin(t*.8+hue)*14}%;border-radius:50%;background:${c[0]};filter:blur(${size*.14}px);opacity:.75"></div>
+     <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.85),rgba(255,255,255,0) 38%)"></div>
+   </div></div>`;
+}
+// waveform bars (svg)
+function bars(n,w,h,t,{gap=.45,color='#0B0B0C',amp=1,seed=0,flat=0,mode='live',reveal=1,colors=null}={}){
+  const bw=w/n*(1-gap);let out='';
+  for(let i=0;i<n;i++){
+    const u=i/(n-1);
+    if(u>reveal) break;
+    let v;
+    const nz=smoothNoise(i*.55+seed+t*5)*.65+smoothNoise(i*1.7+seed*3-t*3)*.35;
+    if(mode==='live'){ v=(.12+.88*nz)*amp*(0.35+0.65*Math.sin(Math.PI*u)); }
+    else { v=(.15+.85*smoothNoise(i*.6+seed))*amp*(0.4+0.6*Math.sin(Math.PI*u)); }
+    v=lerp(v,.04,flat);
+    const bh=Math.max(bw,v*h);
+    const col=colors?colors(u):color;
+    out+=`<rect x="${(i*(w/n)).toFixed(1)}" y="${((h-bh)/2).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="${bw/2}" fill="${col}"/>`;
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block;overflow:visible">${out}</svg>`;
+}
+function mixColor(a,b,p){const pa=a.match(/\w\w/g).map(x=>parseInt(x,16)),pb=b.match(/\w\w/g).map(x=>parseInt(x,16));return '#'+pa.map((v,i)=>Math.round(lerp(v,pb[i],p)).toString(16).padStart(2,'0')).join('');}
+const abs=(x,y,inner,extra='')=>`<div style="position:absolute;left:${x}px;top:${y}px;${extra}">${inner}</div>`;
+const center=(x,y,inner,extra='')=>`<div style="position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%);${extra}">${inner}</div>`;
+
+// ---------- scenes ----------
+// each: [start,end,fn,dark]
+const S=[];
+const scene=(a,b,fn,dark=false)=>S.push({a,b,fn,dark});
+
+// 1. HOOK — ElevenLabs just released Eleven v4
+scene(0,6.45,t=>{
+  const lv=env(t);
+  const slam=P(2.0,.5,E.back);
+  const orbIn=P(0,1.2,E.expo);
+  const orbMove=P(3.55,.9,E.io);
+  const lbIn=P(3.7,.8,E.expo);
+  let h=center(960,lerp(470,300,orbMove),`<div style="${R(orbIn,{y:0,blur:30,s:.2})}">${orb(lerp(300,200,orbMove),t,{level:lv})}</div>`);
+  h+=center(960,lerp(150,95,orbMove),`<div class="pill" style="${R(P(.4,.7))}"><span class="dot" style="background:#FF4D3D;box-shadow:0 0 0 ${6+Math.sin(t*8)*3}px rgba(255,77,61,.18)"></span>${words('ElevenLabs just released',[.44,.94,1.3,1.62],0,{y:20,blur:8})}</div>`);
+  // big title
+  const titleY=lerp(800,500,orbMove);
+  h+=center(960,titleY,`<div class="h1" style="opacity:${clamp(slam*1.4)};transform:scale(${lerp(1.6,1,slam)*lerp(1,.62,orbMove)});filter:blur(${(1-clamp(slam))*20}px);white-space:nowrap">Eleven <span class="grad">v4</span></div>`);
+  // leaderboard
+  if(T>3.5){
+    const rows=[['#1','Eleven v4',1],['#2','',.86],['#3','',.79],['#4','',.71]];
+    let rh='';
+    rows.forEach((r,i)=>{
+      const p=P(3.9+i*.12,.6);
+      const isTop=i===0;
+      const fill=P(4.5+i*.08,1.1,E.out)*r[2];
+      rh+=`<div style="display:flex;align-items:center;gap:26px;height:78px;padding:0 30px;border-radius:20px;${isTop?'background:#0B0B0C;color:#fff;':''}${R(p,{y:30,blur:8})}">
+       <div style="width:60px;font-weight:700;font-size:30px;${isTop?'':'color:#A3A19B'}">${r[0]}</div>
+       <div style="width:230px;font-weight:600;font-size:30px">${r[1]||`<div style="height:16px;width:${150-i*20}px;border-radius:8px;background:#E7E5DF"></div>`}</div>
+       <div style="flex:1;height:12px;border-radius:6px;background:${isTop?'rgba(255,255,255,.15)':'#EFEDE8'}"><div style="height:100%;width:${fill*100}%;border-radius:6px;background:${isTop?'linear-gradient(90deg,#6E97FF,#B892FF,#FFB38A)':'#CFCCC4'}"></div></div>
+      </div>`;
+    });
+    h+=center(960,lerp(1100,800,lbIn),`<div style="width:980px;padding:24px;background:#fff;border-radius:34px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);opacity:${lbIn}">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 30px 16px"><span class="kicker">Voice model ranking</span><span style="font-size:24px;color:#8A8882;${R(P(5.4,.5),{y:10,blur:4})}">in the world 🌍</span></div>${rh}</div>`);
+  }
+  return h;
+});
+
+// 2. Features
+scene(6.35,12.75,t=>{
+  const lv=env(t);
+  const items=[
+    {s:6.54,k:'01',title:'Understands<br>emotion',vis:()=>`<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${['[excited]','[sad]','[whispers]'].map((x,i)=>`<span class="tag" style="background:${['#FFE9DF','#E4ECFF','#EFE6FF'][i]};color:${['#C2410C','#2747C9','#6D3FD1'][i]};font-size:24px;${R(P(7+i*.18,.5),{y:20,blur:6})}">${x}</span>`).join('')}</div>`},
+    {s:8.14,k:'02',title:'Clones a voice<br>from ~10 seconds',vis:()=>`<div style="display:flex;align-items:center;gap:18px">${bars(26,240,90,T,{amp:.5+lv*.7,seed:2,reveal:P(8.6,1.6,E.lin)})}<span style="font-size:40px;font-weight:700">${count(0,10,8.9,1.2)}s</span></div>`},
+    {s:11.06,k:'03',title:'Speaks<br>90+ languages',vis:()=>`<div style="font-family:'Inter Display';font-size:92px;font-weight:700;letter-spacing:-.04em">${count(0,90,11.3,1.0)}<span class="grad">+</span></div>`},
+  ];
+  let h='';
+  items.forEach((it,i)=>{
+    const p=P(it.s,.8,E.expo);
+    const x=330+i*630;
+    h+=center(x,540,`<div style="width:560px;height:620px;background:#fff;border-radius:36px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);padding:44px;display:flex;flex-direction:column;justify-content:space-between;${R(p,{y:120,blur:20})}">
+     <div style="display:flex;justify-content:space-between;align-items:center"><span class="kicker">${it.k}</span>${orb(54,T,{hue:i*120,level:lv*.5})}</div>
+     <div style="height:200px;display:flex;align-items:center;justify-content:center">${T>it.s?it.vis():''}</div>
+     <div class="h3" style="text-align:left;font-size:58px">${it.title}</div></div>`);
+  });
+  return h;
+});
+
+// 3. Agenda
+scene(12.65,17.25,t=>{
+  const list=[['Everything it can do',12.9],['What it costs',14.6],['Who should actually use it',15.6]];
+  let h=center(960,250,`<div class="kicker" style="${R(P(12.8,.5),{y:20})}">In this video</div>`);
+  list.forEach(([txt,s],i)=>{
+    const p=P(s,.6);
+    const ck=P(s+.25,.4,E.back);
+    h+=abs(520,360+i*150,`<div style="display:flex;align-items:center;gap:34px;${R(p,{x:-60,y:0})}">
+      <div class="check" style="transform:scale(${ck})">✓</div>
+      <div class="h3" style="text-align:left;font-size:68px">${txt}</div></div>`);
+  });
+  return h;
+});
+
+// 4. The problem (dark)
+scene(17.15,29.5,t=>{
+  let h='';
+  const head=P(17.5,.7);
+  const headUp=P(20.1,.8,E.io);
+  h+=center(960,lerp(540,200,headUp),`<div class="h2" style="color:#fff;transform:scale(${lerp(1,.66,headUp)})">${words('AI voices have always had the ~same~ ~problem.~',[17.55,17.85,18.05,18.6,18.87,19.09,19.23,19.5],0)}</div>`);
+  if(T>20){
+    // left: read words ✓ / miss feeling ✗ ; then script excited -> flat
+    const a=P(20.2,.6),b=P(21.45,.6);
+    h+=abs(200,330,`<div style="display:flex;flex-direction:column;gap:26px">
+      <div style="display:flex;align-items:center;gap:24px;color:#fff;${R(a,{x:-40,y:0})}"><span class="check" style="background:#fff;color:#000;width:50px;height:50px;font-size:26px">✓</span><span style="font-size:44px;font-weight:600">Reads the words</span></div>
+      <div style="display:flex;align-items:center;gap:24px;color:#fff;${R(b,{x:-40,y:0})}"><span class="check x" style="width:50px;height:50px;font-size:26px">✕</span><span style="font-size:44px;font-weight:600">Misses the feeling</span></div></div>`);
+    // excited line card
+    const c=P(22.6,.7);
+    const flat=P(24.4,.6,E.io);
+    h+=abs(1000,300,`<div style="width:720px;padding:34px;border-radius:30px;background:#161618;border:1.5px solid rgba(255,255,255,.08);${R(c,{y:60})}">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:22px"><span class="tag" style="background:#3A2A1E;color:#FFB38A;font-size:24px">[excited]</span><span style="color:#fff;font-size:34px;font-weight:600">“We actually won!”</span></div>
+      <div style="height:120px;display:flex;align-items:center">${bars(48,650,120,T,{amp:.9,seed:5,flat,colors:u=>mixColor('ffb38a','55555a',flat)})}</div>
+      <div style="display:flex;justify-content:space-between;color:#8A8882;font-size:24px;margin-top:14px"><span>expected: excited</span><span style="color:${flat>.5?'#FF6B5C':'#8A8882'};font-weight:600">result: ${flat>.5?'flat':'…'}</span></div></div>`);
+  }
+  if(T>25.3){
+    // drift timeline
+    const d=P(25.4,.7);
+    const prog=P(25.9,3.2,E.lin);
+    const match=Math.round(lerp(98,61,P(26.6,2.4,E.io)));
+    const n=90;
+    h+=center(960,850,`<div style="width:1520px;padding:30px 40px;border-radius:30px;background:#161618;border:1.5px solid rgba(255,255,255,.08);${R(d,{y:60})}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;color:#fff"><span style="font-size:28px;font-weight:600">Long generation · 12:40</span>
+      <span style="font-size:28px">Voice match <b style="color:${match>85?'#8EE3CF':match>72?'#FFC46B':'#FF6B5C'};font-size:36px">${match}%</b></span></div>
+      ${bars(n,1440,90,T*.5,{amp:.75,seed:9,mode:'static',reveal:prog,colors:u=>mixColor('6e97ff','ff6b5c',clamp(u*1.2))})}
+      <div style="margin-top:14px;text-align:right;color:#FF6B5C;font-size:26px;font-weight:600;${R(P(28.4,.5),{y:10,blur:4})}">doesn't sound like the same person</div></div>`);
+  }
+  return h;
+},true);
+
+// 5. built to fix
+scene(29.4,32.85,t=>{
+  const lv=env(t);
+  let h=center(960,330,`<div style="${R(P(29.5,1),{y:0,s:.4,blur:30})}">${orb(260,t,{level:lv})}</div>`);
+  h+=center(960,700,`<div class="h2" style="white-space:nowrap">${words('Eleven v4 is built to fix *exactly* *that.*',[29.91,30.3,30.81,31.01,31.25,31.49,31.95,32.3],0)}</div>`);
+  return h;
+});
+
+// 6. newest TTS model, end of September
+scene(32.75,38.5,t=>{
+  let h=center(960,330,`<div class="kicker" style="${R(P(33,.5),{y:20})}">What is it?</div>`);
+  h+=center(960,470,`<div class="h2" style="white-space:nowrap">${words("ElevenLabs' *newest* text-to-speech model",[34.65,35.03,35.41,36.29],0)}</div>`);
+  const c=P(36.8,.7);
+  const day=Math.round(lerp(1,30,P(37.2,.9,E.out)));
+  h+=center(960,730,`<div class="pill" style="font-size:34px;padding:20px 34px;${R(c,{y:40})}"><span style="font-size:34px">📅</span> Released <b>end of September</b>
+   <span style="display:inline-flex;gap:4px;margin-left:10px">${Array.from({length:10},(_,i)=>`<i style="width:10px;height:28px;border-radius:5px;background:${i<Math.ceil(day/3)?'#0B0B0C':'#E7E5DF'}"></i>`).join('')}</span></div>`);
+  return h;
+});
+
+// 7. two versions
+scene(38.4,53.35,t=>{
+  const lv=env(t);
+  let h=center(960,140,`<div class="h3">${words('It comes in *two* *versions.*',[38.61,38.81,39.03,39.21,39.57],0)}</div>`);
+  const c1=P(40.2,.8), c2=P(46.1,.8);
+  const tags=[['🎙️ Voiceovers',42.67],['📚 Audiobooks',43.29],['▶️ YouTube narration',44.21]];
+  const dim1=P(46,.6,E.io);
+  h+=abs(150,260,`<div style="width:780px;height:700px;background:#fff;border-radius:40px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);padding:50px;display:flex;flex-direction:column;gap:30px;${R(c1,{y:120})};opacity:${c1*lerp(1,.55,dim1)}">
+    <div style="display:flex;align-items:center;gap:26px">${orb(110,t,{level:T<46?lv:0})}<div><div class="kicker">Quality</div><div class="disp" style="font-size:66px;font-weight:700;letter-spacing:-.04em">Eleven v4</div></div></div>
+    <div style="font-size:32px;color:#6B6A66;line-height:1.35">Built for the best-sounding long-form audio.</div>
+    <div style="display:flex;flex-direction:column;gap:16px;margin-top:6px">${tags.map(([x,s])=>`<div class="pill" style="align-self:flex-start;font-size:32px;${R(P(s,.5),{x:-40,y:0})}">${x}</div>`).join('')}</div></div>`);
+  if(T>46){
+    const lat=P(51.6,1,E.out);
+    h+=abs(990,260,`<div style="width:780px;height:700px;background:#0B0B0C;color:#fff;border-radius:40px;box-shadow:0 30px 80px rgba(20,20,30,.2);padding:50px;display:flex;flex-direction:column;gap:30px;${R(c2,{y:120})}">
+      <div style="display:flex;align-items:center;gap:26px">${orb(110,t*2.2,{level:lv,c:['#3BE0C0','#5B8CFF','#B8FF6B','#2BD4FF']})}<div><div class="kicker" style="color:#9A9890">Speed</div><div class="disp" style="font-size:66px;font-weight:700;letter-spacing:-.04em">v4 Turbo</div></div></div>
+      <div style="font-size:32px;color:#A3A19B;line-height:1.35">Built for real-time conversation.</div>
+      <div class="pill" style="align-self:flex-start;background:#1C1C1F;color:#fff;border-color:rgba(255,255,255,.1);font-size:32px;${R(P(49.29,.5),{x:-40,y:0})}">🤖 Live voice agents</div>
+      <div style="margin-top:auto;${R(P(50.7,.6),{y:30})}">
+        <div style="display:flex;justify-content:space-between;font-size:26px;color:#9A9890;margin-bottom:12px"><span>Response starts in</span><span style="color:#fff;font-size:44px;font-weight:700;font-family:'Inter Display'">~${count(1.0,.1,51.6,1,1)}s</span></div>
+        <div style="height:14px;border-radius:7px;background:#232326"><div style="height:100%;width:${lerp(100,10,lat)}%;border-radius:7px;background:linear-gradient(90deg,#3BE0C0,#5B8CFF)"></div></div></div></div>`);
+  }
+  return h;
+});
+
+// 8. Direction: audio tags
+scene(53.25,66.1,t=>{
+  let h='';
+  const up=P(55.5,.8,E.io);
+  h+=center(960,lerp(540,150,up),`<div style="transform:scale(${lerp(1,.6,up)});text-align:center"><div class="kicker" style="${R(P(53.4,.5),{y:20})};margin-bottom:24px">The biggest upgrade</div><div class="h1" style="font-size:190px">${words('*Direction.*',[54.95],0,{y:80,blur:30})}</div></div>`);
+  if(T>55.6){
+    const ed=P(55.7,.8);
+    const tg=[
+      {s:58.4,txt:'[excited]',bg:'#FFE9DF',fg:'#C2410C',lab:'emotion'},
+      {s:59.1,txt:'[slowly]',bg:'#E4ECFF',fg:'#2747C9',lab:'pacing'},
+      {s:59.7,txt:'[laughs]',bg:'#FFF3C9',fg:'#A16207',lab:'reaction'},
+      {s:61.0,txt:'[door creaks]',bg:'#E3F7EF',fg:'#047857',lab:'sound effect'},
+    ];
+    const seg=['','Can’t believe it…','we did it!','','Who’s there?'];
+    // order checks
+    const ord=i=>P(62.4+i*.45,.4,E.back);
+    let line='';
+    tg.forEach((g,i)=>{
+      const p=P(g.s,.45,E.back);
+      line+=`<span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 8px;position:relative;transform:scale(${p});opacity:${clamp(p)};max-width:${p*400}px">
+        <span class="tag" style="background:${g.bg};color:${g.fg};font-size:26px">${g.txt}</span>
+        <span style="position:absolute;top:-34px;font-size:20px;font-weight:600;color:#8A8882;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">${g.lab}</span>
+        <span style="position:absolute;bottom:-58px;width:40px;height:40px;border-radius:50%;background:#0B0B0C;color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;transform:scale(${ord(i)})">${i+1}</span></span>`;
+      line+=`<span style="font-size:36px;font-weight:500;color:#33322F">${seg[i+1]}</span>`;
+    });
+    h+=center(960,560,`<div style="width:1760px;padding:40px 44px 80px;background:#fff;border-radius:36px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);${R(ed,{y:100})}">
+      <div style="display:flex;gap:10px;margin-bottom:56px"><i style="width:16px;height:16px;border-radius:50%;background:#FF5F57"></i><i style="width:16px;height:16px;border-radius:50%;background:#FEBC2E"></i><i style="width:16px;height:16px;border-radius:50%;background:#28C840"></i><span style="margin-left:20px;font-size:24px;color:#8A8882" class="mono">script.txt</span></div>
+      <div style="line-height:2.2;white-space:nowrap">${line}<span style="display:inline-block;width:3px;height:44px;background:#0B0B0C;vertical-align:middle;opacity:${Math.floor(T*2.5)%2}"></span></div></div>`);
+    // reliability bars
+    const rb=P(63.6,.7);
+    const v3=P(64.6,.9,E.out)*.58, v4=P(64.2,1.1,E.out)*.94;
+    h+=center(960,900,`<div style="display:flex;gap:60px;align-items:center;${R(rb,{y:40})}"><span class="kicker" style="white-space:nowrap">Follows tags in order</span>
+      ${[['v3',v3,'#CFCCC4'],['v4',v4,'linear-gradient(90deg,#6E97FF,#B892FF,#FFB38A)']].map(([n,v,c])=>`<div style="display:flex;align-items:center;gap:18px"><b style="font-size:30px;width:44px">${n}</b><div style="width:420px;height:20px;border-radius:10px;background:#E7E5DF"><div style="height:100%;width:${v*100}%;border-radius:10px;background:${c}"></div></div></div>`).join('')}</div>`);
+  }
+  return h;
+});
+
+// 9. calm -> laughter
+scene(66,71.3,t=>{
+  const lv=env(t);
+  let h=center(960,250,`<div class="h3">${words('One line can start ~calm~ … and end in *laughter.*',[66.19,66.45,66.75,67.01,67.31,67.7,67.89,68.09,68.31,68.6],0)}</div>`);
+  const prog=P(66.8,2.6,E.io);
+  const n=80;
+  h+=center(960,560,`<div style="width:1500px;padding:44px;background:#fff;border-radius:36px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);${R(P(66.3,.7),{y:80})}">
+    <div style="display:flex;justify-content:space-between;margin-bottom:26px"><span class="tag" style="background:#E4ECFF;color:#2747C9">[calm]</span><span class="tag" style="background:#FFF3C9;color:#A16207;${R(P(68.4,.5,E.back),{y:0,s:.4,blur:4})}">[laughing]</span></div>
+    ${(()=>{let o='';const bw=1412/n;for(let i=0;i<n;i++){const u=i/(n-1);if(u>prog)break;const nz=smoothNoise(i*.6+T*4);const a=lerp(.12,1,Math.pow(u,1.6))*(0.4+0.6*nz)+(u>.7?Math.abs(Math.sin(i*1.3+T*9))*.25:0);const hh=Math.max(10,a*190);o+=`<rect x="${i*bw}" y="${(200-hh)/2}" width="${bw*.55}" height="${hh}" rx="${bw*.27}" fill="${mixColor('6e97ff','ffb020',u)}"/>`;}return `<svg width="1412" height="200">${o}</svg>`})()}
+    <div style="height:10px;border-radius:5px;margin-top:24px;background:linear-gradient(90deg,#6E97FF,#B892FF,#FFB020);transform-origin:left;transform:scaleX(${prog})"></div></div>`);
+  h+=center(960,900,`<div class="pill" style="font-size:34px;padding:18px 32px;${R(P(69.5,.6),{y:30})}"><span class="check" style="width:44px;height:44px;font-size:22px">✓</span> …and it actually <b>performs it</b></div>`);
+  return h;
+});
+
+// 10. voice cloning
+scene(71.2,83.4,t=>{
+  const lv=env(t);
+  let h=center(960,170,`<div class="h2" style="font-size:84px;white-space:nowrap">${words('Instant *Voice* *Cloning*',[71.58,71.9,72.22],0)}</div>`);
+  // timeline
+  const tl=P(72.8,.8);
+  const sec10=P(74.4,.8,E.out);
+  const long=P(77.9,1.4,E.io);
+  const W=1500, full=120; // 0..2 min
+  const x10=W*10/full*1.0;
+  h+=abs(210,330,`<div style="width:${W}px;${R(tl,{y:60})}">
+    <div style="position:relative;height:220px">
+      <div style="position:absolute;left:0;top:30px;height:160px;width:${W}px;border-radius:24px;background:#EEECE7"></div>
+      <div style="position:absolute;left:0;top:30px;height:160px;width:${Math.max(x10*sec10,1)}px;border-radius:24px;background:#0B0B0C;overflow:hidden;display:flex;align-items:center;padding-left:14px">${bars(10,x10-28,110,T,{amp:.5+lv,color:'#fff',seed:3})}</div>
+      <div style="position:absolute;left:${W*60/full}px;top:30px;height:160px;width:${(W*60/full)*long}px;border-radius:24px;background:linear-gradient(90deg,#6E97FF33,#B892FF66);border:2px dashed #9B8CFF;opacity:${clamp(long*3)}"></div>
+    </div>
+    <div style="position:relative;height:40px;font-size:24px;color:#8A8882">${['0s','10s','30s','1 min','1.5 min','2 min'].map((l,i)=>{const s=[0,10,30,60,90,120][i];return `<span style="position:absolute;left:${W*s/full}px;transform:translateX(-50%)">${l}</span>`}).join('')}</div>
+  </div>`);
+  // labels
+  h+=abs(210,640,`<div style="display:flex;gap:40px">
+    <div style="width:560px;padding:34px;border-radius:30px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 20px 60px rgba(20,20,30,.07);${R(P(74.9,.6),{y:50})}">
+      <div class="kicker">~10 seconds</div><div style="font-size:46px;font-weight:700;letter-spacing:-.03em;margin-top:10px">Quick draft <span style="${R(P(82.1,.5,E.back),{y:0,s:.3,blur:2})};display:inline-block">⚡</span></div><div style="font-size:28px;color:#6B6A66;margin-top:8px">Works from a short sample</div></div>
+    <div style="width:700px;padding:34px;border-radius:30px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 20px 60px rgba(20,20,30,.07);${R(P(76.1,.6),{y:50})}">
+      <div class="kicker">1–2 minutes</div><div style="font-size:46px;font-weight:700;letter-spacing:-.03em;margin-top:10px">Best result <span class="grad">★</span></div><div style="font-size:28px;color:#6B6A66;margin-top:8px">What ElevenLabs’ own docs recommend</div></div></div>`);
+  return h;
+});
+
+// 11. languages
+scene(83.3,95.5,t=>{
+  let h='';
+  const langs=['English','Español','Français','Deutsch','日本語','한국어','Português','Italiano','हिन्दी','العربية','Türkçe','Polski','Nederlands','Svenska','Tiếng Việt','Bahasa','Українська','ไทย','Ελληνικά','Čeština','Română','Magyar','Tagalog','Suomi','Dansk','Norsk','Hebrew','বাংলা','Swahili','Tamil'];
+  const special=[['Cantonese 粵語',87.69],['Mongolian Монгол',88.41],['Odia ଓଡ଼ିଆ',89.13]];
+  const phase2=P(89.7,.8,E.io);
+  const cnt=Math.round(lerp(0,90,P(84.5,1.4,E.out)));
+  h+=center(960,lerp(250,140,phase2),`<div style="text-align:center;transform:scale(${lerp(1,.7,phase2)})"><div class="h1" style="font-size:200px;${R(P(83.8,.6),{s:.6})}">${cnt}<span class="grad">+</span></div><div class="sub" style="font-size:40px;color:#0B0B0C;font-weight:600;${R(P(85.3,.5),{y:20})}">languages</div></div>`);
+  // drifting chip rows
+  const rowsOp=clamp(P(85.6,.8))*(1-phase2);
+  for(let r=0;r<3;r++){
+    let row='';
+    for(let k=0;k<20;k++){const l=langs[(k*3+r*7)%langs.length];row+=`<span class="pill" style="font-size:30px;margin-right:18px;color:#6B6A66;box-shadow:none">${l}</span>`;}
+    const off=((T*(40+r*12))%900)*(r%2?1:-1)-450;
+    h+=abs(0,520+r*100,`<div style="white-space:nowrap;transform:translateX(${off}px);opacity:${rowsOp*.9}">${row}${row}</div>`);
+  }
+  // special highlight
+  special.forEach(([l,s],i)=>{
+    const p=P(s,.5,E.back);
+    h+=center(460+i*500,lerp(870,470,phase2),`<div class="pill" style="font-size:38px;padding:20px 34px;background:#0B0B0C;color:#fff;transform:scale(${p});opacity:${clamp(p)};white-space:nowrap">${l}</div>`);
+  });
+  if(T>89.6){
+    const tr=P(90.2,.7);
+    h+=center(960,780,`<div style="display:flex;align-items:center;gap:40px;${R(tr,{y:60})}">
+      <div style="padding:30px 40px;border-radius:30px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 20px 60px rgba(20,20,30,.07);display:flex;align-items:center;gap:22px">${orb(80,T,{level:env(T)})}<div><div class="kicker">Cloned voice</div><div style="font-size:38px;font-weight:700">English</div></div></div>
+      <div style="font-size:60px;color:#A3A19B">→</div>
+      <div style="padding:30px 40px;border-radius:30px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 20px 60px rgba(20,20,30,.07);display:flex;align-items:center;gap:22px;${R(P(91.9,.6),{x:-40,y:0})}">${orb(80,T,{level:env(T),hue:90})}<div><div class="kicker">Speaks</div><div style="font-size:38px;font-weight:700;white-space:nowrap">日本語 · Español · हिन्दी</div></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:30px;font-weight:600;white-space:nowrap">
+        <div style="${R(P(93.4,.5),{x:-30,y:0})}"><span class="check" style="width:40px;height:40px;font-size:20px;margin-right:12px">✓</span>Native accent</div>
+        <div style="color:#A3A19B;${R(P(94.4,.5),{x:-30,y:0})}"><span class="check x" style="width:40px;height:40px;font-size:20px;margin-right:12px">✕</span><s>Your accent</s></div></div></div>`);
+  }
+  return h;
+});
+
+// 12. long form
+scene(95.4,107.95,t=>{
+  let h=center(960,150,`<div class="kicker" style="${R(P(95.8,.5),{y:20})}">For long-form</div>`);
+  const box=P(96.8,.7);
+  h+=center(560,420,`<div style="width:760px;padding:44px;border-radius:36px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);${R(box,{y:80})}">
+     <div class="kicker">One request</div>
+     <div class="disp" style="font-size:110px;font-weight:700;letter-spacing:-.05em;line-height:1.1">${Number(count(0,10000,98.3,1.2)).toLocaleString('en-US')}</div>
+     <div style="font-size:34px;color:#6B6A66">characters</div></div>`);
+  h+=center(1400,420,`<div style="text-align:center;${R(P(99.9,.7),{x:-60,y:0})}"><div style="font-size:70px;color:#A3A19B">≈</div><div class="disp" style="font-size:110px;font-weight:700;letter-spacing:-.05em">${count(0,10,100.6,.9)} <span style="font-size:60px">min</span></div><div style="font-size:34px;color:#6B6A66">of audio</div></div>`);
+  // stitching segments
+  const st=P(102.1,.6);
+  const join=P(103.3,1.4,E.io);
+  let segs='';
+  for(let i=0;i<5;i++){
+    const gap=lerp(46,0,join);
+    segs+=`<div style="margin-right:${i<4?gap:0}px;border-radius:${lerp(20,0,join)}px;${i===0?'border-top-left-radius:20px;border-bottom-left-radius:20px;':''}${i===4?'border-top-right-radius:20px;border-bottom-right-radius:20px;':''}background:${join>.9?'#0B0B0C':['#0B0B0C','#2B2B2E','#141416','#38383C','#1F1F22'][i]};padding:20px 16px">${bars(16,240,80,T,{amp:.7,seed:i*4,color:'#fff',mode:'static'})}</div>`;
+  }
+  h+=center(960,800,`<div style="${R(st,{y:60})}"><div style="display:flex;justify-content:center">${segs}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:22px;font-size:28px;font-weight:600"><span style="color:#8A8882">Ch. 1 · parts 1–5</span><span style="${R(P(105.5,.6),{y:20})}">A whole chapter = <span class="grad">one take</span></span></div></div>`);
+  return h;
+});
+
+// 13. multi-speaker
+scene(107.85,118.25,t=>{
+  const lv=env(t);
+  let h=center(960,140,`<div class="h3">${words('Multi-speaker *conversations*',[109.6,110.2],0)}</div>`);
+  const msgs=[
+    {who:0,s:110.8,txt:'So… did it actually work?'},
+    {who:1,s:111.7,txt:'[laughs] It worked. Every single time.'},
+    {who:0,s:112.6,txt:'[gasps] No way!'},
+  ];
+  msgs.forEach((m,i)=>{
+    const p=P(m.s,.6,E.expo);
+    const L=m.who===0;
+    const talking=T>m.s && T<(msgs[i+1]?.s??114);
+    h+=abs(L?260:700,270+i*160,`<div style="display:flex;align-items:center;gap:26px;${L?'':'flex-direction:row-reverse;'}width:960px;${R(p,{x:L?-60:60,y:0})}">
+      ${orb(100,T+i,{level:talking?lv:0,hue:L?0:150,c:L?['#6E97FF','#B892FF','#FFB38A','#8EE3CF']:['#FF9A6B','#FFD36B','#FF6BB5','#FFB38A']})}
+      <div style="padding:26px 34px;border-radius:28px;background:${L?'#fff':'#0B0B0C'};color:${L?'#0B0B0C':'#fff'};border:1.5px solid rgba(0,0,0,.06);font-size:34px;font-weight:500;box-shadow:0 20px 60px rgba(20,20,30,.07);display:flex;align-items:center;gap:20px">${m.txt}${talking?`<span style="opacity:.7">${bars(6,60,34,T*1.5,{amp:.4+lv,color:L?'#0B0B0C':'#fff',seed:i})}</span>`:''}</div></div>`);
+  });
+  const uses=[['🎧 Podcasts',115.3],['🎭 Skits',116.1],['🎬 Animated stories',116.8]];
+  h+=center(960,880,`<div style="display:flex;gap:24px">${uses.map(([u,s])=>`<div class="pill" style="font-size:36px;padding:20px 34px;${R(P(s,.5,E.back),{y:30,s:.6})}">${u}</div>`).join('')}</div>`);
+  return h;
+});
+
+// 14. downsides (dark)
+scene(118.15,126.35,t=>{
+  let h=center(960,lerp(540,190,P(119.2,.8,E.io)),`<div style="transform:scale(${lerp(1.25,.8,P(119.2,.8,E.io))});text-align:center"><div class="kicker" style="color:#FF6B5C;${R(P(118.2,.5),{y:20})};margin-bottom:12px">⚠ Reality check</div><div class="h1" style="color:#fff;font-size:150px">${words('The downsides.',[118.3,118.6],0)}</div></div>`);
+  if(T>119.3){
+    const c=P(119.5,.7);
+    h+=center(960,560,`<div style="width:1300px;padding:44px 54px;border-radius:36px;background:#161618;border:1.5px solid rgba(255,255,255,.08);color:#fff;${R(c,{y:80})}">
+      <div style="display:flex;gap:20px;margin-bottom:26px">${['#1 ranking','Listener tests'].map((x,i)=>`<span class="pill" style="background:#232326;color:#fff;border-color:rgba(255,255,255,.1);${R(P(119.6+i*1.5,.5),{y:20})}">${x}</span>`).join('')}</div>
+      <div style="font-size:44px;font-weight:600;line-height:1.3;${R(P(121.9,.6),{y:20})}">Source: <span style="color:#FFB38A">ElevenLabs’ own launch materials</span></div>
+      <div style="position:absolute;right:50px;top:40px;transform:rotate(-8deg) scale(${P(123.5,.4,E.back)});opacity:${clamp(P(123.5,.3))};border:4px solid #FF6B5C;color:#FF6B5C;padding:10px 22px;border-radius:14px;font-weight:800;font-size:30px;letter-spacing:.1em">SELF-REPORTED</div></div>`);
+    h+=center(960,860,`<div class="pill" style="background:#fff;color:#0B0B0C;font-size:36px;padding:20px 36px;${R(P(124.4,.6),{y:30})}">⏳ Wait for independent comparisons</div>`);
+  }
+  return h;
+},true);
+
+// 15. v3 users
+scene(126.25,136.4,t=>{
+  let h=center(960,150,`<div class="h3">${words('Already using v3 for voiceovers?',[126.44,126.86,127.16,127.72,128.24,128.9],0)}</div>`);
+  const ch=P(128.9,.7);
+  const v3=P(129.4,1,E.out)*.78, v4=P(130,1.2,E.out)*.86;
+  h+=abs(220,280,`<div style="width:700px;height:560px;padding:44px;border-radius:36px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.08);${R(ch,{y:80})}">
+     <div class="kicker">Pre-recorded narration</div>
+     <div style="display:flex;align-items:flex-end;gap:70px;height:300px;margin:30px 40px 0">
+      ${[['v3',v3,'#CFCCC4'],['v4',v4,'linear-gradient(180deg,#B892FF,#6E97FF)']].map(([n,v,c])=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;height:100%;justify-content:flex-end"><div style="width:100%;height:${v*100}%;border-radius:20px;background:${c}"></div><b style="font-size:34px">${n}</b></div>`).join('')}</div>
+     <div style="font-size:38px;font-weight:700;margin-top:24px;${R(P(130.9,.5),{y:20})}">Real, but <span class="g">incremental</span></div></div>`);
+  const sp=P(132.3,.7);
+  h+=abs(1000,280,`<div style="width:700px;height:560px;padding:44px;border-radius:36px;background:#0B0B0C;color:#fff;${R(sp,{y:80})}">
+     <div class="kicker" style="color:#9A9890">Biggest speed gains</div>
+     <div style="display:flex;flex-direction:column;gap:26px;margin-top:40px">
+      <div style="display:flex;align-items:center;gap:22px;font-size:40px;font-weight:700;${R(P(134,.5),{x:-30,y:0})}"><span class="check" style="background:#3BE0C0;color:#000">✓</span>Live agents</div>
+      <div style="display:flex;align-items:center;gap:22px;font-size:40px;font-weight:700;color:#6B6A66;${R(P(134.8,.5),{x:-30,y:0})}"><span class="check" style="background:#2A2A2D;color:#6B6A66">—</span><s>YouTube narration</s></div></div></div>`);
+  return h;
+});
+
+// 16. pricing
+scene(136.3,151.3,t=>{
+  let h=center(960,130,`<div class="h3">${words("What it *costs*",[136.5,136.8,137.1],0)}</div>`);
+  const plans=[
+    {s:136.9,n:'Free',p:'$0',note:'No commercial rights',bad:true,ns:138.7,extra:'Can’t use in monetized videos',es:139.7},
+    {s:142.0,n:'Starter',p:'~$6',note:'Commercial use starts here',ns:142.9},
+    {s:145.9,n:'Creator',p:'$22',note:'v4 included in monthly credits',ns:148.3,hi:true},
+  ];
+  plans.forEach((pl,i)=>{
+    const p=P(pl.s,.8);
+    const dark=pl.hi;
+    h+=abs(170+i*540,250,`<div style="width:500px;height:640px;padding:44px;border-radius:36px;background:${dark?'#0B0B0C':'#fff'};color:${dark?'#fff':'#0B0B0C'};border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,${dark?.25:.08});display:flex;flex-direction:column;gap:20px;${R(p,{y:120})}">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="kicker" style="${dark?'color:#9A9890':''}">${pl.n}</span>${dark?`<span class="pill" style="font-size:20px;padding:8px 16px;background:linear-gradient(90deg,#6E97FF,#B892FF,#FFB38A);color:#fff;border:none">v4 ✓</span>`:''}</div>
+      <div class="disp" style="font-size:120px;font-weight:700;letter-spacing:-.05em;line-height:1">${pl.p}<span style="font-size:34px;font-weight:500;color:${dark?'#9A9890':'#8A8882'};letter-spacing:0">/mo</span></div>
+      <div style="height:2px;background:${dark?'#2A2A2D':'#EEECE7'};margin:10px 0"></div>
+      <div style="display:flex;align-items:center;gap:18px;font-size:30px;font-weight:600;${R(P(pl.ns,.5),{x:-30,y:0})}"><span class="check ${pl.bad?'x':''}" style="width:44px;height:44px;font-size:22px;flex:none;${dark?'background:#fff;color:#000':''}">${pl.bad?'✕':'✓'}</span>${pl.note}</div>
+      ${pl.extra?`<div style="display:flex;align-items:center;gap:18px;font-size:28px;color:#8A8882;${R(P(pl.es,.5),{x:-30,y:0})}"><span class="check x" style="width:44px;height:44px;font-size:22px;flex:none">✕</span>${pl.extra}</div>`:''}
+    </div>`);
+  });
+  return h;
+});
+
+// 17. API
+scene(151.2,154.15,t=>{
+  let h=center(960,230,`<div class="h3" style="white-space:nowrap">${words('Developers can use it through the *API.*',[151.62,152.08,152.28,152.54,152.7,152.94,153.08,153.4],0)}</div>`);
+  const code=`<span style="color:#B892FF">curl</span> -X POST \\
+  <span style="color:#8EE3CF">https://api.elevenlabs.io/v1/text-to-speech/{voice_id}</span> \\
+  -H <span style="color:#FFB38A">"xi-api-key: $KEY"</span> \\
+  -d <span style="color:#FFB38A">'{"text": "[excited] Hello world!"}'</span>`;
+  const typed=P(151.9,1.6,E.lin);
+  h+=center(960,600,`<div style="width:1300px;padding:44px 54px;border-radius:32px;background:#0B0B0C;color:#E8E6E1;font-size:30px;line-height:1.7;${R(P(151.4,.6),{y:80})}">
+    <div style="display:flex;gap:10px;margin-bottom:24px"><i style="width:16px;height:16px;border-radius:50%;background:#FF5F57"></i><i style="width:16px;height:16px;border-radius:50%;background:#FEBC2E"></i><i style="width:16px;height:16px;border-radius:50%;background:#28C840"></i></div>
+    <pre class="mono" style="clip-path:inset(0 ${100-typed*100}% 0 0)">${code}</pre></div>`);
+  return h;
+});
+
+// 18. who should use it
+scene(154.05,161.35,t=>{
+  let h=center(960,130,`<div class="kicker" style="${R(P(154.1,.5),{y:20})}">Who should use it</div>`);
+  const u=[['▶️','Faceless YouTube',154.96],['📚','Audiobooks',156.7],['🎧','Podcasts',157.5],['📣','Ads',158.2]];
+  const fin=P(158.8,.8,E.io);
+  u.forEach(([ic,n,s],i)=>{
+    const p=P(s,.55,E.back);
+    h+=center(330+i*420,lerp(400,300,fin),`<div style="width:380px;height:220px;border-radius:32px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 20px 60px rgba(20,20,30,.07);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;transform:scale(${lerp(.5,1,clamp(p))*lerp(1,.85,fin)});opacity:${clamp(p*1.5)};filter:blur(${(1-clamp(p))*10}px)"><div style="font-size:64px">${ic}</div><div style="font-size:36px;font-weight:650;letter-spacing:-.02em">${n}</div></div>`);
+  });
+  if(T>158.7){
+    h+=center(960,lerp(800,700,fin),`<div style="text-align:center;opacity:${fin}"><div class="h2" style="font-size:110px;white-space:nowrap">${words('Eleven v4 = the new *standard* *to* *beat.*',[158.82,159.3,159.78,159.86,160.1,160.46,160.74,161.0],0,{y:60})}</div></div>`);
+  }
+  return h;
+});
+
+// 19. OUTRO
+scene(161.25,DUR,t=>{
+  const lv=env(t);
+  let h='';
+  const part2=P(164.4,.8,E.io);
+  // turbo for voice agents
+  h+=center(960,lerp(420,140,part2),`<div style="text-align:center;transform:scale(${lerp(1,.62,part2)})">
+     <div class="h3" style="color:#6B6A66;margin-bottom:30px">${words('Building voice agents?',[161.3,161.7,162.04],0)}</div>
+     <div style="display:inline-flex;align-items:center;gap:30px;padding:30px 50px;border-radius:999px;background:#0B0B0C;color:#fff;${R(P(162.84,.6,E.back),{y:40,s:.5})}">${orb(90,t*2,{level:lv,c:['#3BE0C0','#5B8CFF','#B8FF6B','#2BD4FF']})}<span class="disp" style="font-size:80px;font-weight:700;letter-spacing:-.04em">v4 Turbo</span></div></div>`);
+  // links in description + subscribe
+  if(T>164.3){
+    const lk=P(164.52,.6);
+    h+=center(960,480,`<div class="pill" style="font-size:36px;padding:20px 36px;${R(lk,{y:40})}">🔗 Links in the description <span style="display:inline-block;transform:translateY(${Math.sin(T*6)*6}px)">↓</span></div>`);
+    const sb=P(166.0,.6,E.back);
+    const pressed=T>166.3;
+    const press=1-0.08*Math.exp(-Math.pow((T-166.3)*12,2));
+    h+=center(960,700,`<div style="display:flex;align-items:center;gap:40px;padding:36px 46px;border-radius:40px;background:#fff;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 30px 80px rgba(20,20,30,.1);${R(clamp(sb),{y:80})};transform:scale(${lerp(.7,1,sb)})">
+       <div style="width:120px;height:120px;border-radius:50%;background:#0B0B0C;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Inter Display';font-weight:800;font-size:44px;letter-spacing:-.04em;position:relative;overflow:hidden"><div style="position:absolute;inset:0;opacity:.9">${orb(120,t,{level:lv})}</div><span style="position:relative;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.3)">E</span></div>
+       <div><div style="font-size:52px;font-weight:700;letter-spacing:-.03em">Eden AI</div><div style="font-size:28px;color:#6B6A66;margin-top:6px;white-space:nowrap">${words('A new AI tool breakdown every week',[167.3,167.64,168.06,168.3,168.6,169.0,169.32],0,{y:16,blur:6})}</div></div>
+       <div style="display:flex;align-items:center;gap:16px;padding:26px 42px;border-radius:999px;background:${pressed?'#E9E7E2':'#FF2D2D'};color:${pressed?'#33322F':'#fff'};font-size:36px;font-weight:700;white-space:nowrap;transform:scale(${press})">${pressed?'✓ Subscribed':'Subscribe'}</div>
+       <div style="font-size:52px;transform:rotate(${pressed?Math.sin((T-166.6)*18)*Math.exp(-(T-166.6)*3)*25:0}deg);opacity:${clamp(P(166.5,.3))}">🔔</div></div>`);
+    // cursor
+    const cp=P(165.6,.7,E.io);
+    const cx=lerp(1500,1312,cp), cy=lerp(980,712,cp);
+    h+=abs(cx,cy,`<svg width="44" height="54" viewBox="0 0 22 27" style="transform:scale(${T>166.25&&T<166.45?.85:1});opacity:${clamp(P(165.5,.3))*(1-P(167.4,.5))}"><path d="M2 2 L2 22 L7.5 17 L11 25 L14 23.6 L10.6 15.8 L18 15.6 Z" fill="#0B0B0C" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`);
+    // click ripple
+    if(T>166.3&&T<167){const rp=P(166.3,.6,E.out);h+=center(1322,722,`<div style="width:${rp*160}px;height:${rp*160}px;border-radius:50%;border:3px solid rgba(255,45,45,${1-rp})"></div>`);}
+  }
+  // end fade
+  const endF=P(170.3,1.0,E.io);
+  if(endF>0) h+=`<div style="position:absolute;inset:0;background:#F4F3EF;opacity:${endF}"></div>`;
+  return h;
+});
+
+// ---------- render ----------
+function render(t){
+  T=t;
+  let dark=0;
+  for(const s of S){ if(s.dark){ const fi=clamp((t-s.a)/.5), fo=clamp((s.b-t)/.5); dark=Math.max(dark,Math.min(fi,fo)); } }
+  const bgc=mixColor('f4f3ef','0b0b0c',E.io(dark));
+  let html=`<div class="bg" style="background:radial-gradient(120% 90% at 50% 0%,${mixColor('ffffff','1a1a1e',E.io(dark))} 0%,${bgc} 60%)"></div>`;
+  // ambient blobs
+  html+=`<div style="position:absolute;width:900px;height:900px;left:${-250+Math.sin(t*.13)*120}px;top:${-350+Math.cos(t*.11)*90}px;border-radius:50%;background:radial-gradient(circle,rgba(150,170,255,${.22-dark*.1}),transparent 65%)"></div>
+           <div style="position:absolute;width:900px;height:900px;right:${-300+Math.cos(t*.12)*120}px;bottom:${-420+Math.sin(t*.1)*90}px;border-radius:50%;background:radial-gradient(circle,rgba(255,190,150,${.2-dark*.1}),transparent 65%)"></div>`;
+  for(const s of S){
+    if(t<s.a-0.01||t>s.b+0.01) continue;
+    const pin=clamp((t-s.a)/.45), pout=clamp((s.b-t)/.4);
+    const op=Math.min(E.out(pin),E.out(pout));
+    const sc=lerp(.97,1,E.out(pout))*lerp(1.02,1,E.out(pin));
+    const bl=(1-pout)*12;
+    html+=`<div class="scene ${s.dark?'dark':''}" style="opacity:${op};transform:scale(${sc});filter:blur(${bl}px)">${s.fn(t)}</div>`;
+  }
+  // brand + progress
+  const fg=dark>.5?'#fff':'#0B0B0C';
+  html+=`<div class="brand" style="color:${fg};opacity:${t<0.6?clamp(t/0.6):1}"><i></i>Eden AI</div>`;
+  html+=`<div class="prog" style="background:${dark>.5?'rgba(255,255,255,.1)':'rgba(0,0,0,.07)'}"><b style="width:${clamp(t/169.8)*100}%;background:${fg}"></b></div>`;
+  document.getElementById('root').innerHTML=html;
+}
+window.render=render;
+const q=new URLSearchParams(location.search); if(q.has('t')) render(parseFloat(q.get('t'))); else render(0);
+</script></body></html>
