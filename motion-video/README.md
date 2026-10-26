@@ -43,3 +43,7 @@ Built-in problems, matching the fixes in the script:
 | Look | Flat footage | Test a filter |
 | Audio | Music too loud (about −11 dB average, peaks at 0 dB) | Lower the level in the timeline |
 | Export | 1080p | Re-export at native 4K |
+
+## Badly animated 20 s motion graphics (to redo properly)
+
+`badmg.html` + `src/badmg.js` render `out/bad_motion_graphics_20s.mp4`: the opening of the script in the main video's style, animated badly on purpose. Problems to fix: no easing (linear moves that stop dead), overdone elastic bounces, letters spinning in, choppy 6 fps wobble, overlapping boxes with text spilling out, mixed fonts, a rainbow background and lens flare, camera shake, white flash frames, spin and star wipes, text running off the frame edges, and an abrupt cut to black at the end.
