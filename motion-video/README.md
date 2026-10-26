@@ -22,3 +22,24 @@ node make_srt.js > out/captions.srt
 Preview stills: `node snap.js main.html /tmp/still 12 95 180`.
 
 The top-left corner stays empty (no logo or AI name), and the video has no channel branding.
+
+## "Bad" first-version promo (to improve on camera)
+
+`bad.html` + `src/badpromo.js` render `out/bad_promo_first_version.mp4`: a deliberately weak 30 s promo with a loud music bed.
+
+```bash
+node render.js bad.html out/bad_silent.mp4 30 0 30 3   # then mux any music track
+```
+
+Built-in problems, matching the fixes in the script:
+
+| Time | Problem | Script fix |
+| --- | --- | --- |
+| 0–3 s | Plain white title card, linear fade | Animate the opening title (Agent) |
+| 3–10 s | Title lower third only appears at 8.2 s, is too long, and covers the sidebar | Move the title clip earlier and trim it (Timeline) |
+| 10–20 s | Static "Save 10 hours" box sits on top of the product | Turn the number into an animated visual |
+| 20–30 s | Long headline, low in the frame, weak hierarchy, cyan accent off-brand, stat card overlaps the product | Shorten the headline, change the accent, resize/move up, reposition the graphic (Canvas) |
+| Cuts | Hard cuts between every clip | Add a controlled transition |
+| Look | Flat footage | Test a filter |
+| Audio | Music too loud (about −11 dB average, peaks at 0 dB) | Lower the level in the timeline |
+| Export | 1080p | Re-export at native 4K |
