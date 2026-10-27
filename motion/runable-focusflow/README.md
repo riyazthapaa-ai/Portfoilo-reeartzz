@@ -1,6 +1,6 @@
 # Runable × FocusFlow — motion graphics
 
-Apple-style kinetic type with a subtle Vox-style mixed-media layer: torn paper, tape, hand-drawn marker strokes, halftone and film grain. The palette is navy, light backgrounds and blue accents. Every cue is timed to the word-aligned voiceover.
+Apple-style kinetic type in the Runable look — sky-blue cloud backdrop with dot texture, editorial serif headlines, black ink accents and white chip UI — with a subtle Vox-style mixed-media layer (torn paper, tape, hand-drawn marks, grain). FocusFlow outputs (site, deck, post) keep their own blue brand. The Runable mark is a hand-traced approximation; swap in the official SVG via `RLOGO` in `source/motion.html`.
 
 | File | VO section | Length |
 |---|---|---|
