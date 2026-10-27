@@ -1,0 +1,674 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FocusFlow Motion</title>
+<style>
+@font-face{font-family:Hand;src:url(fonts/caveat-latin-600-normal.woff2) format('woff2');font-weight:600}
+@font-face{font-family:Hand;src:url(fonts/caveat-latin-700-normal.woff2) format('woff2');font-weight:700}
+@font-face{font-family:Serif;src:url(fonts/instrument-serif-latin-400-normal.woff2) format('woff2');font-style:normal}
+@font-face{font-family:Serif;src:url(fonts/instrument-serif-latin-400-italic.woff2) format('woff2');font-style:italic}
+:root{
+  --navy:#0B1B3F; --ink:#14244A; --mute:#6B7690; --line:#DDE3EE;
+  --bg:#F3F5F9; --paper:#FBFAF6; --blue:#2F6BFF; --blue2:#6E9BFF; --sky:#E7EEFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+body{font-family:'Inter Display','Inter',sans-serif;color:var(--navy);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden;
+  background:radial-gradient(1200px 800px at 85% -10%,#E3EAFB 0%,transparent 60%),
+             radial-gradient(1000px 700px at -10% 110%,#E8EDF7 0%,transparent 60%),var(--bg)}
+#world{position:absolute;inset:0;transform-origin:50% 50%}
+.scene{position:absolute;inset:0;display:none}
+.c{position:absolute;left:50%;top:50%;will-change:transform,opacity,filter}
+.hl{font-weight:700;font-size:118px;letter-spacing:-.04em;line-height:1.02;white-space:nowrap;text-align:center}
+.hl.m{font-size:92px}
+.hl.s{font-size:64px;letter-spacing:-.03em}
+.sub{font-weight:500;font-size:40px;color:var(--mute);letter-spacing:-.015em;white-space:nowrap}
+.w{display:inline-block;will-change:transform,opacity,filter}
+.ser{font-family:Serif;font-style:italic;font-weight:400;letter-spacing:-.01em}
+.grad{background:linear-gradient(100deg,#1F55F0 0%,#5E8DFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 .04em}
+.hand{font-family:Hand;font-weight:700;color:var(--blue);white-space:nowrap}
+.hand.ink{color:var(--navy)}
+.mute{color:var(--mute)}
+
+/* mixed media */
+.paperwrap{filter:drop-shadow(0 18px 22px rgba(11,27,63,.13)) drop-shadow(0 2px 3px rgba(11,27,63,.10))}
+.paper{position:relative;background-color:var(--paper);background-image:var(--noise)}
+.tape{position:absolute;height:44px;background:rgba(214,224,243,.78);background-image:var(--noise);mix-blend-mode:multiply}
+.halftone{position:absolute;border-radius:50%;
+  background-image:radial-gradient(circle,rgba(47,107,255,.55) 1.6px,transparent 2.2px);background-size:13px 13px;
+  -webkit-mask-image:radial-gradient(circle,#000 0%,rgba(0,0,0,.6) 45%,transparent 70%);mask-image:radial-gradient(circle,#000 0%,rgba(0,0,0,.6) 45%,transparent 70%)}
+svg.draw path,svg.draw line,svg.draw circle{fill:none;stroke-linecap:round;stroke-linejoin:round}
+#overlay{position:absolute;inset:0;pointer-events:none;background-image:var(--grain);opacity:.55;mix-blend-mode:multiply}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 60%,rgba(11,27,63,.06) 100%)}
+
+/* glass + ui */
+.glass{background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 40px 80px -30px rgba(11,27,63,.28),0 12px 30px -12px rgba(11,27,63,.12),inset 0 1px 0 #fff;border-radius:28px}
+.browser{width:760px;height:480px;border-radius:20px;overflow:hidden;background:#fff;
+  box-shadow:0 50px 90px -35px rgba(11,27,63,.35),0 14px 30px -14px rgba(11,27,63,.18);border:1px solid #E6EAF2}
+.bar{height:44px;background:#F5F7FB;border-bottom:1px solid #E8ECF3;display:flex;align-items:center;padding:0 16px;gap:8px}
+.dot{width:12px;height:12px;border-radius:50%;background:#D9DEE8}
+.url{margin-left:18px;flex:1;height:26px;border-radius:8px;background:#fff;border:1px solid #E6EAF2;font:500 14px Inter;color:var(--mute);display:flex;align-items:center;padding:0 12px;gap:6px}
+.pub{height:28px;border-radius:8px;background:var(--blue);color:#fff;font:600 14px Inter;display:flex;align-items:center;padding:0 14px;gap:6px}
+.site{padding:22px 34px;position:relative;height:436px;background:linear-gradient(180deg,#fff 0%,#F4F7FF 100%)}
+.nav{display:flex;align-items:center;gap:10px;font:600 16px 'Inter Display'}
+.nav .links{margin-left:auto;display:flex;gap:22px;font:500 13px Inter;color:var(--mute)}
+.hero-h{margin-top:54px;font:700 50px/1.02 'Inter Display';letter-spacing:-.04em;text-align:center}
+.hero-p{margin:14px auto 0;width:420px;text-align:center;font:400 15px/1.45 Inter;color:var(--mute)}
+.cta{margin:22px auto 0;width:max-content;border-radius:999px;background:var(--blue);color:#fff;font:600 16px Inter;padding:12px 24px;box-shadow:0 10px 24px -8px rgba(47,107,255,.6)}
+.mini{position:absolute;left:50%;bottom:-40px;transform:translateX(-50%);width:560px;height:130px;border-radius:14px;background:#fff;border:1px solid #E6EAF2;box-shadow:0 20px 40px -20px rgba(11,27,63,.25);padding:16px;display:flex;gap:12px}
+.mini .col{flex:1;border-radius:8px;background:#F4F6FB;padding:10px;display:flex;flex-direction:column;gap:7px}
+.mini .ln{height:8px;border-radius:4px;background:#DCE3F1}
+.mini .ln.b{background:#BFD0FF}
+
+.deck{width:640px;height:360px;border-radius:16px;background:#fff;overflow:hidden;position:relative;
+  box-shadow:0 50px 90px -35px rgba(11,27,63,.35),0 14px 30px -14px rgba(11,27,63,.18);border:1px solid #E6EAF2;padding:40px 46px}
+.deck .k{font:600 14px Inter;color:var(--blue);letter-spacing:.12em;text-transform:uppercase}
+.deck .t{margin-top:14px;font:700 54px/1 'Inter Display';letter-spacing:-.04em}
+.deck .p{margin-top:16px;width:330px;font:400 16px/1.45 Inter;color:var(--mute)}
+.deck .n{position:absolute;right:30px;bottom:24px;font:500 13px Inter;color:var(--mute)}
+.deck .bars{position:absolute;right:46px;bottom:60px;display:flex;gap:12px;align-items:flex-end}
+.deck .bars i{display:block;width:34px;border-radius:6px 6px 0 0;background:#DCE5FF}
+.deck .bars i.on{background:var(--blue)}
+
+.post{width:380px;height:475px;border-radius:22px;overflow:hidden;position:relative;color:#fff;padding:28px;
+  background:radial-gradient(120% 90% at 100% 0%,#6E9BFF 0%,#2F6BFF 45%,#173FB8 100%);
+  box-shadow:0 50px 90px -35px rgba(11,27,63,.4),0 14px 30px -14px rgba(11,27,63,.2)}
+.post .hd{display:flex;align-items:center;gap:10px;font:600 15px Inter}
+.post .av{width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.post .big{position:absolute;left:28px;right:28px;bottom:84px;font:700 46px/1.02 'Inter Display';letter-spacing:-.035em}
+.post .ft{position:absolute;left:28px;bottom:30px;font:500 14px Inter;opacity:.8}
+.post .ring{position:absolute;right:-60px;top:70px;width:230px;height:230px;border-radius:50%;border:26px solid rgba(255,255,255,.14)}
+
+.prompt{width:1240px;min-height:200px;padding:34px 120px 34px 96px;position:relative;font:400 31px/1.42 Inter;color:var(--ink);letter-spacing:-.01em}
+.prompt .ic{position:absolute;left:30px;top:34px;width:42px;height:42px}
+.prompt .send{position:absolute;right:28px;bottom:28px;width:64px;height:64px;border-radius:50%;background:var(--blue);display:grid;place-items:center;box-shadow:0 12px 24px -10px rgba(47,107,255,.7)}
+.caret{display:inline-block;width:3px;height:1.1em;background:var(--blue);vertical-align:-.18em;margin-left:2px}
+.ph{color:#A3ACBF}
+.chip{display:flex;align-items:center;gap:16px;padding:20px 30px;border-radius:22px;font:600 34px 'Inter Display';letter-spacing:-.02em;white-space:nowrap}
+.chip svg{width:38px;height:38px}
+
+.app{width:1120px;height:640px;border-radius:26px;overflow:hidden;background:#fff;display:flex;
+  box-shadow:0 60px 110px -40px rgba(11,27,63,.38),0 16px 36px -16px rgba(11,27,63,.18);border:1px solid #E6EAF2}
+.side{width:250px;background:#F6F8FC;border-right:1px solid #EBEFF5;padding:28px 22px;display:flex;flex-direction:column;gap:8px}
+.side .it{font:500 18px Inter;color:var(--mute);padding:11px 14px;border-radius:12px;display:flex;align-items:center;gap:12px}
+.side .it.on{background:#fff;color:var(--navy);box-shadow:0 4px 12px -6px rgba(11,27,63,.2)}
+.side .it i{width:10px;height:10px;border-radius:3px;background:#C9D3E6;display:block}
+.side .it.on i{background:var(--blue)}
+.mainp{flex:1;padding:40px 46px;position:relative}
+.mainp h3{font:700 40px 'Inter Display';letter-spacing:-.03em}
+.mainp .dt{font:500 17px Inter;color:var(--mute);margin-top:6px}
+.row{margin-top:22px;width:470px;height:86px;border-radius:18px;border:1px solid #E8ECF4;display:flex;align-items:center;gap:20px;padding:0 24px;font:600 25px 'Inter Display';letter-spacing:-.02em;background:#fff;position:relative}
+.box{width:34px;height:34px;border-radius:10px;border:2.5px solid #C8D1E3;display:grid;place-items:center;flex:none}
+.tag{margin-left:auto;font:600 13px Inter;padding:6px 10px;border-radius:999px;background:var(--sky);color:var(--blue)}
+.timer{position:absolute;right:56px;top:120px;width:300px;height:300px}
+.timer .lbl{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.timer .lbl b{display:block;font:700 62px 'Inter Display';letter-spacing:-.03em}
+.timer .lbl span{display:block;font:500 17px Inter;color:var(--mute);margin-top:-6px}
+
+.node{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid #E1E7F2;box-shadow:0 18px 40px -20px rgba(11,27,63,.3)}
+.node svg{width:46px;height:46px}
+.nlabel{font:600 32px 'Inter Display';letter-spacing:-.02em;white-space:nowrap;text-align:center}
+.pill{border-radius:999px;padding:18px 34px;font:600 40px 'Inter Display';letter-spacing:-.02em;white-space:nowrap;display:flex;align-items:center;gap:14px}
+.pill.blue{background:var(--blue);color:#fff;box-shadow:0 20px 40px -16px rgba(47,107,255,.7)}
+.pill.light{background:#fff;color:var(--navy);box-shadow:0 18px 40px -20px rgba(11,27,63,.3);border:1px solid #E6EAF2}
+.label{font:500 30px Inter;color:var(--mute);letter-spacing:-.01em;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="stage"><div id="world"></div><div id="vignette"></div><div id="overlay"></div></div>
+<script src="cues.js"></script>
+<script>
+/* ---------- utilities ---------- */
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const E={
+  lin:p=>p,
+  out:p=>1-Math.pow(1-p,3),
+  out4:p=>1-Math.pow(1-p,4),
+  expo:p=>p>=1?1:1-Math.pow(2,-10*p),
+  inOut:p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,
+  in:p=>p*p*p,
+  spring:p=>p>=1?1:1-Math.exp(-6.5*p)*Math.cos(9.5*p),
+  soft:p=>p>=1?1:1-Math.exp(-5*p)*Math.cos(6*p)
+};
+const pr=(t,t0,d)=>clamp((t-t0)/d);
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const hash=(n)=>{const r=rng(n*9301+49297);return r()};
+// stop-motion jitter: changes 8x per second, tiny
+const jit=(seed,t,a=.45)=>(hash(Math.floor(t*8)*31+seed)-.5)*2*a;
+
+const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstElementChild};
+function el(parent,html,cls){const e=$(html);if(cls)e.classList.add(...cls.split(' '));parent.appendChild(e);return e}
+// words: "One *idea.*" => *x* serif italic, _x_ gradient, ~x~ hand
+function W(text){
+  return text.split(' ').map(w=>{
+    let c='w';
+    if(/^\*.*\*$/.test(w)){c+=' ser';w=w.slice(1,-1)}
+    else if(/^_.*_$/.test(w)){c+=' grad';w=w.slice(1,-1)}
+    return `<span class="${c}">${w}</span>`}).join(' ');
+}
+const ST={};
+function set(e,o){
+  const x=o.x??0,y=o.y??0,s=o.s??1,r=o.r??0,op=o.o??1,b=o.b??0;
+  let tr=(e.classList.contains('c')?'translate(-50%,-50%) ':'')+`translate(${x}px,${y}px)`;
+  if(o.ry||o.rx)tr+=` perspective(2200px) rotateX(${o.rx||0}deg) rotateY(${o.ry||0}deg)`;
+  tr+=` rotate(${r}deg) scale(${s}${o.sy!=null?','+o.sy:''})`;
+  e.style.transform=tr;e.style.opacity=op;
+  e.style.filter=b>0.05?`blur(${b}px)`:(e.dataset.f||'');
+  e.style.visibility=op<=0.002?'hidden':'visible';
+}
+// keyframes: [{t, x,y,s,r,o,b,e}] -> interpolated props
+function kf(e,t,F){
+  const keys=['x','y','s','r','o','b','rx','ry','sy'];const D={x:0,y:0,s:1,r:0,o:1,b:0,rx:0,ry:0};
+  const full=[];let prev=Object.assign({},D);
+  for(const f of F){const g=Object.assign({},prev,f);full.push(g);prev=g}
+  let out;
+  if(t<=full[0].t)out=full[0];
+  else if(t>=full[full.length-1].t)out=full[full.length-1];
+  else{for(let i=1;i<full.length;i++){if(t<full[i].t){const a=full[i-1],b=full[i];const p=(E[b.e]||E.out4)((t-a.t)/(b.t-a.t));out={};for(const k of keys){if(a[k]!=null||b[k]!=null)out[k]=lerp(a[k]??D[k],b[k]??D[k],p)}break}}}
+  set(e,out);return out;
+}
+// enter (rise+deblur) and exit for a whole element
+function inout(e,t,tin,tout,o={}){
+  const d=o.d??.9,dy=o.dy??40,bl=o.bl??16,s0=o.s0??1;
+  const p=(o.e?E[o.e]:E.out4)(pr(t,tin,d));
+  const q=tout!=null?E.inOut(pr(t,tout,o.od??.5)):0;
+  set(e,{x:(o.x??0),y:(o.y??0)+dy*(1-p)-(o.oy??24)*q,s:lerp(s0,1,p)*(1-q*(o.os??.04)),r:o.r??0,o:p*(1-q),b:bl*(1-p)+(o.ob??10)*q});
+}
+// per-word reveal
+function words(e,t,tin,tout,o={}){
+  const ws=e.querySelectorAll('.w');const st=o.st??.075,d=o.d??.85,dy=o.dy??46,bl=o.bl??14;
+  ws.forEach((w,i)=>{const ti=Array.isArray(tin)?(tin[i]??tin[tin.length-1]):tin+i*st;const p=E.out4(pr(t,ti,d));
+    w.style.transform=`translateY(${dy*(1-p)}px)`;w.style.opacity=p;w.style.filter=p<.99?`blur(${bl*(1-p)}px)`:'none'});
+  const q=tout!=null?E.inOut(pr(t,tout,o.od??.5)):0;
+  set(e,{x:o.x??0,y:(o.y??0)-(o.oy??22)*q,s:(o.s??1)*(1-q*.03),o:1-q,b:(o.ob??10)*q});
+}
+function draw(path,t,t0,d,e='inOut'){const p=E[e](pr(t,t0,d));path.style.strokeDasharray='1 1';path.style.strokeDashoffset=1-p;path.style.opacity=p>0?1:0;return p}
+function torn(w,h,amp=7,step=16,seed=1,edges='trbl'){
+  const r=rng(seed);const pts=[];const J=()=>r()*amp;
+  const T=edges.includes('t'),R=edges.includes('r'),B=edges.includes('b'),L=edges.includes('l');
+  for(let x=0;x<w;x+=step)pts.push([x,T?J():0]);
+  for(let y=0;y<h;y+=step)pts.push([w-(R?J():0),y]);
+  for(let x=w;x>0;x-=step)pts.push([x,h-(B?J():0)]);
+  for(let y=h;y>0;y-=step)pts.push([L?J():0,y]);
+  return 'polygon('+pts.map(p=>p[0].toFixed(1)+'px '+p[1].toFixed(1)+'px').join(',')+')';
+}
+function paper(parent,w,h,seed,inner='',opts={}){
+  const wrap=el(parent,`<div class="paperwrap c"><div class="paper" style="width:${w}px;height:${h}px;background-color:${opts.bg||'var(--paper)'};clip-path:${torn(w,h,opts.amp??6,opts.step??15,seed,opts.edges||'trbl')}">${inner}</div></div>`);
+  return wrap;
+}
+function tape(parent,w,x,y,r,seed){
+  const t=el(parent,`<div class="tape" style="width:${w}px;left:${x}px;top:${y}px;transform:rotate(${r}deg);clip-path:${torn(w,44,5,7,seed,'lr')}"></div>`);return t;
+}
+function typeText(e,t,t0,text,cps=30,caret=true){
+  const n=Math.max(0,Math.floor((t-t0)*cps));const s=text.slice(0,n);
+  const blink=caret&&(n>=text.length?Math.floor(t*2)%2===0:true);
+  e.innerHTML=(s||'')+(caret?`<span class="caret" style="opacity:${blink?1:0}"></span>`:'');
+}
+
+/* ---------- textures ---------- */
+const noiseSVG=(a,f)=>`url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='${f}' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .25 0 0 0 0 .27 0 0 0 0 .33 0 0 0 ${a} 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>`).replace('%2523','%23')}")`;
+document.documentElement.style.setProperty('--noise',noiseSVG(.10,.75));
+document.documentElement.style.setProperty('--grain',noiseSVG(.16,1.1));
+
+/* ---------- shared components ---------- */
+const LOGO=(sz=64,id='')=>`<svg width="${sz}" height="${sz}" viewBox="0 0 64 64"><defs><linearGradient id="lg${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5E8DFF"/><stop offset="1" stop-color="#1F55F0"/></linearGradient></defs><rect width="64" height="64" rx="17" fill="url(#lg${id})"/><path class="lring" d="M44.5 21.5 A16 16 0 1 0 47.6 35" fill="none" stroke="#fff" stroke-width="5.2" stroke-linecap="round" pathLength="1"/><path d="M47.6 35 l4.8 -3.6 M47.6 35 l-4.2 -4" stroke="#fff" stroke-width="4.6" stroke-linecap="round" fill="none"/><circle cx="32" cy="32" r="5.6" fill="#fff"/></svg>`;
+const ICON={
+  spark:`<svg viewBox="0 0 24 24"><path d="M12 2.5l2.1 6.2 6.4 2.3-6.4 2.3L12 19.5l-2.1-6.2L3.5 11l6.4-2.3z" fill="#2F6BFF"/><path d="M19 15.5l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9z" fill="#8DB0FF"/></svg>`,
+  arrowUp:`<svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  plan:`<svg viewBox="0 0 24 24" fill="none" stroke="#2F6BFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>`,
+  create:`<svg viewBox="0 0 24 24" fill="none" stroke="#2F6BFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.6L20 11l-5.8 2.4L12 19l-2.2-5.6L4 11l5.8-2.4z"/></svg>`,
+  control:`<svg viewBox="0 0 24 24" fill="none" stroke="#2F6BFF" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>`,
+  doc:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>`,
+  list:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>`,
+  wand:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2M15 10V8M11 6h2M17 6h2M4 20L14 10"/><path d="M19 13l.8 1.7 1.7.8-1.7.8L19 18l-.8-1.7-1.7-.8 1.7-.8z"/></svg>`,
+  pen:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>`,
+  test:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16.5 9.5"/></svg>`,
+  check:`<svg width="20" height="20" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  lock:`<svg width="12" height="12" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="#6B7690"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#6B7690" stroke-width="2.6" fill="none"/></svg>`,
+  cursor:`<svg width="44" height="44" viewBox="0 0 24 24"><path d="M5 3l14 8.2-6.2 1.4L9.6 19z" fill="#0B1B3F" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`
+};
+function browserHTML(o={}){
+  return `<div class="browser"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <div class="url">${ICON.lock}<span class="urltx">${o.url||'focusflow.app'}</span></div>${o.pub?'<div class="pub"><span class="pubtx">Publish</span></div>':''}</div>
+    <div class="site"><div class="nav">${LOGO(26,'b'+(o.id||''))}FocusFlow<div class="links"><span>Features</span><span>Pricing</span><span>About</span></div></div>
+    <div class="hero-h">Focus on what<br>matters most.</div>
+    <div class="hero-p">Organize tasks, manage projects and protect your deep work — all in one calm space.</div>
+    <div class="cta">Get started free</div>
+    <div class="mini"><div class="col"><div class="ln b" style="width:60%"></div><div class="ln"></div><div class="ln" style="width:70%"></div></div><div class="col"><div class="ln b" style="width:45%"></div><div class="ln"></div><div class="ln" style="width:80%"></div></div><div class="col"><div class="ln b" style="width:70%"></div><div class="ln" style="width:55%"></div><div class="ln"></div></div></div>
+    </div></div>`;
+}
+const deckHTML=()=>`<div class="deck"><div class="k">01 — The problem</div><div class="t">Work is<br>scattered.</div><div class="p">Tasks live in five apps. Focus lives in none of them.</div><div class="bars"><i style="height:50px"></i><i style="height:80px"></i><i class="on" style="height:130px"></i></div><div class="n">FocusFlow · 02 / 08</div></div>`;
+const postHTML=()=>`<div class="post"><div class="ring"></div><div class="hd"><div class="av">${LOGO(24,'p')}</div>focusflow</div><div class="big">Your day,<br>finally in<br>focus.</div><div class="ft">Launching soon · #FocusFlow</div></div>`;
+
+/* ---------- scene system ---------- */
+const world=document.getElementById('world');
+const scenes=[];
+function scene(t0,t1,build,render){const root=el(world,'<div class="scene"></div>');const ctx=build(root)||{};scenes.push({t0,t1,root,ctx,render});}
+// full-stage svg for hand drawn marks
+function svgLayer(root,inner,cls='draw'){return el(root,`<svg class="${cls}" width="1920" height="1080" viewBox="-960 -540 1920 1080" style="position:absolute;inset:0;overflow:visible">${inner}</svg>`)}
+
+// ambient mixed-media decor shared by all clips
+const decor=el(world,'<div style="position:absolute;inset:0"></div>');
+const ht1=el(decor,'<div class="halftone c" style="width:620px;height:620px"></div>');
+const ht2=el(decor,'<div class="halftone c" style="width:420px;height:420px"></div>');
+const scrap=paper(decor,300,190,77,'',{bg:'#EEF2FA',amp:9});
+const scrap2=paper(decor,240,150,91,'',{bg:'#F6F2E9',amp:8});
+function renderDecor(t,dur){
+  const a=E.out(pr(t,0,1.2))*(1-E.inOut(pr(t,dur-1.0,1.0)));
+  set(ht1,{x:780+Math.sin(t*.25)*14,y:-420+Math.cos(t*.2)*10,r:t*3,o:.16*a});
+  set(ht2,{x:-820+Math.cos(t*.22)*12,y:430+Math.sin(t*.3)*10,r:-t*2,o:.13*a});
+  set(scrap,{x:-930,y:-470,r:-14+jit(3,t,.3),o:.85*a});
+  set(scrap2,{x:930,y:480,r:10+jit(5,t,.3),o:.8*a});
+}
+
+const CLIP=(new URLSearchParams(location.search).get('clip'))||'hook';
+const T=CUES[CLIP];
+let DUR=T.end;
+
+/* =================================================================
+   HOOK
+   ================================================================= */
+if(CLIP==='hook'){
+  // A — one idea -> three outputs
+  scene(0,T.today+.6,root=>{
+    const c={};
+    c.note=paper(root,380,300,11,`<div style="position:absolute;left:0;right:0;top:78px;text-align:center" class="hand ink"><div style="font-size:66px;line-height:1">a simple</div><div style="font-size:84px;line-height:1;color:var(--blue)">idea</div></div>
+      <svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;right:34px;top:26px" class="draw"><path d="M32 10c-9 0-15 7-15 15 0 6 3 9 6 12 2 2 2 4 2 6h14c0-2 0-4 2-6 3-3 6-6 6-12 0-8-6-15-15-15z" stroke="#2F6BFF" stroke-width="3"/><path d="M26 50h12M28 55h8M32 3v-1M50 10l2-2M14 10l-2-2" stroke="#2F6BFF" stroke-width="3"/></svg>`,{bg:'#FFFDF6'});
+    tape(c.note.firstElementChild,150,115,-14,-4,12);
+    c.cards=[
+      [el(root,`<div class="c">${browserHTML({id:'a'})}</div>`),-575,30,.6,-3,T.website],
+      [el(root,`<div class="c">${deckHTML()}</div>`),0,10,.7,1.5,T.deck],
+      [el(root,`<div class="c">${postHTML()}</div>`),575,30,.62,3,T.marketing],
+    ];
+    c.labels=[['Website',-575],['Pitch deck',0],['Marketing',575]].map(([s,x])=>el(root,`<div class="c label">${s}</div>`));
+    c.h1=el(root,`<div class="c hl m">${W('One *idea.*')}</div>`);
+    c.h2=el(root,`<div class="c hl m">${W('Three _outputs._')}</div>`);
+    c.svg=svgLayer(root,`
+      <path class="l1" pathLength="1" d="M-120 -250 C -300 -240, -420 -200, -520 -150" stroke="#2F6BFF" stroke-width="4" stroke-dasharray="1 1"/>
+      <path class="l2" pathLength="1" d="M0 -200 C 6 -180, -4 -160, 0 -130" stroke="#2F6BFF" stroke-width="4"/>
+      <path class="l3" pathLength="1" d="M120 -250 C 300 -240, 420 -200, 520 -150" stroke="#2F6BFF" stroke-width="4"/>
+      <path class="u" pathLength="1" d="M230 -330 c 60 -6 120 -4 170 2" stroke="#2F6BFF" stroke-width="5"/>`);
+    c.hand=el(root,`<div class="c hand" style="font-size:54px">not separately!</div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.today-.15;
+    // note
+    const nIn=T.idea+.05;
+    kf(c.note,t,[{t:nIn,y:-20,s:.55,r:-12,o:0},{t:nIn+.25,o:1,e:'out'},{t:nIn+.9,s:1,r:-3,e:'spring'},
+      {t:T.website-.1,y:-30,s:1.02},{t:T.website+.7,y:-300,s:.52,r:-5,e:'out4'},{t:ex,y:-310,s:.5},{t:ex+.5,y:-330,s:.46,o:0,b:8,e:'inOut'}]);
+    c.note.style.transform+=` rotate(${jit(1,t)}deg)`;
+    c.h1&&words(c.h1,t,T.idea+.45,T.website-.25,{y:300});
+    words(c.h2,t,T.website+.25,ex,{y:390,st:.09});
+    c.cards.forEach(([e,x,y,s,r,ti],i)=>{
+      kf(e,t,[{t:ti-.05,x:0,y:-260,s:.15,r:r*4,o:0,b:10},{t:ti+.2,o:1,b:0,e:'out'},{t:ti+1.0,x,y,s,r,e:'spring'},
+        {t:ex,x:x*1.02,y:y-6,s:s*1.02,e:'lin'},{t:ex+.5,x:x*1.06,y:y-20,s:s*.94,o:0,b:10,e:'inOut'}]);
+      e.style.transform+=` rotate(${jit(i+7,t,.25)}deg)`;
+      inout(c.labels[i],t,ti+.45,ex,{x:c.cards[i][1],y:250,dy:20,bl:8});
+    });
+    const sp=T.separately;
+    ['l1','l2','l3'].forEach((k,i)=>{const p=c.svg.querySelector('.'+k);draw(p,t,sp+.05+i*.12,.6);p.style.opacity=(t<sp?0:1)*(1-pr(t,ex,.4))});
+    const u=c.svg.querySelector('.u');draw(u,t,sp+.6,.4);u.style.opacity*=(1-pr(t,ex,.4));
+    inout(c.hand,t,sp+.1,ex,{x:320,y:-380,r:-4,dy:14,bl:6,d:.6});
+    c.svg.style.transform=`translateY(${0}px)`;
+  });
+
+  // B — Runable + FocusFlow
+  scene(T.today-.2,T.scratch+.6,root=>{
+    const c={};
+    c.a=el(root,`<div class="c sub">${W("Today, I'm testing")}</div>`);
+    c.r=el(root,`<div class="c hl">${W('Runable')}</div>`);
+    c.logo=el(root,`<div class="c">${LOGO(190,'h')}</div>`);
+    c.word=el(root,`<div class="c hl" style="font-size:156px">${'FocusFlow'.split('').map(ch=>`<span class="w">${ch}</span>`).join('')}</div>`);
+    c.tag=el(root,`<div class="c sub" style="font-size:36px">${W('A productivity tool for individuals & small teams')}</div>`);
+    c.hand=el(root,`<div class="c hand" style="font-size:58px">fictional!</div>`);
+    c.svg=svgLayer(root,`<path class="ar" pathLength="1" d="M520 -250 C 470 -200, 440 -160, 380 -120" stroke="#2F6BFF" stroke-width="4.5"/><path class="ah" pathLength="1" d="M402 -146 L 378 -118 L 414 -112" stroke="#2F6BFF" stroke-width="4.5"/>
+      <path class="ul" pathLength="1" d="M-150 120 C 40 108, 260 112, 470 116" stroke="#2F6BFF" stroke-width="16" opacity=".25"/>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.scratch-.15;const F=T.fictional, FF=T.focusflow;
+    words(c.a,t,T.today,null,{y:-90});
+    kf(c.a,t,[{t:F-.1,y:-90,o:1},{t:F+.6,y:-380,s:.8,o:0,b:6}]);
+    // "Runable" word rises then floats up as context
+    const rr=c.r.querySelector('.w');
+    kf(c.r,t,[{t:T.runable-.05,y:40,o:0,b:14},{t:T.runable+.7,y:20,o:1,b:0},{t:F-.1,y:20,s:1},{t:F+.8,y:-330,s:.42,o:.0,e:'inOut'}]);
+    rr.style.cssText='';
+    // logo
+    const lp=pr(t,FF-.25,.9);
+    kf(c.logo,t,[{t:FF-.3,x:-430,y:-10,s:.4,r:-20,o:0},{t:FF,o:1,e:'out'},{t:FF+.9,s:1,r:0,e:'spring'},{t:ex,s:1.02},{t:ex+.5,s:.96,o:0,b:10,e:'inOut'}]);
+    const ring=c.logo.querySelector('.lring');draw(ring,t,FF-.1,.9,'out4');
+    words(c.word,t,FF+.05,ex,{x:105,y:-10,st:.045,dy:60,bl:16});
+    words(c.tag,t,FF+.9,ex,{y:150,st:.04});
+    const ar=c.svg.querySelector('.ar'),ah=c.svg.querySelector('.ah'),ul=c.svg.querySelector('.ul');
+    draw(ar,t,F+.6,.5);draw(ah,t,F+1.05,.25);draw(ul,t,FF+.8,.6);
+    const fo=1-pr(t,ex,.4);ar.style.opacity*=fo;ah.style.opacity*=fo;ul.style.opacity*=fo*.25/.25;
+    inout(c.hand,t,F+.35,ex,{x:600,y:-290,r:-6,dy:12,bl:6,d:.6});
+  });
+
+  // C — from scratch, one prompt, plan/create/control
+  scene(T.scratch-.2,T.important+.6,root=>{
+    const c={};
+    c.h1=el(root,`<div class="c hl m">${W('From *scratch.*')}</div>`);
+    c.h2=el(root,`<div class="c hl m">${W('One _prompt._')}</div>`);
+    c.bar=el(root,`<div class="c"><div class="glass prompt"><div class="ic">${ICON.spark}</div><div class="tx"></div><div class="send">${ICON.arrowUp}</div></div></div>`);
+    c.tx=c.bar.querySelector('.tx');
+    c.chips=[['plan','Plan',T.plans],['create','Create',T.create],['control','Control',T.control]].map(([ic,s,ti],i)=>[el(root,`<div class="c"><div class="chip glass">${ICON[ic]}${s}</div></div>`),ti,(i-1)*330]);
+    c.svg=svgLayer(root,[0,1,2].map(i=>`<path class="m${i}" pathLength="1" d="M${(i-1)*330-110} 312 C ${(i-1)*330-30} 306, ${(i-1)*330+40} 309, ${(i-1)*330+110} 304" stroke="#2F6BFF" stroke-width="7"/>`).join(''));
+    c.prompt="I'm launching a fictional productivity product called FocusFlow. Help me create a complete product launch package — a website, an eight-slide pitch deck and a marketing kit.";
+    return c;
+  },(t,c)=>{
+    const ex=T.important-.15;
+    words(c.h1,t,T.scratch,T.prompt-.2,{y:-300});
+    words(c.h2,t,T.prompt+.05,ex,{y:-300});
+    inout(c.bar,t,T.scratch+.15,ex,{y:-20,dy:60,s0:.96,d:1});
+    if(t<T.prompt+.2){c.tx.innerHTML=`<span class="ph">Describe what you want to build…</span><span class="caret" style="opacity:${Math.floor(t*2.2)%2?0:1};margin-left:6px"></span>`}
+    else typeText(c.tx,t,T.prompt+.2,c.prompt,34);
+    const sendP=E.spring(pr(t,T.plans-.4,.6));c.bar.querySelector('.send').style.transform=`scale(${1+.08*Math.sin(sendP*Math.PI)})`;
+    c.chips.forEach(([e,ti,x],i)=>{
+      inout(e,t,ti,ex,{x,y:230,dy:40,s0:.9,e:'spring',d:1});
+      const m=c.svg.querySelector('.m'+i);draw(m,t,ti+.25,.45);m.style.opacity*=(1-pr(t,ex,.4));
+      const nxt=c.chips[i+1];const dim=nxt?pr(t,nxt[1],.4)*.45:0;e.firstElementChild.style.opacity=1-dim;
+    });
+  });
+
+  // D — publish & test
+  scene(T.important-.2,T.started+.6,root=>{
+    const c={};
+    c.h=el(root,`<div class="c hl s">${W('Publish it. Then *test* it.')}</div>`);
+    c.b=el(root,`<div class="c">${browserHTML({pub:true,url:'preview · focusflow',id:'d'})}</div>`);
+    c.cur=el(root,`<div class="c" style="width:44px;height:44px">${ICON.cursor}</div>`);
+    c.rip=el(root,`<div class="c" style="width:90px;height:90px;border-radius:50%;border:3px solid #2F6BFF"></div>`);
+    c.rip2=el(root,`<div class="c" style="width:90px;height:90px;border-radius:50%;border:3px solid #2F6BFF"></div>`);
+    c.live=el(root,`<div class="c pill light" style="font-size:30px;padding:14px 26px"><span style="width:14px;height:14px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 6px rgba(34,197,94,.18)"></span>Live</div>`);
+    c.svg=svgLayer(root,`<path class="cir" pathLength="1" d="M-150 168 C -150 118, 160 112, 168 160 C 176 210, -120 222, -160 178 C -175 160, -140 135, -90 130" stroke="#2F6BFF" stroke-width="5"/>
+      <path class="ar" pathLength="1" d="M420 250 C 360 250, 280 230, 220 196" stroke="#2F6BFF" stroke-width="4.5"/><path class="ah" pathLength="1" d="M246 186 L 218 194 L 236 220" stroke="#2F6BFF" stroke-width="4.5"/>`);
+    c.hand=el(root,`<div class="c hand" style="font-size:56px">does it actually work?</div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.started-.35;const P=T.publish,Wk=T.works;
+    words(c.h,t,T.important,ex,{y:-430,st:.07});
+    const S=1.12;
+    inout(c.b,t,T.important+.1,ex,{y:40,dy:80,s0:.94,d:1.1});
+    c.b.style.transform=c.b.style.transform.replace(/scale\(([^)]+)\)/,(m,v)=>`scale(${parseFloat(v)*S})`);
+    // cursor path (stage coords). publish btn approx at (+372*S? ) -> bar right
+    const pubX=338*S, pubY=(40-240+22)*S+40*(1-S)+ (40*S-40) ;
+    const pX=332, pY=-180, ctaX=0, ctaY=140;
+    const cp=E.inOut(pr(t,P-.3,.8)), cq=E.inOut(pr(t,Wk-.35,.8));
+    let x=lerp(lerp(620,pX,cp),ctaX,cq), y=lerp(lerp(420,pY,cp),ctaY,cq);
+    const click1=P+.55, click2=Wk+.5;
+    const press=Math.max(1-Math.abs(t-click1)/.12,0)+Math.max(1-Math.abs(t-click2)/.12,0);
+    const co=E.out(pr(t,P-.3,.3))*(1-pr(t,ex,.3));
+    set(c.cur,{x:x+14,y:y+16,s:1-.15*clamp(press),o:co});
+    [[c.rip,click1],[c.rip2,click2]].forEach(([r,ck],i)=>{const p=pr(t,ck,.6);const xx=i?ctaX:pX,yy=i?ctaY:pY;set(r,{x:xx,y:yy,s:.3+p*1.2,o:(p>0&&p<1)?(1-p)*.8:0})});
+    // publish state
+    const pub=c.b.querySelector('.pub'),ptx=c.b.querySelector('.pubtx'),utx=c.b.querySelector('.urltx');
+    if(t>click1){ptx.textContent='Published';pub.style.background='#0B1B3F';utx.textContent='focusflow.site';}else{ptx.textContent='Publish';pub.style.background='';utx.textContent='preview · focusflow'}
+    inout(c.live,t,click1+.15,ex,{x:560,y:-170,e:'spring',s0:.6,dy:10,d:.9});
+    const cta=c.b.querySelector('.cta');const cpr=Math.max(1-Math.abs(t-click2)/.15,0);cta.style.transform=`scale(${1-.05*cpr})`;
+    const cir=c.svg.querySelector('.cir'),ar=c.svg.querySelector('.ar'),ah=c.svg.querySelector('.ah');
+    draw(cir,t,Wk+.7,.7);draw(ar,t,Wk+1.2,.4);draw(ah,t,Wk+1.55,.2);
+    const fo=1-pr(t,ex,.4);[cir,ar,ah].forEach(p=>p.style.opacity*=fo);
+    inout(c.hand,t,Wk+1.0,ex,{x:600,y:300,r:-4,dy:12,bl:6,d:.6});
+  });
+
+  // E — let's get started
+  scene(T.started-.3,DUR+1,root=>{
+    const c={};c.h=el(root,`<div class="c hl" style="font-size:150px">${W("Let's get _started._")}</div>`);
+    c.svg=svgLayer(root,`<path class="u" pathLength="1" d="M60 92 C 220 82, 400 86, 560 96" stroke="#2F6BFF" stroke-width="16" opacity=".22"/>`);return c;
+  },(t,c)=>{
+    words(c.h,t,T.started-.12,DUR-.6,{st:.12,dy:60,od:.6});
+    draw(c.svg.querySelector('.u'),t,T.started+.6,.5);c.svg.style.opacity=1-pr(t,DUR-.6,.5);
+    c.h.style.transform+=` scale(${1+.03*pr(t,T.started,DUR-T.started)})`;
+  });
+}
+
+/* =================================================================
+   INTRO
+   ================================================================= */
+if(CLIP==='intro'){
+  // F — ideas -> finished work
+  scene(0,T.website+.1,root=>{
+    const c={};
+    c.label=el(root,`<div class="c pill light" style="font-size:34px;padding:14px 28px">${ICON.spark.replace('<svg','<svg width="30" height="30"')}Runable</div>`);
+    c.idea=paper(root,470,360,21,`<div class="hand ink" style="position:absolute;left:50px;top:70px;font-size:100px;line-height:.9;transform:rotate(-4deg)">ideas<br><span style="color:var(--blue);font-size:64px">& rough notes</span></div>
+      <svg class="draw" width="470" height="360" style="position:absolute;inset:0"><path d="M60 250 c40 -14 90 10 130 -6 s70 -10 110 4" stroke="#2F6BFF" stroke-width="3"/><path d="M340 70 l40 40 M380 70 l-40 40" stroke="#9AA6BF" stroke-width="3"/><circle cx="395" cy="270" r="26" stroke="#9AA6BF" stroke-width="3"/><path d="M60 300 h70 M150 300 h40" stroke="#C3CBDB" stroke-width="3"/></svg>`,{bg:'#FFFDF6'});
+    tape(c.idea.firstElementChild,160,150,-16,3,22);
+    c.stack=[el(root,`<div class="c">${postHTML()}</div>`),el(root,`<div class="c">${deckHTML()}</div>`),el(root,`<div class="c">${browserHTML({id:'f'})}</div>`)];
+    c.svg=svgLayer(root,`<path class="fl" pathLength="1" d="M-200 -20 C -90 -70, 30 30, 150 -20" stroke="#2F6BFF" stroke-width="4" stroke-dasharray="0.02 0.02"/>`);
+    c.dots=[0,1,2,3].map(()=>el(root,`<div class="c" style="width:16px;height:16px;border-radius:50%;background:#2F6BFF;box-shadow:0 0 18px rgba(47,107,255,.7)"></div>`));
+    c.ai=el(root,`<div class="c pill light" style="font-size:28px;padding:12px 22px">${ICON.spark.replace('<svg','<svg width="26" height="26"')}using AI</div>`);
+    c.h=el(root,`<div class="c hl m">${W('*Ideas* into _finished_ _work._')}</div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.website-.55;
+    kf(c.label,t,[{t:T.designed,y:-10,s:1.9,o:0,b:14},{t:T.designed+.8,o:1,b:0,e:'out4'},{t:T.ideas-.15,s:2.0,e:'lin'},{t:T.ideas+.75,y:-420,s:1,e:'inOut'},{t:ex,y:-420},{t:ex+.5,y:-440,o:0,b:8,e:'inOut'}]);
+    kf(c.idea,t,[{t:T.ideas-.1,x:-560,y:-20,s:.7,r:-14,o:0},{t:T.ideas+.2,o:1,e:'out'},{t:T.ideas+1,s:1,r:-5,e:'spring'},{t:ex,x:-545,r:-4.5,e:'lin'},{t:ex+.5,x:-600,o:0,b:10,s:.94,e:'inOut'}]);
+    c.idea.style.transform+=` rotate(${jit(2,t)}deg)`;
+    const pos=[[640,-30,.52,8],[560,0,.62,3],[470,40,.66,-3]];
+    c.stack.forEach((e,i)=>{const ti=T.finished+i*.14;const [x,y,s,r]=pos[i];
+      kf(e,t,[{t:ti-.05,x:x+120,y:y+40,s:s*.8,r:r+8,o:0,b:12},{t:ti+.25,o:1,b:0,e:'out'},{t:ti+1.1,x,y,s,r,e:'spring'},{t:ex,x:x-8,y:y-5},{t:ex+.5,x:x+60,o:0,b:10,s:s*.94,e:'inOut'}])});
+    const fl=c.svg.querySelector('.fl');const fp=E.inOut(pr(t,T.ai-.2,.8));fl.style.strokeDasharray='0.012 0.018';fl.style.opacity=fp*(1-pr(t,ex,.4));
+    fl.setAttribute('d','M-230 -20 C -110 -80, 20 40, 160 -20');
+    fl.style.clipPath=`inset(0 ${(1-fp)*100}% 0 0)`;
+    // flowing dots along bezier
+    const bz=(p)=>{const P=[[-230,-20],[-110,-80],[20,40],[160,-20]];const u=1-p;return[u*u*u*P[0][0]+3*u*u*p*P[1][0]+3*u*p*p*P[2][0]+p*p*p*P[3][0],u*u*u*P[0][1]+3*u*u*p*P[1][1]+3*u*p*p*P[2][1]+p*p*p*P[3][1]]};
+    c.dots.forEach((d,i)=>{const ph=((t-T.ai)*.55+i*.25)%1;const [x,y]=bz(ph);const o=fp*(1-pr(t,ex,.4))*Math.sin(ph*Math.PI);set(d,{x,y,o,s:.7+.5*Math.sin(ph*Math.PI)})});
+    inout(c.ai,t,T.ai,ex,{x:-35,y:-150,e:'spring',s0:.7,dy:16});
+    words(c.h,t,T.ideas+.4,ex,{y:350,st:.09});
+  });
+
+  // G — three separate projects -> one place
+  scene(T.website-.8,T.experiment+.6,root=>{
+    const c={};
+    const mk=(inner,seed,lab)=>{const p=paper(root,500,400,seed,`<div style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(${inner[1]})">${inner[0]}</div><div class="hand ink" style="position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:46px">${lab}</div>`,{bg:'#FFFDF6'});tape(p.firstElementChild,140,180,-18,(seed%2?-3:4),seed+1);return p};
+    c.panel=el(root,`<div class="c glass" style="width:1560px;height:600px;border-radius:44px"></div>`);
+    c.cards=[mk([browserHTML({id:'g'}),.5],31,'website'),mk([deckHTML(),.58],41,'presentation'),mk([postHTML(),.6],51,'marketing campaign')];
+    c.svg=svgLayer(root,`<path class="d1" pathLength="1" d="M-300 -230 C -296 -100, -304 60, -298 230" stroke="#9AA6BF" stroke-width="4" stroke-dasharray=".03 .025"/><path class="d2" pathLength="1" d="M300 -230 C 304 -100, 296 60, 302 230" stroke="#9AA6BF" stroke-width="4"/>`);
+    c.hand=el(root,`<div class="c hand ink" style="font-size:64px">3 separate projects?</div>`);
+    c.nums=[1,2,3].map(n=>el(root,`<div class="c hand" style="font-size:52px">#${n}</div>`));
+    c.h=el(root,`<div class="c hl m">${W('All in _one_ _place._')}</div>`);
+    c.sub=el(root,`<div class="c sub">${W('One product. One brief.')}</div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.experiment-.15;const O=T.oneplace-.6;
+    const tis=[T.website,T.presentation,T.marketing];const xs=[-620,0,620],rs=[-4,2.5,-2];
+    c.cards.forEach((e,i)=>{
+      kf(e,t,[{t:tis[i]-.4,x:xs[i],y:-40,s:.6,r:rs[i]*4,o:0,b:10},{t:tis[i]-.15,o:1,b:0,e:'out'},{t:tis[i]+.65,s:.92,r:rs[i],e:'spring'},
+        {t:O,x:xs[i]*1.03,s:.92},{t:O+1.0,x:xs[i]*.8,y:-30,s:.9,r:0,e:'inOut'},{t:ex,x:xs[i]*.8,y:-36,s:.91},{t:ex+.5,y:-60,o:0,b:10,s:.86,e:'inOut'}]);
+      e.style.transform+=` rotate(${jit(i+20,t)*(t<O?1:0)}deg)`;
+      // paper -> glass: fade the paper bg
+      const pp=E.inOut(pr(t,O+.3,.8));e.style.filter=`drop-shadow(0 18px 22px rgba(11,27,63,${.13*(1-pp)}))`+(e.style.filter.includes('blur')?' '+e.style.filter.match(/blur\([^)]*\)/)[0]:'');
+      e.firstElementChild.style.backgroundColor=`rgba(251,250,246,${1-pp})`;e.firstElementChild.style.backgroundImage=pp>.98?'none':'';
+      e.querySelector('.hand').style.opacity=1-pp;e.querySelector('.tape').style.opacity=1-pp;
+      inout(c.nums[i],t,T.separate+.2+i*.12,O,{x:xs[i]-190,y:-250,r:-8,dy:10,bl:4,d:.5});
+    });
+    const d1=c.svg.querySelector('.d1'),d2=c.svg.querySelector('.d2');draw(d1,t,T.separate,.6);draw(d2,t,T.separate+.15,.6);
+    d2.style.strokeDasharray='.03 .025';const dp=E.inOut(pr(t,T.separate+.15,.6));d2.style.strokeDashoffset=0;d2.style.clipPath=`inset(0 0 ${(1-dp)*100}% 0)`;d1.style.strokeDashoffset=0;d1.style.clipPath=`inset(0 0 ${(1-E.inOut(pr(t,T.separate,.6)))*100}% 0)`;
+    const df=1-pr(t,O,.5);d1.style.opacity=df*(t>T.separate?1:0);d2.style.opacity=df*(t>T.separate?1:0);
+    inout(c.hand,t,T.separate,O,{y:-400,r:-2,dy:14,bl:6,d:.6});
+    inout(c.panel,t,O+.4,ex,{y:-30,dy:30,s0:.9,d:1.1});
+    words(c.h,t,T.oneplace,ex,{y:350,st:.09});
+    words(c.sub,t,T.oneplace+.5,ex,{y:-390});
+  });
+
+  // H — FocusFlow app: organize / manage / stay focused
+  scene(T.experiment-.2,T.use+.6,root=>{
+    const c={};
+    c.top=el(root,`<div class="c" style="display:flex;align-items:center;gap:18px">${LOGO(64,'i')}<span class="hl s" style="font-size:58px">FocusFlow</span></div>`);
+    c.hand=el(root,`<div class="c hand" style="font-size:50px">(fictional — for this experiment)</div>`);
+    c.app=el(root,`<div class="c"><div class="app"><div class="side"><div style="display:flex;align-items:center;gap:10px;font:600 20px 'Inter Display';margin:0 0 20px 6px">${LOGO(30,'j')}FocusFlow</div>
+      <div class="it on"><i></i>Today</div><div class="it"><i></i>Projects</div><div class="it"><i></i>Focus</div><div class="it"><i></i>Team</div></div>
+      <div class="mainp"><h3>Good morning</h3><div class="dt">Three things that matter today</div>
+      <div class="row r0"><div class="box"></div>Organize tasks<span class="tag">Inbox</span></div>
+      <div class="row r1"><div class="box"></div>Manage projects<span class="tag">Launch</span></div>
+      <div class="row r2"><div class="box"></div>Stay focused<span class="tag">Deep work</span></div>
+      <div class="timer"><svg width="300" height="300" viewBox="0 0 300 300"><circle cx="150" cy="150" r="128" stroke="#EEF2FA" stroke-width="18" fill="none"/><circle class="tr" cx="150" cy="150" r="128" stroke="#2F6BFF" stroke-width="18" fill="none" stroke-linecap="round" pathLength="1" transform="rotate(-90 150 150)"/></svg><div class="lbl"><div><b class="tm">25:00</b><span>Focus session</span></div></div></div>
+      </div></div></div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.use-.15;
+    inout(c.top,t,T.experiment,ex,{y:-445,dy:20,s0:.95});
+    inout(c.hand,t,T.experiment+.5,ex,{x:470,y:-440,r:-3,dy:10,bl:5,d:.6});
+    inout(c.app,t,T.focusflow-.3,ex,{y:50,dy:90,s0:.94,d:1.2,bl:20});
+    [T.organize,T.manage,T.focused].forEach((ti,i)=>{
+      const row=c.app.querySelector('.r'+i),box=row.querySelector('.box');const p=E.spring(pr(t,ti+.1,.6));const on=t>ti+.1;
+      box.style.background=on?'#2F6BFF':'';box.style.borderColor=on?'#2F6BFF':'';box.innerHTML=on?ICON.check:'';box.style.transform=`scale(${on?lerp(.6,1,p):1})`;
+      const hi=E.out(pr(t,ti,.5));row.style.boxShadow=`0 ${16*hi}px ${36*hi}px -18px rgba(47,107,255,${.45*hi})`;row.style.borderColor=hi>.5?'#C9D8FF':'';row.style.transform=`translateX(${10*Math.sin(E.out(pr(t,ti,.6))*Math.PI)}px)`;
+    });
+    const tp=pr(t,T.focused,4);const ring=c.app.querySelector('.tr');ring.style.strokeDasharray='1 1';ring.style.strokeDashoffset=1-(.08+.5*E.out(tp));
+    const secs=Math.max(0,1500-Math.floor(Math.max(0,t-T.focused)*7));c.app.querySelector('.tm').textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`;
+  });
+
+  // I — the foundation
+  scene(T.use-.2,DUR+1,root=>{
+    const c={};
+    c.base=el(root,`<div class="c" style="width:1240px;height:150px;border-radius:32px;background:linear-gradient(180deg,#14275A,#0B1B3F);display:flex;align-items:center;justify-content:center;gap:22px;color:#fff;font:700 58px 'Inter Display';letter-spacing:-.03em;box-shadow:0 40px 80px -30px rgba(11,27,63,.55)">${LOGO(78,'k')}FocusFlow</div>`);
+    c.items=[el(root,`<div class="c">${browserHTML({id:'k'})}</div>`),el(root,`<div class="c">${deckHTML()}</div>`),el(root,`<div class="c">${postHTML()}</div>`)];
+    c.h=el(root,`<div class="c hl m">${W('The *foundation* for _everything._')}</div>`);
+    c.hand=el(root,`<div class="c hand" style="font-size:52px">one idea</div>`);
+    c.svg=svgLayer(root,`<path class="a" pathLength="1" d="M-830 250 C -790 300, -740 320, -660 318" stroke="#2F6BFF" stroke-width="4.5"/><path class="ah" pathLength="1" d="M-684 298 L -656 318 L -684 336" stroke="#2F6BFF" stroke-width="4.5"/>`);
+    return c;
+  },(t,c)=>{
+    const U=T.use, Fd=T.foundation, end=DUR-.7;
+    inout(c.base,t,U+.1,end,{y:320,dy:120,s0:.92,d:1.1,e:'soft'});
+    const pos=[[-420,-20,.72],[70,0,.74],[480,-24,.64]];
+    c.items.forEach((e,i)=>{const ti=Fd+.1+i*.18;const [x,y,s]=pos[i];
+      kf(e,t,[{t:ti,x,y:y-420,s,o:0,b:8},{t:ti+.2,o:1,b:0,e:'out'},{t:ti+.95,y,e:'spring'},{t:end,y:y-6},{t:end+.6,y:y-24,o:0,b:8,e:'inOut'}])});
+    words(c.h,t,Fd-.2,end,{y:-420,st:.09});
+    inout(c.hand,t,U+.8,end,{x:-830,y:210,r:-8,dy:10,bl:5,d:.6});
+    const a=c.svg.querySelector('.a'),ah=c.svg.querySelector('.ah');draw(a,t,U+1.1,.5);draw(ah,t,U+1.55,.25);const fo=1-pr(t,end,.5);a.style.opacity*=fo;ah.style.opacity*=fo;
+  });
+}
+
+/* =================================================================
+   OUTRO
+   ================================================================= */
+if(CLIP==='outro'){
+  // K — gallery
+  scene(0,T.instead+.6,root=>{
+    const c={};
+    c.items=[el(root,`<div class="c">${deckHTML()}</div>`),el(root,`<div class="c">${postHTML()}</div>`),el(root,`<div class="c">${browserHTML({id:'o'})}</div>`)];
+    c.labs=[['the deck',-600,330,-4],['the posts',640,370,3],['the site',0,420,-2]].map(([s,x,y,r])=>({e:el(root,`<div class="c hand" style="font-size:50px">${s}</div>`),x,y,r}));
+    c.h=el(root,`<div class="c hl m">${W('One _workspace._')}</div>`);
+    c.h2=el(root,`<div class="c hl m">${W('One *launch.*')}</div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.instead-.15;
+    const P=[[-600,90,.78,24],[620,90,.68,-24],[0,110,1,0]];
+    c.items.forEach((e,i)=>{const ti=T.overall+i*.2;const [x,y,s,ry]=P[i];const dr=Math.sin(t*.35+i)*8;
+      kf(e,t,[{t:ti,x:x*1.1,y:y+80,s:s*.9,ry:ry*1.4,o:0,b:16},{t:ti+1.3,x,y,s,ry,o:1,b:0,e:'out4'},{t:ex,x:x+(i==2?0:x*-.04),y:y-10,s:s*1.03,ry:ry*.9,e:'lin'},{t:ex+.5,s:s*.95,o:0,b:12,e:'inOut'}]);
+      e.style.transform+=` translateY(${dr}px)`;
+    });
+    c.labs.forEach((l,i)=>inout(l.e,t,T.overall+1.2+i*.25,ex,{x:l.x,y:l.y,r:l.r,dy:12,bl:5,d:.6}));
+    words(c.h,t,T.workspace,T.launch-.2,{y:-405,st:.09});
+    words(c.h2,t,T.launch,ex,{y:-405,st:.09});
+  });
+
+  // L — stepper
+  scene(T.instead-.2,T.results+.6,root=>{
+    const c={};
+    c.h=el(root,`<div class="c hl m">${W('Connected, not *isolated.*')}</div>`);
+    const steps=[['doc','Brief',T.brief],['list','Plan',T.plan],['wand','Generate',T.generated],['pen','Refine',T.refined],['test','Test',T.tested]];
+    c.svg=svgLayer(root,`<line x1="-720" y1="0" x2="720" y2="0" stroke="#E1E7F2" stroke-width="6"/><line class="pl" x1="-720" y1="0" x2="720" y2="0" stroke="#2F6BFF" stroke-width="6" pathLength="1"/>`,'');
+    c.steps=steps.map(([ic,lab,ti],i)=>({ti,x:-720+i*360,n:el(root,`<div class="c node" style="color:#9AA6BF">${ICON[ic]}</div>`),l:el(root,`<div class="c nlabel">${lab}</div>`)}));
+    c.hand=el(root,`<div class="c hand" style="font-size:52px">one brief → one launch</div>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.results-.15;
+    words(c.h,t,T.instead,ex,{y:-330,st:.09});
+    const lineIn=inout(c.svg,t,T.instead+.1,ex,{dy:0,bl:0,d:.5});
+    const pl=c.svg.querySelector('.pl');
+    // progress to current step
+    let prog=0;c.steps.forEach((s,i)=>{const p=E.inOut(pr(t,s.ti-.25,.5));if(p>0)prog=Math.max(prog,(i-1+p)/4)});
+    pl.style.strokeDasharray='1 1';pl.style.strokeDashoffset=1-clamp(prog);
+    c.steps.forEach((s,i)=>{
+      inout(s.n,t,T.instead+.2+i*.08,ex,{x:s.x,y:0,dy:30,s0:.8,e:'spring',d:.9});
+      inout(s.l,t,T.instead+.35+i*.08,ex,{x:s.x,y:110,dy:20});
+      const on=E.spring(pr(t,s.ti,.6));const act=t>=s.ti;
+      s.n.style.background=act?'#2F6BFF':'#fff';s.n.style.color=act?'#fff':'#9AA6BF';s.n.style.borderColor=act?'#2F6BFF':'';
+      s.n.style.boxShadow=act?'0 24px 44px -18px rgba(47,107,255,.75)':'';
+      s.n.style.transform+=` scale(${act?lerp(.85,1.08,on):1})`;
+      s.l.style.color=act?'var(--navy)':'#9AA6BF';
+    });
+    inout(c.hand,t,T.tested+.4,ex,{y:280,r:-2,dy:12,bl:5,d:.6});
+  });
+
+  // M — depends on brief + refinement -> clearer picture
+  scene(T.results-.2,T.try+.6,root=>{
+    const c={};
+    c.h=el(root,`<div class="c hl s">${W('Results depend on')}</div>`);
+    c.p1=el(root,`<div class="c pill light">${ICON.doc.replace('<svg','<svg width="34" height="34" style="color:#2F6BFF"')}your brief</div>`);
+    c.plus=el(root,`<div class="c hl s mute">+</div>`);
+    c.p2=el(root,`<div class="c pill light">${ICON.pen.replace('<svg','<svg width="34" height="34" style="color:#2F6BFF"')}your refinement</div>`);
+    c.b=el(root,`<div class="c">${browserHTML({id:'m'})}</div>`);
+    c.h2=el(root,`<div class="c hl m">${W('A _clearer_ *picture.*')}</div>`);
+    c.svg=svgLayer(root,`<path class="u1" pathLength="1" d="M-560 -250 C -450 -258, -330 -254, -240 -250" stroke="#2F6BFF" stroke-width="12" opacity=".25"/><path class="u2" pathLength="1" d="M100 -250 C 250 -258, 420 -254, 560 -250" stroke="#2F6BFF" stroke-width="12" opacity=".25"/>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.try-.15, CL=T.clearer;
+    words(c.h,t,T.results,CL-.3,{y:-420});
+    inout(c.p1,t,T.depend,CL-.3,{x:-400,y:-290,e:'spring',s0:.8,dy:20});
+    inout(c.plus,t,T.refinement-.15,CL-.3,{x:-40,y:-290,dy:10});
+    inout(c.p2,t,T.refinement,CL-.3,{x:330,y:-290,e:'spring',s0:.8,dy:20});
+    draw(c.svg.querySelector('.u1'),t,T.depend+.5,.4);draw(c.svg.querySelector('.u2'),t,T.refinement+.5,.4);
+    c.svg.style.opacity=1-pr(t,CL-.3,.4);
+    // focus pull
+    const fp=E.inOut(pr(t,CL,1.2));
+    const bIn=E.out4(pr(t,T.results+.2,1.0));const q=E.inOut(pr(t,ex,.5));
+    set(c.b,{y:lerp(190,110,fp)+40*(1-bIn),s:lerp(.95,1.12,fp)*(1-q*.04),o:bIn*(1-q),b:lerp(16,0,fp)+10*q});
+    words(c.h2,t,CL+.1,ex,{y:-400,st:.09});
+  });
+
+  // N — CTA
+  scene(T.try-.2,T.thanks+.6,root=>{
+    const c={};
+    c.h=el(root,`<div class="c hl" style="font-size:150px">${W('Try _Runable._')}</div>`);
+    c.pill=el(root,`<div class="c pill blue">Link in the description<svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 5v14M5.5 12.5L12 19l6.5-6.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`);
+    c.hand=el(root,`<div class="c hand" style="font-size:56px">down here!</div>`);
+    c.svg=svgLayer(root,`<path class="ar" pathLength="1" d="M330 280 C 380 330, 400 390, 380 470" stroke="#2F6BFF" stroke-width="5"/><path class="ah" pathLength="1" d="M352 446 L 380 474 L 404 442" stroke="#2F6BFF" stroke-width="5"/>`);
+    return c;
+  },(t,c)=>{
+    const ex=T.thanks-.15;
+    words(c.h,t,T.try-.1,ex,{y:-90,st:.12,dy:60});
+    inout(c.pill,t,T.description-.4,ex,{y:100,e:'spring',s0:.8,dy:30,d:1});
+    c.pill.style.transform+=` translateY(${Math.sin(Math.max(0,t-T.description)*4)*4}px)`;
+    inout(c.hand,t,T.description+.1,ex,{x:200,y:300,r:-6,dy:10,bl:5,d:.6});
+    const ar=c.svg.querySelector('.ar'),ah=c.svg.querySelector('.ah');draw(ar,t,T.description+.3,.5);draw(ah,t,T.description+.75,.25);
+    const fo=1-pr(t,ex,.4);ar.style.opacity*=fo;ah.style.opacity*=fo;
+  });
+
+  // O — thanks
+  scene(T.thanks-.2,DUR+1,root=>{
+    const c={};
+    c.h=el(root,`<div class="c hl" style="font-size:136px">${W('Thanks for *watching.*')}</div>`);
+    c.s=el(root,`<div class="c sub" style="font-size:44px">${W('See you in the next one.')}</div>`);
+    c.l=el(root,`<div class="c" style="display:flex;align-items:center;gap:14px;font:600 30px 'Inter Display';color:var(--mute)">${LOGO(40,'z')}FocusFlow launch experiment</div>`);
+    return c;
+  },(t,c)=>{
+    const end=DUR-.8;
+    words(c.h,t,T.thanks,end,{y:-40,st:.1,dy:60});
+    words(c.s,t,T.next-.3,end,{y:90,st:.06});
+    inout(c.l,t,T.next+.4,end,{y:400,dy:16});
+    c.h.style.transform+=` scale(${1+.025*pr(t,T.thanks,DUR-T.thanks)})`;
+  });
+}
+
+/* ---------- master render ---------- */
+function seek(t){
+  renderDecor(t,DUR);
+  for(const s of scenes){const vis=t>=s.t0&&t<=s.t1;s.root.style.display=vis?'block':'none';if(vis)s.render(t,s.ctx)}
+  // gentle camera breathing
+  world.style.transform=`scale(${1.0+.012*Math.sin(t*.18)}) translate(${Math.sin(t*.13)*4}px,${Math.cos(t*.11)*3}px)`;
+  // fade in/out of whole clip
+  const f=E.out(pr(t,0,.35))*(1-E.inOut(pr(t,DUR-.35,.35)));
+  world.style.opacity=f;
+  const ov=document.getElementById('overlay');ov.style.backgroundPosition=`${Math.floor(hash(Math.floor(t*12))*300)}px ${Math.floor(hash(Math.floor(t*12)+7)*300)}px`;
+}
+window.seek=seek;window.DUR=DUR;
+document.fonts.ready.then(()=>{window.READY=true;if(!navigator.webdriver){const t0=performance.now();(function loop(){seek(((performance.now()-t0)/1000)%(DUR+.5));requestAnimationFrame(loop)})()}});
+</script>
+</body>
+</html>
