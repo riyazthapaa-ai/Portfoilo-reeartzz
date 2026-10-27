@@ -1,0 +1,605 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Teamily Edit and Collaborate</title>
+<style>
+  :root{
+    --bg:#1b1f1c; --panel:#262b27; --panel2:#2c322e; --line:rgba(255,255,255,.07);
+    --ink:#eef2ee; --mute:#9aa49c; --mint:#aee1b0; --mint2:#93dbb7; --code:#1c1c1e;
+    --alice:#f28bb5; --david:#7aa7ff; --maya:#f5c46b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#111;overflow:hidden}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+  #stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:var(--bg);transform-origin:0 0}
+  .abs{position:absolute}
+  .blob{position:absolute;border-radius:50%;filter:blur(90px)}
+  .mint{color:var(--mint)}
+
+  /* intro */
+  .bigline{position:absolute;left:0;width:1920px;text-align:center;font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+  .bigline span{display:inline-block}
+
+  /* message card (from Teamily chat) */
+  .msgcard{background:#262b27;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden}
+  .msgcard .hd{background:#2e3647;display:flex;align-items:center;gap:12px;padding:14px 18px;font-weight:700;font-size:17px}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.04em;padding:4px 9px;border-radius:7px;background:#c7d3ff;color:#2a3566}
+  .codebox{background:var(--code);border-radius:12px;margin:14px;padding:16px 18px;font-family:"DejaVu Sans Mono",monospace;font-size:13px;color:#bfc6c0;line-height:1.8}
+  .dots i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+  .ft{display:flex;align-items:center;gap:10px;padding:10px 18px 14px;font-size:13px;color:var(--mute)}
+  .btn-mint{background:var(--mint);color:#1b2a1d;font-weight:700;border-radius:10px;padding:8px 14px;font-size:14px}
+
+  /* app window */
+  #app{left:150px;top:196px;width:1620px;height:840px;background:#222723;border:1px solid rgba(255,255,255,.09);border-radius:22px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.55);transform-origin:50% 50%}
+  #titlebar{position:absolute;left:0;top:0;right:0;height:52px;background:#2a302c;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px;gap:16px}
+  .tab{background:#353b37;border-radius:10px 10px 0 0;height:38px;margin-top:14px;padding:0 16px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+  .url{flex:1;max-width:620px;height:32px;border-radius:16px;background:#202522;display:flex;align-items:center;padding:0 16px;font-size:14px;color:#c9d0ca;gap:10px}
+  .avs{display:flex;margin-left:auto}
+  .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#1b1f1c;border:2px solid #2a302c;margin-left:-8px}
+  #ver{font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;background:#353b37;color:var(--mint)}
+  #shareBtn{background:var(--mint);color:#1b2a1d;font-weight:700;font-size:14px;border-radius:10px;padding:8px 16px;display:flex;gap:8px;align-items:center}
+
+  #canvas{position:absolute;left:0;top:52px;width:1160px;height:788px;background:#1e2220;overflow:hidden}
+  #modes{position:absolute;left:40px;top:16px;height:38px;background:#2a302c;border-radius:12px;display:flex;padding:4px;font-size:14px;font-weight:600}
+  #modes div{position:relative;width:150px;display:flex;align-items:center;justify-content:center;gap:8px;z-index:1}
+  #modes #modeInd{position:absolute;top:4px;left:4px;width:150px;height:30px;border-radius:9px;background:var(--mint);z-index:0}
+  #devs{position:absolute;right:40px;top:16px;display:flex;gap:8px}
+  #devs div{width:38px;height:38px;border-radius:10px;background:#2a302c;display:flex;align-items:center;justify-content:center}
+
+  #page{position:absolute;left:40px;top:68px;width:1080px;height:700px;background:#f6f3ec;border-radius:14px;overflow:hidden;color:#1d2420}
+  #pc{position:absolute;left:0;top:0;width:1080px;height:1000px}
+  .p-el{position:absolute}
+  #nav{left:48px;right:48px;top:26px;height:36px;display:flex;align-items:center;gap:28px;font-size:15px;color:#555}
+  #nav b{color:#1d2420;font-size:19px;display:flex;align-items:center;gap:8px;margin-right:auto}
+  #h1old{font-size:52px;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+  #h1new{font-size:62px;font-weight:800;letter-spacing:-.035em;line-height:1.02;white-space:nowrap}
+  .sub{font-size:20px;line-height:1.45;color:#59605b}
+  #cta{height:54px;color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #cta span{position:absolute;white-space:nowrap}
+  #img{overflow:hidden}
+  #img svg{position:absolute;left:0;top:0;width:100%;height:100%}
+  .card{background:#fff;border-radius:16px;padding:22px;box-shadow:0 1px 0 rgba(0,0,0,.05)}
+  .card .ic{width:40px;height:40px;border-radius:12px;margin-bottom:16px}
+  .card h4{font-size:19px;font-weight:700;margin-bottom:8px;white-space:nowrap;position:relative;height:24px}
+  .card h4 span{position:absolute;left:0;top:0}
+  .card p{font-size:14px;color:#6a706c;line-height:1.45;position:relative;height:40px}
+  .card p span{position:absolute;left:0;top:0;width:100%}
+  #badge{font-size:13px;font-weight:800;letter-spacing:.08em;padding:7px 12px;border-radius:20px;display:flex;align-items:center;gap:8px}
+
+  .sel{position:absolute;border:2px solid var(--mint2);border-radius:6px;pointer-events:none}
+  .sel i{position:absolute;width:10px;height:10px;background:#fff;border:2px solid var(--mint2);border-radius:2px}
+  #fmt{position:absolute;height:46px;background:#262b27;border-radius:12px;display:flex;align-items:center;padding:0 6px;gap:4px;color:#e8ece8;font-size:15px;box-shadow:0 12px 30px rgba(0,0,0,.3)}
+  #fmt .b{width:36px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:700}
+  #fmt .sep{width:1px;height:24px;background:rgba(255,255,255,.12);margin:0 6px}
+  #fmt .dd{padding:0 10px;height:34px;display:flex;align-items:center;gap:6px;border-radius:8px;background:#30362f}
+  #fmt .dot{width:22px;height:22px;border-radius:50%;margin:0 2px;border:2px solid transparent}
+
+  /* side panel */
+  #side{position:absolute;left:1160px;top:52px;width:460px;height:788px;background:#232824;border-left:1px solid var(--line)}
+  #sideTabs{position:absolute;left:20px;right:20px;top:16px;height:38px;display:flex;background:#2a302c;border-radius:12px;padding:4px;font-size:14px;font-weight:600}
+  #sideTabs div{flex:1;display:flex;align-items:center;justify-content:center;z-index:1}
+  #sideTabs #sideInd{position:absolute;flex:none;top:4px;left:4px;height:30px;border-radius:9px;background:#3a413c;z-index:0}
+  .view{position:absolute;left:0;top:70px;width:460px;height:718px}
+  .who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;margin-bottom:8px}
+  .who small{font-size:12px;color:#c9b45a;font-weight:600}
+  .ai-ic{width:34px;height:34px;border-radius:50%;background:#1b1f1c;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
+  .bubble{background:#2e3430;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:12px 16px;font-size:15px;line-height:1.45}
+  #inputBox{position:absolute;left:20px;right:20px;bottom:20px;min-height:60px;border-radius:20px;background:#2a302c;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;padding:12px 12px 12px 18px;gap:10px;font-size:15px}
+  #typed{flex:1;line-height:1.4;color:#e8ece8}
+  #caret{display:inline-block;width:2px;height:18px;background:var(--mint);vertical-align:-3px;margin-left:1px}
+  .mic{width:38px;height:38px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;flex:none}
+  .chk{display:flex;align-items:center;gap:10px;font-size:15px;padding:7px 0}
+  .chk .c{width:22px;height:22px;border-radius:50%;border:2px solid #4a524c;display:flex;align-items:center;justify-content:center;flex:none}
+  .think i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mint);margin-right:5px}
+
+  .prop{margin:0 24px 22px}
+  .prop h5{font-size:12px;letter-spacing:.08em;color:var(--mute);font-weight:700;margin-bottom:12px}
+  .field{background:#2a302c;border-radius:10px;height:42px;display:flex;align-items:center;padding:0 14px;font-size:15px;justify-content:space-between}
+  .sw{width:34px;height:34px;border-radius:10px;display:inline-block;margin-right:8px}
+  .track{position:relative;height:6px;border-radius:3px;background:#3a413c;margin-top:18px}
+  .track b{position:absolute;left:0;top:0;height:6px;border-radius:3px;background:var(--mint)}
+  .knob{position:absolute;top:-8px;width:22px;height:22px;border-radius:50%;background:#fff;margin-left:-11px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+
+  .act{display:flex;gap:12px;align-items:flex-start;margin:0 24px 14px;background:#2a302c;border-radius:14px;padding:14px}
+  .act .av{margin:0;border:none;flex:none;width:34px;height:34px}
+  .act > div:last-child{font-size:14px;line-height:1.45;color:#c9d0ca}
+  .act b{color:#fff}
+
+  /* modal */
+  #shade{position:absolute;inset:0;background:rgba(10,12,11,.55)}
+  #modal{position:absolute;left:660px;top:330px;width:600px;background:#262b27;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:26px;box-shadow:0 40px 100px rgba(0,0,0,.6)}
+  #modal h3{font-size:22px;margin-bottom:6px}
+  #modal .lk{display:flex;gap:10px;margin:18px 0}
+  #modal .lk div:first-child{flex:1;background:#1e2220;border-radius:12px;height:46px;display:flex;align-items:center;padding:0 16px;font-size:15px;color:#c9d0ca;gap:10px}
+  .row{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--line)}
+  .row .av{margin:0;border:none;width:38px;height:38px}
+  .row .nm{flex:1;font-size:16px;font-weight:600}
+  .row .nm small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+  .role{font-size:14px;background:#30362f;border-radius:9px;padding:7px 12px;color:#dfe5df}
+
+  /* cursors */
+  .cur{position:absolute;left:0;top:0;pointer-events:none}
+  .cur .tag{position:absolute;left:20px;top:22px;font-size:13px;font-weight:700;color:#1b1f1c;padding:4px 9px;border-radius:8px;white-space:nowrap}
+  .ring{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid var(--mint)}
+
+  .comment{position:absolute;display:flex;gap:10px;align-items:flex-start}
+  .comment .pin{width:34px;height:34px;border-radius:50% 50% 50% 4px;background:var(--alice);color:#1b1f1c;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .comment .cb{background:#fff;color:#1d2420;border-radius:14px;padding:10px 14px;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.18);white-space:nowrap}
+  .comment .cb small{display:block;font-size:12px;color:#888;font-weight:600;margin-bottom:2px}
+
+  /* captions */
+  #cap{position:absolute;left:0;top:74px;width:1920px;height:90px}
+  .capl{position:absolute;left:0;width:1920px;text-align:center;font-size:52px;font-weight:700;letter-spacing:-.025em;white-space:nowrap}
+  .capl span{display:inline-block}
+  .dim{color:#5d665f}
+
+  /* timeline */
+  .vchip{position:absolute;top:0;width:250px;height:120px;background:#262b27;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:18px}
+  .vchip .v{font-size:13px;font-weight:800;color:var(--mint);margin-bottom:8px}
+  .vchip .t{font-size:19px;font-weight:700}
+  .vchip .s{font-size:13px;color:var(--mute);margin-top:6px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg" class="abs" style="inset:0">
+    <div class="blob" id="b1" style="width:900px;height:700px;background:rgba(147,219,183,.16)"></div>
+    <div class="blob" id="b2" style="width:800px;height:600px;background:rgba(122,167,255,.08)"></div>
+    <div class="blob" id="b3" style="width:700px;height:600px;background:rgba(174,225,176,.10)"></div>
+    <svg class="abs" style="inset:0" width="1920" height="1080">
+      <defs><pattern id="dp" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="rgba(255,255,255,.05)"/></pattern></defs>
+      <rect width="1920" height="1080" fill="url(#dp)"/>
+    </svg>
+  </div>
+
+  <!-- INTRO -->
+  <div id="intro" class="abs" style="inset:0">
+    <div class="bigline" id="i1" style="top:300px;font-size:84px"><span>Creating</span> <span>the</span> <span>first</span> <span>version</span></div>
+    <div class="bigline" id="i2" style="top:400px;font-size:84px;color:#7f8a82"><span>is</span> <span>only</span> <span>part</span> <span>of</span> <span>the</span> <span>process.</span></div>
+    <div class="bigline" id="i3" style="top:300px;font-size:84px"><span>Then</span> <span>you</span> <span>edit</span> <span>it</span><span>…</span></div>
+    <div class="bigline" id="i4" style="top:400px;font-size:84px"><span>and</span> <span>make</span> <span>it</span> <span class="mint" id="yo">your&nbsp;own.</span></div>
+    <svg id="uline" class="abs" width="420" height="30"><path d="M6 18 C 110 4, 300 4, 414 16" stroke="#aee1b0" stroke-width="7" fill="none" stroke-linecap="round" pathLength="1" stroke-dasharray="1" id="ulp"/></svg>
+
+    <div id="v1card" class="msgcard abs" style="left:640px;top:560px;width:640px">
+      <div class="hd">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dfe5df" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m10 13-2 2 2 2M14 13l2 2-2 2"/></svg>
+        Landing Page Prototype <span style="margin-left:auto" class="pill">WEB PAGE</span>
+      </div>
+      <div class="codebox"><div class="dots" style="margin-bottom:10px"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span style="float:right;color:#666;font-size:11px;letter-spacing:.1em">APP.TSX</span></div>
+        <span style="color:#c792ea">import</span> React <span style="color:#c792ea">from</span> <span style="color:#c3e88d">'react'</span>;<br>
+        <span style="color:#c792ea">export default function</span> <span style="color:#82aaff">App</span>() { ... }</div>
+      <div class="ft"><b style="color:#fff">1 delivery</b> · v1 · Thought for 8s <span style="margin-left:auto" class="btn-mint">Open Studio</span></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="abs">
+    <div id="titlebar">
+      <div class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+      <div class="tab"><span style="width:10px;height:10px;border-radius:50%;background:var(--mint)"></span>Summer Launch · Studio</div>
+      <div class="url"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa49c" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>teamily.ai/studio/summer-launch</div>
+      <div class="avs" id="avs">
+        <div class="av" id="avA" style="background:var(--alice)">A</div>
+        <div class="av" id="avD" style="background:var(--david)">D</div>
+        <div class="av" id="avM" style="background:var(--maya)">M</div>
+        <div class="av" style="background:var(--mint);font-size:10px">You</div>
+      </div>
+      <div id="ver">v1</div>
+      <div id="shareBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1b2a1d" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Share</div>
+    </div>
+
+    <div id="canvas">
+      <div id="modes"><div id="modeInd"></div><div id="mPrompt">✦ Prompt</div><div id="mManual">✎ Manual</div></div>
+      <div id="devs"><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dfe5df" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/></svg></div><div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7f8a82" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="2"/></svg></div></div>
+      <div id="page"><div id="pc">
+        <div id="nav" class="p-el"><b><span id="logoDot" style="width:22px;height:22px;border-radius:7px;display:inline-block"></span>Brightside</b><span>Products</span><span>Stories</span><span>Pricing</span></div>
+        <div id="badge" class="p-el"><span style="width:8px;height:8px;border-radius:50%;background:currentColor"></span>SUMMER '26 CAMPAIGN</div>
+        <div id="h1old" class="p-el">Build your landing page</div>
+        <div id="h1new" class="p-el">Make Waves<br>This <span id="summer">Summer.</span></div>
+        <div id="hlSweep" class="p-el" style="background:var(--mint);border-radius:8px"></div>
+        <div id="subOld" class="p-el sub" style="white-space:nowrap">A clean, simple page generated by Personal AI.</div>
+        <div id="subNew" class="p-el sub" style="width:520px">Our biggest summer drop yet. 30% off every plan, free shipping, and fresh gear until August 31.</div>
+        <div id="cta" class="p-el"><span id="ctaOld">Get started</span><span id="ctaNew">Claim 30% off  →</span></div>
+        <div id="img" class="p-el">
+          <svg id="imgOld" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><rect width="400" height="300" fill="#dcdcd6"/><circle cx="290" cy="90" r="26" fill="#c4c4bc"/><path d="M0 300 L120 150 L200 240 L260 180 L400 300Z" fill="#c4c4bc"/></svg>
+          <svg id="imgNew" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+            <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb36b"/><stop offset=".6" stop-color="#ff7a59"/><stop offset="1" stop-color="#e8577a"/></linearGradient></defs>
+            <rect width="400" height="300" fill="url(#sky)"/><circle id="sun" cx="200" cy="170" r="62" fill="#ffe7a8"/>
+            <path id="w1" d="M0 200 Q50 185 100 200 T200 200 T300 200 T400 200 T500 200 V300 H0Z" fill="#2fa59a"/>
+            <path id="w2" d="M0 232 Q50 217 100 232 T200 232 T300 232 T400 232 T500 232 V300 H0Z" fill="#1d7f86"/>
+            <path id="w3" d="M0 262 Q50 249 100 262 T200 262 T300 262 T400 262 T500 262 V300 H0Z" fill="#165d6b"/>
+          </svg>
+        </div>
+        <div class="card p-el" id="c0"><div class="ic"></div><h4><span class="o">Fast setup</span><span class="n">Summer bundles</span></h4><p><span class="o">Launch in minutes with AI-built sections.</span><span class="n">Curated kits for beach, trail and city.</span></p></div>
+        <div class="card p-el" id="c1"><div class="ic"></div><h4><span class="o">Responsive</span><span class="n" id="c1n">Free shipping</span></h4><p><span class="o">Looks right on every screen size.</span><span class="n">Fast delivery on every order this season.</span></p></div>
+        <div class="card p-el" id="c2"><div class="ic"></div><h4><span class="o">Analytics</span><span class="n">Limited drops</span></h4><p><span class="o">Track visits and conversions.</span><span class="n">New colourways every Friday at noon.</span></p></div>
+        <div id="news" class="p-el" style="left:48px;top:720px;width:984px;height:200px;border-radius:20px;background:#1d2420;color:#fff;padding:38px 44px">
+          <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--maya);margin-bottom:10px">ADDED BY MAYA</div>
+          <div style="font-size:34px;font-weight:800;letter-spacing:-.02em">Join the summer list</div>
+          <div style="font-size:16px;color:#aab3ac;margin-top:8px">Early access to every drop. No spam, ever.</div>
+          <div class="abs" style="right:44px;top:72px;display:flex;gap:10px"><div style="width:300px;height:52px;border-radius:12px;background:#2c342f;display:flex;align-items:center;padding:0 16px;color:#7f8a82">you@email.com</div><div style="height:52px;border-radius:12px;background:var(--maya);color:#1d2420;font-weight:800;display:flex;align-items:center;padding:0 22px">Subscribe</div></div>
+        </div>
+        <div class="comment" id="cmt"><div class="pin">A</div><div class="cb"><small>Alice · Review</small>Love this headline! Ship it.</div></div>
+        <div class="sel" id="selH"><i style="left:-6px;top:-6px"></i><i style="right:-6px;top:-6px"></i><i style="left:-6px;bottom:-6px"></i><i style="right:-6px;bottom:-6px"></i></div>
+        <div class="sel" id="selC"><i style="left:-6px;top:-6px"></i><i style="right:-6px;top:-6px"></i><i style="left:-6px;bottom:-6px"></i><i style="right:-6px;bottom:-6px"></i></div>
+        <div class="sel" id="selD" style="border-color:var(--david)"></div>
+        <div class="sel" id="selM" style="border-color:var(--maya)"></div>
+        <div id="fmt"><div class="b">B</div><div class="b" style="font-style:italic">I</div><div class="b" style="text-decoration:underline">U</div><div class="sep"></div><div class="dd">Inter ▾</div><div class="dd">62</div><div class="sep"></div>
+          <div class="dot" id="dot0" style="background:#1d2420"></div><div class="dot" id="dot1" style="background:#ff7a59"></div><div class="dot" id="dot2" style="background:#1f9e8a"></div><div class="dot" style="background:#e8577a"></div></div>
+      </div></div>
+    </div>
+
+    <div id="side">
+      <div id="sideTabs"><div id="sideInd"></div><div>Chat</div><div>Design</div><div>Team</div></div>
+
+      <div class="view" id="vChat">
+        <div id="thread" class="abs" style="left:20px;right:20px;top:4px">
+          <div id="t0">
+            <div class="who"><div class="ai-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="#dfe5df"><rect x="4" y="5" width="16" height="12" rx="3"/><circle cx="9.5" cy="11" r="1.6" fill="#1b1f1c"/><circle cx="14.5" cy="11" r="1.6" fill="#1b1f1c"/><rect x="10" y="18" width="4" height="3" rx="1"/></svg></div>Personal AI <small>Earlier</small></div>
+            <div class="bubble" style="display:flex;align-items:center;gap:12px;margin-left:44px"><span class="pill">WEB PAGE</span><b style="font-size:15px">Landing Page Prototype</b><span style="margin-left:auto;color:var(--mute);font-size:13px">v1</span></div>
+          </div>
+          <div id="t1" style="margin-top:22px">
+            <div class="who" style="justify-content:flex-end">You <small style="color:var(--mute)">Now</small></div>
+            <div class="bubble" id="userMsg" style="margin-left:40px;background:#37403a"></div>
+          </div>
+          <div id="t2" style="margin-top:22px">
+            <div class="who"><div class="ai-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="#dfe5df"><rect x="4" y="5" width="16" height="12" rx="3"/><circle cx="9.5" cy="11" r="1.6" fill="#1b1f1c"/><circle cx="14.5" cy="11" r="1.6" fill="#1b1f1c"/><rect x="10" y="18" width="4" height="3" rx="1"/></svg></div>Personal AI <small>Now</small></div>
+            <div class="bubble" style="margin-left:44px;position:relative">
+              <div class="think" id="think" style="color:var(--mute);font-size:14px"><i></i><i></i><i></i>&nbsp;Thinking</div>
+              <div id="plan">
+                <div style="font-size:14px;color:var(--mute);margin-bottom:4px">Updating your page</div>
+                <div class="chk"><div class="c" id="k0"></div>Switch to split-screen layout</div>
+                <div class="chk"><div class="c" id="k1"></div>Rewrite the headings</div>
+                <div class="chk"><div class="c" id="k2"></div>Match the summer campaign</div>
+                <div id="done" style="font-size:13px;color:var(--mute);margin-top:6px"><b style="color:var(--mint)">v2 ready</b> · Thought for 4s</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="inputBox"><div id="typed"></div><div class="mic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1b2a1d" stroke-width="2.6"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
+      </div>
+
+      <div class="view" id="vDesign">
+        <div class="prop" style="margin-top:10px"><h5>SELECTED</h5><div class="field"><span id="selName">Heading · H1</span><span style="color:var(--mute)">⌘ K</span></div></div>
+        <div class="prop"><h5>TYPOGRAPHY</h5><div style="display:flex;gap:10px"><div class="field" style="flex:2">Inter <span style="color:var(--mute)">▾</span></div><div class="field" style="flex:1">ExtraBold</div><div class="field" style="flex:1">62</div></div></div>
+        <div class="prop"><h5>COLOR</h5><span class="sw" style="background:#1d2420;border:1px solid #444"></span><span class="sw" style="background:#ff7a59"></span><span class="sw" style="background:#1f9e8a"></span><span class="sw" style="background:#e8577a"></span><span class="sw" style="background:#ffe7a8"></span></div>
+        <div class="prop"><h5 style="display:flex;justify-content:space-between">BUTTON · CORNER RADIUS <span id="radV" style="color:#fff">10</span></h5><div class="track" id="track"><b id="trackFill"></b><div class="knob" id="knob"></div></div></div>
+        <div class="prop" style="margin-top:34px"><h5>SPACING</h5><div style="display:flex;gap:10px"><div class="field" style="flex:1">↕ 48</div><div class="field" style="flex:1">↔ 32</div></div></div>
+      </div>
+
+      <div class="view" id="vTeam">
+        <div class="prop" style="margin-top:10px"><h5>ACTIVITY · 4 ONLINE</h5></div>
+        <div class="act" id="a0"><div class="av" style="background:var(--alice)">A</div><div><b>Alice</b> left a review on the headline<br><span style="color:var(--mute);font-size:13px">“Love this headline! Ship it.”</span></div></div>
+        <div class="act" id="a1"><div class="av" style="background:var(--david)">D</div><div><b>David</b> edited the Free shipping card<br><span style="color:var(--mute);font-size:13px">+ “over $50”</span></div></div>
+        <div class="act" id="a2"><div class="av" style="background:var(--maya)">M</div><div><b>Maya</b> added a new section<br><span style="color:var(--mute);font-size:13px">Join the summer list</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- collaboration interstitial -->
+  <div id="collab" class="abs" style="inset:0">
+    <svg class="abs" style="inset:0" width="1920" height="1080" id="links"></svg>
+    <div class="bigline" id="collabT" style="top:470px;font-size:110px">Collaboration</div>
+    <div class="av abs cav" id="ca0" style="width:96px;height:96px;font-size:34px;background:var(--alice);border:none;margin:0">A</div>
+    <div class="av abs cav" id="ca1" style="width:96px;height:96px;font-size:34px;background:var(--david);border:none;margin:0">D</div>
+    <div class="av abs cav" id="ca2" style="width:96px;height:96px;font-size:34px;background:var(--maya);border:none;margin:0">M</div>
+    <div class="av abs cav" id="ca3" style="width:96px;height:96px;font-size:26px;background:var(--mint);border:none;margin:0">You</div>
+  </div>
+
+  <!-- share modal -->
+  <div id="shade"></div>
+  <div id="modal">
+    <h3>Share “Summer Launch”</h3>
+    <div style="color:var(--mute);font-size:15px">Invite teammates to review, edit and build with you.</div>
+    <div class="lk"><div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aee1b0" stroke-width="2.4"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>static.teamily.ai/summer-launch</div><div class="btn-mint" style="display:flex;align-items:center;padding:0 18px">Copy</div></div>
+    <div class="row" id="r0"><div class="av" style="background:var(--alice)">A</div><div class="nm">Alice<small>Brand lead</small></div><div class="role">Can review ▾</div></div>
+    <div class="row" id="r1"><div class="av" style="background:var(--david)">D</div><div class="nm">David<small>Product designer</small></div><div class="role">Can edit ▾</div></div>
+    <div class="row" id="r2"><div class="av" style="background:var(--maya)">M</div><div class="nm">Maya<small>Growth marketer</small></div><div class="role">Can edit ▾</div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px"><div class="btn-mint" id="inviteBtn" style="padding:12px 26px;font-size:16px">Send invites</div></div>
+  </div>
+
+  <!-- outro -->
+  <div id="outro" class="abs" style="inset:0">
+    <div class="bigline" id="o1" style="top:250px;font-size:64px"><span class="dim">From an</span> <span>AI-generated page</span></div>
+    <div class="bigline" id="o2" style="top:660px;font-size:64px"><span class="dim">to a project your</span> <span class="mint">whole team</span> <span class="dim">builds together.</span></div>
+    <svg class="abs" id="tl" style="left:0;top:0" width="1920" height="1080"><line id="tlLine" x1="285" y1="480" x2="1635" y2="480" stroke="#aee1b0" stroke-width="3" stroke-dasharray="8 10"/></svg>
+    <div id="chips" class="abs" style="left:0;top:420px;width:1920px;height:120px"></div>
+  </div>
+
+  <div id="end" class="abs" style="inset:0">
+    <div id="logo" class="abs" style="left:0;width:1920px;top:400px;display:flex;justify-content:center;align-items:center;gap:26px">
+      <div style="width:120px;height:120px;border-radius:34px;background:var(--mint);display:flex;align-items:center;justify-content:center">
+        <svg width="70" height="70" viewBox="0 0 24 24" fill="#1b2a1d"><rect x="3" y="5" width="18" height="12" rx="3.5"/><circle cx="9" cy="11" r="1.8" fill="#aee1b0"/><circle cx="15" cy="11" r="1.8" fill="#aee1b0"/><rect x="10" y="18" width="4" height="3" rx="1"/><rect x="11" y="1.5" width="2" height="3.5" rx="1"/></svg>
+      </div>
+      <div style="font-size:120px;font-weight:800;letter-spacing:-.04em">Teamily</div>
+    </div>
+    <div class="bigline" id="tag" style="top:580px;font-size:40px;font-weight:600;color:#c9d0ca">Create. Edit. <span class="mint">Build together.</span></div>
+    <div id="urlPill" class="abs" style="left:810px;width:300px;top:670px;height:56px;border-radius:28px;border:1px solid rgba(174,225,176,.4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:var(--mint)">teamily.ai</div>
+  </div>
+
+  <!-- captions -->
+  <div id="cap"></div>
+
+  <!-- cursors -->
+  <div class="ring" id="ring"></div>
+  <div class="cur" id="curMe"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M3 2 L3 27 L10 21 L15 32 L20 30 L15 19 L25 19 Z" fill="#fff" stroke="#1b1f1c" stroke-width="2" stroke-linejoin="round"/></svg></div>
+  <div class="cur" id="curA"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M3 2 L3 27 L10 21 L15 32 L20 30 L15 19 L25 19 Z" fill="#f28bb5" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg><div class="tag" style="background:var(--alice)">Alice</div></div>
+  <div class="cur" id="curD"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M3 2 L3 27 L10 21 L15 32 L20 30 L15 19 L25 19 Z" fill="#7aa7ff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg><div class="tag" style="background:var(--david)">David</div></div>
+  <div class="cur" id="curM"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M3 2 L3 27 L10 21 L15 32 L20 30 L15 19 L25 19 Z" fill="#f5c46b" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg><div class="tag" style="background:var(--maya)">Maya</div></div>
+
+  <div id="fade" class="abs" style="inset:0;background:#000;pointer-events:none"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const P=(t,a,b)=>cl((t-a)/(b-a));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const eo=x=>1-Math.pow(1-x,3);
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c1=1.6,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const env=(t,a,b,din=.45,dout=.45)=>Math.min(eo(P(t,a,a+din)),1-eio(P(t,b-dout,b)));
+function hex(c){return [1,3,5].map(i=>parseInt(c.slice(i,i+2),16))}
+function mix(a,b,x){const A=hex(a),B=hex(b);return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],x))).join(',')})`}
+function S(el,o){ // set style shortcut
+  if(typeof el==='string')el=$(el);
+  const tr=[];
+  if(o.x!==undefined||o.y!==undefined)tr.push(`translate(${o.x||0}px,${o.y||0}px)`);
+  if(o.s!==undefined)tr.push(`scale(${o.s})`);
+  if(o.r!==undefined)tr.push(`rotate(${o.r}deg)`);
+  el.style.transform=tr.join(' ');
+  if(o.o!==undefined){el.style.opacity=o.o;el.style.visibility=o.o<=0.001?'hidden':'visible'}
+  if(o.blur!==undefined)el.style.filter=o.blur>0.05?`blur(${o.blur}px)`:'none';
+}
+function box(el,l,t,w,h){el=typeof el==='string'?$(el):el;el.style.left=l+'px';el.style.top=t+'px';if(w!==undefined)el.style.width=w+'px';if(h!==undefined)el.style.height=h+'px'}
+// center of element in stage coords
+function ctr(el,dx=.5,dy=.5){const r=(typeof el==='string'?$(el):el).getBoundingClientRect();const k=STAGE_SCALE;return [(r.left+r.width*dx)/k,(r.top+r.height*dy)/k]}
+let STAGE_SCALE=1;
+
+/* ---------- captions ---------- */
+const caps=[
+  {a:6.35,b:14.25,html:'Edit with <span class="mint">natural language</span>',sub:{at:9.7,html:'Describe it. <span class="mint">Skip the rebuild.</span>'}},
+  {a:14.35,b:20.85,html:'<span class="k" data-t="15.9">Layout</span> <span class="dim">·</span> <span class="k" data-t="17.3">Headings</span> <span class="dim">·</span> <span class="k" data-t="18.8">Content</span>'},
+  {a:20.9,b:25.95,html:'Or take <span class="mint">full control</span>, manually'},
+  {a:28.9,b:36.75,html:'<span class="k" data-t="29.3">Share.</span> <span class="k" data-t="32.3">Review.</span> <span class="k" data-t="33.7">Edit.</span> <span class="k" data-t="35.0">Build together.</span>'},
+];
+caps.forEach((c,i)=>{
+  const d=document.createElement('div');d.className='capl';d.innerHTML=c.html;d.style.top='0px';$('cap').appendChild(d);c.el=d;
+  if(c.sub){const e=document.createElement('div');e.className='capl';e.innerHTML=c.sub.html;e.style.top='0px';$('cap').appendChild(e);c.sub.el=e;}
+});
+
+/* ---------- version chips ---------- */
+const chipData=[['v1','AI draft','Generated by Personal AI'],['v2','Prompt edits','Layout, headings, content'],['v3','Manual polish','Colour & button tweaks'],['v4','Team review','Alice, David, Maya'],['v5','Ready to launch','Shared with the team']];
+chipData.forEach((c,i)=>{const d=document.createElement('div');d.className='vchip';d.style.left=(160+i*330)+'px';d.innerHTML=`<div class="v">${c[0]}${i==4?' · LIVE':''}</div><div class="t">${c[1]}</div><div class="s">${c[2]}</div>`;$('chips').appendChild(d)});
+const chips=[...$('chips').children];
+
+const prompt='Make it split-screen, rewrite the headline and match our summer campaign.';
+let W={};
+function measure(){
+  W.h1old=$('h1old').offsetWidth; W.subOld=$('subOld').offsetWidth;
+}
+
+function cursor(id,x,y,o,s=1){S(id,{x:x,y:y,o:o,s:s})}
+// piecewise path: keys [[t,x,y],...] with easing between
+function path(t,keys){
+  if(t<=keys[0][0])return [keys[0][1],keys[0][2]];
+  for(let i=0;i<keys.length-1;i++){const a=keys[i],b=keys[i+1];if(t<=b[0]){const x=eio(P(t,a[0],b[0]));return [lerp(a[1],b[1],x),lerp(a[2],b[2],x)]}}
+  const l=keys[keys.length-1];return [l[1],l[2]];
+}
+
+function render(t){
+  /* background drift */
+  S('b1',{x:-200+Math.sin(t*.25)*120,y:-250+Math.cos(t*.2)*60});
+  S('b2',{x:1300+Math.cos(t*.22)*120,y:500+Math.sin(t*.3)*80});
+  S('b3',{x:600+Math.sin(t*.18+1)*200,y:700+Math.cos(t*.25)*60});
+
+  /* ===== INTRO (0 - 6.4) ===== */
+  const introO=1-eio(P(t,5.25,5.8));
+  S('intro',{o:introO});
+  const w1=[...$('i1').children], w2=[...$('i2').children], w3=[...$('i3').children], w4=[...$('i4').children];
+  const out1=eio(P(t,2.75,3.15));
+  w1.forEach((s,i)=>{const k=eo(P(t,.15+i*.12,.65+i*.12));S(s,{y:(1-k)*40-out1*40,o:k*(1-out1),blur:(1-k)*8+out1*8})});
+  w2.forEach((s,i)=>{const k=eo(P(t,.95+i*.1,1.45+i*.1));S(s,{y:(1-k)*40-out1*40,o:k*(1-out1),blur:(1-k)*8+out1*8})});
+  w3.forEach((s,i)=>{const k=eo(P(t,3.05+i*.1,3.55+i*.1));S(s,{y:(1-k)*40,o:k,blur:(1-k)*8})});
+  w4.forEach((s,i)=>{const k=eo(P(t,4.1+i*.13,4.6+i*.13));S(s,{y:(1-k)*40,o:k,blur:(1-k)*8})});
+  // underline under "your own"
+  if(t>4){const [cx,cy]=ctr('yo',.5,1);box('uline',cx-210,cy-6)}
+  $('ulp').style.strokeDashoffset=1-eo(P(t,4.75,5.3));
+  // v1 card
+  const vc=back(P(t,.5,1.2));
+  const vEdit=eo(P(t,3.2,3.8));
+  S('v1card',{y:(1-vc)*120+vEdit*0,o:cl(vc*1.4),s:.92+vc*.08-eio(P(t,5.3,6.1))*-.3});
+
+  /* ===== APP ===== */
+  // enter 5.6-6.4 ; collab dim 26-28.8 ; outro exit 36.8-37.6
+  const appIn=eo(P(t,5.6,6.5));
+  const dimC=eio(P(t,25.9,26.5))*(1-eio(P(t,28.5,29.0)));
+  const appOut=eio(P(t,36.7,37.5));
+  S('app',{o:appIn*(1-appOut)*(1-dimC*.85),s:(.82+appIn*.18)*(1-dimC*.06)*(1-appOut*.25),y:(1-appIn)*80-appOut*40,blur:dimC*10+appOut*8});
+
+  // page layout factor
+  const L=eio(P(t,15.9,16.4)), L2=eio(P(t,16.25,16.85));
+  const Hn=eio(P(t,17.3,17.8)); // heading swap
+  const C=eio(P(t,18.8,19.4)); // content swap
+  // accent colors
+  const acc=mix('#3b4a6b','#ff7a59',C);
+  $('logoDot').style.background=acc; $('cta').style.background=acc;
+  [...document.querySelectorAll('.card .ic')].forEach((e,i)=>e.style.background=mix('#d9dde6',['#ffd2c2','#bfe7e1','#ffe7a8'][i],C));
+  S('badge',{o:C,y:(1-C)*10}); box('badge',48,92); $('badge').style.background=mix('#ffe1d6','#ffe1d6',0);$('badge').style.color='#d4502f';
+  // h1 old
+  box('h1old',lerp((1080-W.h1old)/2,48,L),lerp(112,150,L2));
+  S('h1old',{o:1-Hn,y:-Hn*20,blur:Hn*6});
+  box('h1new',48,138); S('h1new',{o:Hn,y:(1-Hn)*24,blur:(1-Hn)*6});
+  // highlight sweep across new headline
+  const sw=P(t,17.15,17.9); const swIn=eio(cl(sw*2)), swOut=eio(cl(sw*2-1));
+  box('hlSweep',40+swOut*480,140,swIn*480-swOut*480,136); S('hlSweep',{o:sw>0&&sw<1?.9:0});
+  // summer color: coral after content, teal after manual edit
+  const teal=eio(P(t,23.7,24.0));
+  $('summer').style.color=teal>0?mix('#ff7a59','#1f9e8a',teal):mix('#1d2420','#ff7a59',C);
+  // sub
+  box('subOld',lerp((1080-W.subOld)/2,48,L),lerp(196,302,L2)); S('subOld',{o:1-C});
+  box('subNew',48,302); S('subNew',{o:C,y:(1-C)*12});
+  // cta
+  const ctaW=lerp(170,230,C);
+  box('cta',lerp((1080-170)/2,48,L),lerp(258,420,L2),ctaW,54);
+  const rad=lerp(10,30,eio(P(t,24.7,25.4)));
+  $('cta').style.borderRadius=rad+'px';
+  S('ctaOld',{o:1-C,y:-C*20}); S('ctaNew',{o:C,y:(1-C)*20});
+  // image
+  box('img',lerp(48,600,L),lerp(346,104,L2),lerp(984,432,L),lerp(150,382,L2)); $('img').style.borderRadius=lerp(16,24,L)+'px';
+  S('imgNew',{o:C});
+  const wv=t*40; ['w1','w2','w3'].forEach((id,i)=>S(id,{x:-((wv*(1+i*.3))%100)}));
+  S('sun',{y:Math.sin(t*.8)*4});
+  // cards
+  for(let i=0;i<3;i++){const c=$('c'+i);box(c,48+i*336,lerp(520,514,L),312,166);
+    c.querySelectorAll('.o').forEach(e=>S(e,{o:1-C}));c.querySelectorAll('.n').forEach(e=>S(e,{o:C}));}
+  // David's typed addition
+  const dTyped=Math.floor(P(t,34.0,34.7)*' over $50'.length);
+  $('c1n').textContent='Free shipping'+' over $50'.slice(0,dTyped);
+  // Maya's section + page scroll
+  const scr=eio(P(t,34.7,35.4));
+  S('pc',{y:-scr*230});
+  const nb=back(P(t,35.0,35.7)); S('news',{o:cl(P(t,35.0,35.3)),s:.9+nb*.1,y:(1-nb)*30});
+  // version
+  $('ver').textContent=t<19.8?'v1':t<25.6?'v2':t<35.8?'v3':'v4';
+  S('ver',{s:1+.25*Math.max(env(t,19.8,20.3,.12,.3),env(t,25.6,26.1,.12,.3),env(t,35.8,36.3,.12,.3))});
+  // titlebar avatars
+  [['avA',31.7],['avD',31.85],['avM',32.0]].forEach(([id,a])=>{const k=back(P(t,a,a+.4));S(id,{s:k,o:cl(k)});$(id).style.display=t<a?'none':'flex'});
+
+  // mode toggle
+  const man=eio(P(t,21.1,21.45))*(1-eio(P(t,28.6,29.0)));
+  S('modeInd',{x:man*150});
+  $('mPrompt').style.color=mix('#1b2a1d','#c9d0ca',man); $('mManual').style.color=mix('#c9d0ca','#1b2a1d',man);
+
+  // side panel views: chat -> design (21.2) -> team (31.9)
+  const toD=eio(P(t,21.15,21.55)), toT=eio(P(t,31.8,32.2));
+  const vC=1-toD, vD=toD*(1-toT), vT=toT;
+  S('vChat',{o:vC,x:-toD*30}); S('vDesign',{o:vD,x:(1-toD)*30-toT*30}); S('vTeam',{o:vT,x:(1-toT)*30});
+  const tabW=(460-40-8)/3;
+  $('sideInd').style.width=tabW+'px'; S('sideInd',{x:(toD+toT)*tabW});
+
+  // chat: typing
+  const n=Math.floor(eo(P(t,6.9,9.3))*prompt.length);
+  const sent=t>=9.55;
+  $('typed').innerHTML=sent?'<span style="color:#6f7a72">Describe a change…</span>':(n?prompt.slice(0,n):'<span style="color:#6f7a72">Describe a change…</span>')+(t>6.6&&!sent&&(Math.floor(t*2.5)%2==0||n<prompt.length)?'<span id="caret"></span>':'');
+  $('userMsg').textContent=prompt;
+  const um=back(P(t,9.55,10.0)); S('t1',{o:cl(P(t,9.55,9.75)),y:(1-um)*30});
+  const am=eo(P(t,10.2,10.6)); S('t2',{o:am,y:(1-am)*20});
+  const thinking=t<14.8; $('think').style.display=thinking?'block':'none'; $('plan').style.display=thinking?'none':'block';
+  [...$('think').children].forEach((d,i)=>S(d,{y:-Math.max(0,Math.sin(t*7-i*.9))*5}));
+  S('plan',{o:eo(P(t,14.8,15.2))});
+  [[0,16.6],[1,17.85],[2,19.4]].forEach(([i,a])=>{const k=back(P(t,a,a+.35));const c=$('k'+i);
+    c.style.background=k>0?'#aee1b0':'transparent';c.style.borderColor=k>0?'#aee1b0':'#4a524c';
+    c.innerHTML=k>0?`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1b2a1d" stroke-width="4" style="transform:scale(${k})"><path d="M4 12l5 5L20 6"/></svg>`:''});
+  S('done',{o:eo(P(t,19.8,20.2))});
+  // pulse the send button
+  S(document.querySelector('.mic'),{s:1+.2*env(t,9.4,9.7,.1,.2)});
+
+  // design panel slider
+  const kx=lerp(.2,.8,eio(P(t,24.7,25.4)));
+  $('knob').style.left=(kx*100)+'%'; $('trackFill').style.width=(kx*100)+'%';
+  $('radV').textContent=Math.round(rad);
+  $('selName').textContent=t<24.2?'Heading · H1':'Button · CTA';
+
+  // selections & format toolbar (manual)
+  const hb=$('h1new');
+  const selHo=env(t,22.0,24.25,.2,.25);
+  box('selH',hb.offsetLeft-8,hb.offsetTop-6,hb.offsetWidth+16,hb.offsetHeight+12); S('selH',{o:selHo});
+  const fb=back(P(t,22.15,22.55)); box('fmt',48,58); S('fmt',{o:cl(fb)*(1-eio(P(t,24.0,24.3))),y:(1-fb)*12});
+  $('dot2').style.borderColor=t>23.7?'#fff':'transparent';
+  const cb=$('cta');
+  box('selC',cb.offsetLeft-6,cb.offsetTop-6,cb.offsetWidth+12,cb.offsetHeight+12); S('selC',{o:env(t,24.25,25.9,.2,.3)});
+  // David & Maya selections
+  const c1=$('c1'); box('selD',c1.offsetLeft-6,c1.offsetTop-6,312+12,166+12); S('selD',{o:env(t,33.85,36.4,.2,.3)});
+  box('selM',48-6,720-6,984+12,212); S('selM',{o:env(t,35.3,36.5,.2,.3)});
+  // Alice comment
+  const cm=back(P(t,32.45,32.9)); box('cmt',560,150); S('cmt',{o:cl(cm)*(1-eio(P(t,36.4,36.7))),s:.7+.3*cm});
+
+  /* ===== cursors ===== */
+  // Me (manual + share)
+  let meO=0,me=[1500,900];
+  if(t<28){
+    const H=ctr('h1new',.45,.55), D2=ctr('dot2'), Cc=ctr('cta',.6,.5), K=ctr('knob');
+    const k0=[21.6,1400,960];
+    const keys=[k0,[22.0,H[0],H[1]],[23.1,H[0],H[1]],[23.65,D2[0],D2[1]],[23.95,D2[0],D2[1]],[24.2,Cc[0],Cc[1]],[24.45,Cc[0],Cc[1]],[24.7,K[0]-(kx-.2)*0,K[1]]];
+    me=path(t,keys); if(t>=24.7) me=[K[0],K[1]]; if(t>25.5){const q=eio(P(t,25.5,26.2));me=[lerp(K[0],K[0]+120,q),lerp(K[1],K[1]+160,q)]}
+    meO=env(t,21.6,26.0,.25,.3);
+  } else {
+    const Sh=ctr('shareBtn',.4,.6), Iv=ctr('inviteBtn',.5,.55);
+    me=path(t,[[28.9,1300,800],[29.35,Sh[0],Sh[1]],[30.6,Sh[0],Sh[1]],[31.2,Iv[0],Iv[1]]]);
+    meO=env(t,28.9,31.75,.25,.25);
+  }
+  cursor('curMe',me[0],me[1],meO);
+  // click ring
+  const clicks=[22.0,23.75,24.3,29.4,31.3]; let rk=-1; clicks.forEach(c=>{if(t>=c&&t<c+.45)rk=c});
+  if(rk>0){const q=P(t,rk,rk+.45);box('ring',me[0]+4,me[1]+4);S('ring',{s:.4+q*1.1,o:1-q})}else S('ring',{o:0});
+  S('curMe',{x:me[0],y:me[1],o:meO,s:rk>0&&t-rk<.12?.85:1});
+  // Alice
+  const Ah=ctr('h1new',.82,.25);
+  const A=path(t,[[32.0,1700,300],[32.4,Ah[0],Ah[1]],[33.2,Ah[0]+10,Ah[1]+8],[34.0,Ah[0]+40,Ah[1]+30],[36.0,Ah[0]+60,Ah[1]+10]]);
+  cursor('curA',A[0],A[1],env(t,32.0,35.0,.3,.3));
+  const Dc=ctr('c1',.9,.32);
+  const Dp=path(t,[[33.3,1100,1040],[33.8,Dc[0],Dc[1]],[34.7,Dc[0]+6,Dc[1]+4],[36.0,Dc[0]-30,Dc[1]+40]]);
+  cursor('curD',Dp[0],Dp[1],env(t,33.3,36.6,.3,.3));
+  const Mn=ctr('news',.25,.45);
+  const Mp=path(t,[[34.3,1290,1060],[34.75,900,960],[35.3,Mn[0],Mn[1]],[36.2,Mn[0]+30,Mn[1]-10]]);
+  cursor('curM',Mp[0],Mp[1],env(t,34.3,36.6,.3,.3));
+
+  /* ===== share modal ===== */
+  const mo=back(P(t,29.6,30.05)), mOut=eio(P(t,31.45,31.8));
+  S('modal',{o:cl(P(t,29.6,29.8))*(1-mOut),s:(.9+.1*mo)*(1-mOut*.05),y:(1-mo)*30});
+  S('shade',{o:env(t,29.55,31.8,.3,.3)});
+  ['r0','r1','r2'].forEach((id,i)=>{const k=eo(P(t,30.0+i*.22,30.4+i*.22));S(id,{o:k,x:(1-k)*30})});
+  S('inviteBtn',{s:1-.08*env(t,31.25,31.45,.08,.15)});
+
+  /* ===== activity ===== */
+  [['a0',32.5],['a1',34.0],['a2',35.4]].forEach(([id,a])=>{const k=back(P(t,a,a+.4));S(id,{o:cl(P(t,a,a+.2)),y:(1-k)*24})});
+
+  /* ===== collaboration interstitial (26 - 28.9) ===== */
+  const co=env(t,26.0,28.9,.35,.4);
+  S('collab',{o:co});
+  const ct=eo(P(t,26.05,26.6)); S('collabT',{o:ct,s:.9+ct*.1,blur:(1-ct)*10});
+  const cpos=[[560,330],[1270,320],[1300,660],[530,650]];
+  let lines='';
+  cpos.forEach((p,i)=>{const k=back(P(t,26.4+i*.18,26.9+i*.18));const fx=p[0]+Math.sin(t*1.2+i)*8,fy=p[1]+Math.cos(t*1.1+i)*8;
+    box('ca'+i,fx,fy);S('ca'+i,{s:k,o:cl(k)});
+    const lk=eo(P(t,26.8+i*.18,27.4+i*.18));const ex=lerp(fx+48,960,lk*.55),ey=lerp(fy+48,540,lk*.55);
+    lines+=`<line x1="${fx+48}" y1="${fy+48}" x2="${ex}" y2="${ey}" stroke="rgba(174,225,176,.35)" stroke-width="2" stroke-dasharray="6 8"/>`});
+  $('links').innerHTML=lines;
+
+  /* ===== captions ===== */
+  caps.forEach(c=>{
+    const o=env(t,c.a,c.b,.45,.4); let subK=0;
+    if(c.sub){subK=eio(P(t,c.sub.at,c.sub.at+.45));S(c.sub.el,{o:o*subK,y:(1-subK)*30,blur:(1-subK)*6})}
+    S(c.el,{o:o*(1-subK),y:(1-eo(P(t,c.a,c.a+.5)))*30-subK*30,blur:(1-o)*6});
+    c.el.querySelectorAll('.k').forEach(k=>{const kt=+k.dataset.t;const q=eo(P(t,kt,kt+.35));k.style.color=mix('#5d665f',kt>=35?'#aee1b0':'#eef2ee',q);S(k,{y:-q*0+(1-q)*0,s:1+.08*env(t,kt,kt+.6,.15,.35)})});
+  });
+
+  /* ===== outro (36.8 - 40.6) ===== */
+  const oo=1-eio(P(t,40.0,40.5));
+  S('outro',{o:t<36.9?0:oo});
+  const o1=eo(P(t,37.0,37.5)); S('o1',{o:o1,y:(1-o1)*30,blur:(1-o1)*6});
+  const o2=eo(P(t,38.6,39.1)); S('o2',{o:o2,y:(1-o2)*30,blur:(1-o2)*6});
+  chips.forEach((c,i)=>{const a=37.35+i*.3;const k=back(P(t,a,a+.45));S(c,{o:cl(P(t,a,a+.2)),s:.85+.15*k,y:(1-k)*30});
+    c.style.borderColor=i==4?mix('#333a35','#aee1b0',eo(P(t,38.7,39.1))):'rgba(255,255,255,.09)'});
+  const lp=eio(P(t,37.4,38.9)); $('tlLine').setAttribute('x2',285+lp*1350); $('tlLine').style.strokeDashoffset=-t*30;
+
+  /* ===== end card ===== */
+  const e1=back(P(t,40.55,41.1)); S('end',{o:t<40.5?0:1});
+  S('logo',{o:cl(P(t,40.55,40.8)),s:.85+.15*e1});
+  const e2=eo(P(t,41.1,41.6)); S('tag',{o:e2,y:(1-e2)*20});
+  const e3=eo(P(t,41.4,41.9)); S('urlPill',{o:e3,y:(1-e3)*20});
+
+  S('fade',{o:Math.max(1-eo(P(t,0,.35)),eio(P(t,42.35,42.71)))});
+}
+window.render=render;
+window.ready=document.fonts.ready.then(()=>{measure();render(0);return true});
+// preview mode: ?play
+if(location.search.includes('play')){
+  const fit=()=>{STAGE_SCALE=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`scale(${STAGE_SCALE})`};fit();addEventListener('resize',fit);
+  window.ready.then(()=>{const t0=performance.now();const loop=()=>{render(((performance.now()-t0)/1000)%42.7);requestAnimationFrame(loop)};loop()});
+}
+</script>
+</body>
+</html>
