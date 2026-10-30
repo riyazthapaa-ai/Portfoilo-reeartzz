@@ -1,0 +1,38 @@
+[
+ {
+  "k": "yo",
+  "t0": 0.6,
+  "t1": 1.453,
+  "txt": "Yo! I'm Mori."
+ },
+ {
+  "k": "guy",
+  "t0": 1.703,
+  "t1": 3.346,
+  "txt": "The little guy behind MO ARTZ."
+ },
+ {
+  "k": "share",
+  "t0": 3.646,
+  "t1": 6.761,
+  "txt": "Here to share motion design, creative experiments, things I've learned,"
+ },
+ {
+  "k": "oops",
+  "t0": 6.861,
+  "t1": 9.314,
+  "txt": "and probably a few questionable design decisions."
+ },
+ {
+  "k": "connect",
+  "t0": 9.614,
+  "t1": 13.091,
+  "txt": "Also looking to connect with cool people, studios, and potential clients."
+ },
+ {
+  "k": "move",
+  "t0": 13.311,
+  "t1": 14.613,
+  "txt": "Let's make some stuff move!"
+ }
+]
