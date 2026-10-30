@@ -7,5 +7,5 @@
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 window.ready=Promise.all(['900 40px "Inter Display"','800 40px "Inter Display"','700 40px "Inter Display"','500 40px Inter','600 40px Inter','700 40px Inter','650 40px Inter'].map(f=>document.fonts.load(f)));
-window.frameJPEG=t=>{ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;drawFrame(ctx,t);return cv.toDataURL('image/jpeg',0.93).split(',')[1];};
+window.frameJPEG=async t=>{const p=window.prepareFrame&&window.prepareFrame(t);if(p)await p;ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;drawFrame(ctx,t);return cv.toDataURL('image/jpeg',0.93).split(',')[1];};
 </script></body></html>

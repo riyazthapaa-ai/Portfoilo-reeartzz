@@ -238,17 +238,48 @@ function sNext(ctx, t) {
 
 // 6 ─ Before / after on the same source material (64.1 – 111.5)
 const RL = [100, 200, 840, 472.5], RR = [980, 200, 840, 472.5];
+// Real footage in the comparison: media/src = source footage, media/fin = the Fotor Agent result (30 fps JPEG frames).
+// Each clip is cut to the VO beats: [main time, clip time, rate, max clip time]. Both panels share the same cuts
+// once the enhanced version is shown, so the comparison always shows the same moment of the same material.
+const CUTS = [[76.6, 0, 0], [77.5, 0], [80.4, 5.5], [82.6, 23.6, 1, 29.0], [96.2, 0]];
+const SEG_L = [[64.1, 17.5, 1, 29.9], ...CUTS], SEG_R = [[0, 0, 0], ...CUTS];
+function segTime(t, segs) {
+  let g = segs[0]; for (const s of segs) if (t >= s[0]) g = s;
+  return clamp(g[1] + Math.max(0, t - g[0]) * (g[2] ?? 1), 0, g[3] ?? 29.9);
+}
+const VID = { src: { dir: 'media/src', cache: new Map() }, fin: { dir: 'media/fin', cache: new Map() } };
+const fidx = sec => Math.max(1, Math.min(900, Math.round(sec * 30) + 1));
+function vidLoad(name, sec) {
+  const v = VID[name], i = fidx(sec);
+  if (v.cache.has(i)) return v.cache.get(i).p;
+  const img = new Image(), p = new Promise(r => { img.onload = r; img.onerror = r; });
+  img.src = `${v.dir}/${String(i).padStart(4, '0')}.jpg`;
+  v.cache.set(i, { img, p });
+  if (v.cache.size > 90) v.cache.delete(v.cache.keys().next().value);
+  return p;
+}
+// called before each frame is drawn so the needed footage frames are decoded
+window.prepareFrame = t => (t > 63.5 && t < 112.5 ? Promise.all([vidLoad('src', segTime(t, SEG_L)), vidLoad('fin', segTime(t, SEG_R))]) : null);
+function drawVid(ctx, name, sec, x, y, w, h, o = {}) {
+  const e = VID[name].cache.get(fidx(sec));
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 26;
+  rrect(ctx, x, y, w, h, 18); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowColor = 'transparent'; ctx.clip();
+  if (o.filter) ctx.filter = o.filter;
+  if (e && e.img.complete && e.img.naturalWidth) ctx.drawImage(e.img, x, y, w, h);
+  ctx.restore();
+  rrect(ctx, x, y, w, h, 18); ctx.strokeStyle = o.stroke || 'rgba(255,255,255,0.18)'; ctx.lineWidth = 2; ctx.stroke();
+}
 function sCompare(ctx, t) {
   kicker(ctx, 'Same footage · two treatments', t, S(9) + 0.1);
   const lk = A(t, S(9), 0.9, E.expo), rk = A(t, S(9) + 0.15, 0.9, E.expo);
-  const leftOn = win(t, S(10), EN(10) + 0.2) * 1, rightOn = A(t, S(11), 0.4);
+  const leftOn = win(t, S(10), EN(10) + 0.2) * 1;
   withA(ctx, lk, () => {
-    frameInto(ctx, 1, RL[0] - (1 - lk) * 200, RL[1], RL[2], RL[3], c => drawPromoBasic(c), { stroke: leftOn > 0.5 ? rgba(C.amber, 0.9) : undefined });
+    drawVid(ctx, 'src', segTime(t, SEG_L), RL[0] - (1 - lk) * 200, RL[1], RL[2], RL[3], { stroke: leftOn > 0.5 ? rgba(C.amber, 0.9) : undefined });
     pill(ctx, RL[0], RL[1] - 36, 'ORIGINAL', { size: 20, fill: 'rgba(20,20,30,0.9)', dot: C.amber });
   });
   withA(ctx, rk, () => {
     const enh = t > S(11) - 0.05;
-    frameInto(ctx, 2, RR[0] + (1 - rk) * 200, RR[1], RR[2], RR[3], c => enh ? drawPromoEnhanced(c, t, { t0: S(11) + 0.2 }) : drawPromoBasic(c),
+    drawVid(ctx, 'fin', segTime(t, SEG_R), RR[0] + (1 - rk) * 200, RR[1], RR[2], RR[3],
       { filter: enh ? 'none' : 'grayscale(1) brightness(0.35)', stroke: enh ? rgba(C.lime, 0.9) : undefined });
     if (!enh) { txt(ctx, 'Enhanced version', RR[0] + RR[2] / 2, RR[1] + RR[3] / 2 + 12, { size: 34, weight: 750, align: 'center', color: C.dim }); }
     pill(ctx, RR[0], RR[1] - 36, 'ENHANCED', { size: 20, fill: 'rgba(20,20,30,0.9)', dot: C.lime });
@@ -264,9 +295,9 @@ function sCompare(ctx, t) {
   // b) the enhanced
   const b0 = S(12), b1 = EN(12) + 0.3;
   withA(ctx, win(t, b0, b1), () => {
-    const pts = [['Headline moves into position', 'headline', 60, 290], ['Graphics create depth', 'supporting', 930, 300], ['Data becomes an animated visual', 'data', 70, 660]];
-    pts.forEach(([s, w, fx, fy], i) => {
-      numBadge(ctx, i + 1, mapX(RR, fx), mapY(RR, fy), t, WT(12, w));
+    const pts = [['Headline moves into position', 'headline', 770, 455, 80.4], ['Graphics create depth', 'supporting', 155, 475, 82.6], ['Data becomes an animated visual', 'data', 115, 356, 99]];
+    pts.forEach(([s, w, fx, fy, off], i) => {
+      withA(ctx, 1 - A(t, off - 0.2, 0.2), () => numBadge(ctx, i + 1, mapX(RR, fx), mapY(RR, fy), t, WT(12, w)));
       const k = A(t, WT(12, w), 0.6, E.expo); if (k <= 0) return;
       withA(ctx, k, () => {
         const x = 160 + i * 560, y = Y + 50;
@@ -282,12 +313,12 @@ function sCompare(ctx, t) {
     const gk = A(t, WT(13, 'alignment'), 0.8, E.inOut);
     ctx.save(); rrect(ctx, RR[0], RR[1], RR[2], RR[3], 18); ctx.clip();
     ctx.strokeStyle = rgba(C.cyan, 0.55); ctx.lineWidth = 1.5;
-    for (let i = 0; i <= 12; i++) { const x = mapX(RR, 110 + i * (1700 / 12)); ctx.beginPath(); ctx.moveTo(x, RR[1]); ctx.lineTo(x, RR[1] + RR[3] * gk); ctx.stroke(); }
-    ctx.strokeStyle = C.pink; ctx.lineWidth = 2; const lx = mapX(RR, 110); ctx.beginPath(); ctx.moveTo(lx, RR[1]); ctx.lineTo(lx, RR[1] + RR[3] * gk); ctx.stroke();
+    for (let i = 0; i <= 12; i++) { const x = mapX(RR, 120 + i * (1700 / 12)); ctx.beginPath(); ctx.moveTo(x, RR[1]); ctx.lineTo(x, RR[1] + RR[3] * gk); ctx.stroke(); }
+    ctx.strokeStyle = C.pink; ctx.lineWidth = 2; const lx = mapX(RR, 120); ctx.beginPath(); ctx.moveTo(lx, RR[1]); ctx.lineTo(lx, RR[1] + RR[3] * gk); ctx.stroke();
     ctx.restore();
     const sk = A(t, WT(13, 'spacing'), 0.6);
     if (sk > 0) withA(ctx, sk, () => {
-      [[490, 560], [870, 900]].forEach(([y0, y1]) => { const x = mapX(RR, 760); arrowLine(ctx, x, mapY(RR, y0), x, mapY(RR, y1), 1, C.pink, 2); arrowLine(ctx, x, mapY(RR, y1), x, mapY(RR, y0), 1, C.pink, 2); });
+      [[292, 356]].forEach(([y0, y1]) => { const x = mapX(RR, 870); arrowLine(ctx, x, mapY(RR, y0), x, mapY(RR, y1), 1, C.pink, 2); arrowLine(ctx, x, mapY(RR, y1), x, mapY(RR, y0), 1, C.pink, 2); });
     });
     txt(ctx, 'Alignment', 260, Y + 40, { size: 48, weight: 850, color: C.cyan }); fadeTxt(ctx, '+ spacing', 260, Y + 100, t, WT(13, 'spacing'), { size: 40, weight: 800, color: C.pink, fam: DISPLAY });
     const vk = A(t, WT(13, 'text'), 0.6, E.out), jk = A(t, WT(13, 'together') - 0.3, 0.9, E.inOut);
