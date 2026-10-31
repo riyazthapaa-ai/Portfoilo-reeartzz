@@ -16,7 +16,8 @@ export default {
     // "This entire product advertisement started with just one image."  (0.0 - 3.7 s)
     [Words, 0, 8.6, { shots: [
       { at: 0, style: 'punch3d', text: 'THIS ENTIRE', fx: 'punch' },
-      { at: 1.45, style: 'slam', text: 'PRODUCT AD', ground: 'accent', in: 'whipY', fx: 'hit' },
+      { at: 1.45, style: 'slam', text: 'PRODUCT', ground: 'accent', in: 'whipY', fx: 'hit' },
+      { at: 2.75, style: 'cut', text: 'ADVERTISEMENT', color: 'accent', size: 300, rot: -3, fx: 'beat' },
       { at: 4.5, style: 'pair', text: ['STARTED WITH', 'JUST'], ground: 'paper', second: 1.5, fx: 'beat' },
       { at: 6.85, style: 'split', text: ['ONE', 'IMAGE.'], second: .95, in: 'whipX', fx: 'punch', big: true },
     ] }],

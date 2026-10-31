@@ -177,6 +177,16 @@ export class Words extends Scene {
   cam(t) {
     const base = super.cam(t);
     if (this.zP) { const z = zoomThrough(t, this.exT, this.t1, this.zP, base); if (z) return z; }
+    // keep every shot alive: a push, a pan and a roll that restart on each shot, alternating direction
+    let sh = null;
+    for (const x of this.shots) if (t >= x.s.t) sh = x;
+    if (sh) {
+      const a = t - sh.s.t, d = sh.s.i % 2 ? 1 : -1, dr = this.o.drift ?? 1.35;
+      base.s *= 1 + .07 * dr * a;
+      base.x = (base.x || 0) + d * 110 * dr * a;
+      base.y = (base.y || 0) - 25 * dr * a;
+      base.r = (base.r || 0) + d * 1.6 * dr * a;
+    }
     return base;
   }
   update(t) {
