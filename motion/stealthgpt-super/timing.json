@@ -1,0 +1,478 @@
+[
+{
+"i": 0,
+"p": 0,
+"s": 0.25,
+"e": 4.36,
+"t": "AI can help you write scripts, emails, articles, and pretty much anything else."
+},
+{
+"i": 1,
+"p": 0,
+"s": 4.77,
+"e": 8.46,
+"t": "But there\u2019s one problem: sometimes the writing just doesn\u2019t sound natural."
+},
+{
+"i": 2,
+"p": 1,
+"s": 8.85,
+"e": 16.27,
+"t": "And if you create content professionally, you probably don\u2019t want to spend another 30 minutes rewriting something that AI already helped you produce."
+},
+{
+"i": 3,
+"p": 2,
+"s": 16.5,
+"e": 20.03,
+"t": "So today, I\u2019m testing StealthGPT\u2019s newest model, SUPER."
+},
+{
+"i": 4,
+"p": 2,
+"s": 20.55,
+"e": 28.1,
+"t": "I\u2019m going to take an AI-generated piece of writing, process it through SUPER, and then test the result using an actual AI detector on camera."
+},
+{
+"i": 5,
+"p": 3,
+"s": 28.54,
+"e": 33.75,
+"t": "We\u2019ll look at the writing quality, whether the original meaning stays intact, and what the detector reports."
+},
+{
+"i": 6,
+"p": 3,
+"s": 34.14,
+"e": 35.35,
+"t": "No edited results."
+},
+{
+"i": 7,
+"p": 3,
+"s": 35.8,
+"e": 36.41,
+"t": "Let\u2019s see what happens."
+},
+{
+"i": 8,
+"p": 4,
+"s": 36.83,
+"e": 40.34,
+"t": "If you use AI for work, you already know how useful it can be."
+},
+{
+"i": 9,
+"p": 4,
+"s": 40.65,
+"e": 45.94,
+"t": "I use AI tools to brainstorm ideas, organize information, and speed up my content workflow."
+},
+{
+"i": 10,
+"p": 5,
+"s": 46.36,
+"e": 48.73,
+"t": "But a first draft is rarely the final draft."
+},
+{
+"i": 11,
+"p": 5,
+"s": 49.2,
+"e": 56.75,
+"t": "Sometimes the sentences feel repetitive, the transitions are predictable, or the tone doesn\u2019t sound like something you would naturally write."
+},
+{
+"i": 12,
+"p": 6,
+"s": 57.16,
+"e": 59.64,
+"t": "That\u2019s why the goal shouldn\u2019t just be to generate text faster."
+},
+{
+"i": 13,
+"p": 6,
+"s": 60.06,
+"e": 65.64,
+"t": "It should be to produce writing that communicates your ideas clearly and still sounds like you."
+},
+{
+"i": 14,
+"p": 7,
+"s": 66.03,
+"e": 69.81,
+"t": "That\u2019s the problem StealthGPT is trying to address with its new SUPER model."
+},
+{
+"i": 15,
+"p": 8,
+"s": 70.19,
+"e": 73.75,
+"t": "StealthGPT has introduced SUPER, its newest AI humanizer model."
+},
+{
+"i": 16,
+"p": 9,
+"s": 74.12,
+"e": 83.08,
+"t": "The idea is straightforward: take AI-generated or AI-assisted writing and refine how it reads while preserving the original message, context, and tone."
+},
+{
+"i": 17,
+"p": 10,
+"s": 83.46,
+"e": 91.37,
+"t": "According to StealthGPT, SUPER is designed to improve readability without the quality compromises associated with older humanization tools."
+},
+{
+"i": 18,
+"p": 11,
+"s": 91.84,
+"e": 96.85,
+"t": "Instead of taking that claim at face value, though, I want to test it with an actual example."
+},
+{
+"i": 19,
+"p": 12,
+"s": 97.15,
+"e": 104.43,
+"t": "I\u2019ll start with a piece of AI-generated writing, run it through SUPER, and compare the original and processed versions before testing them."
+},
+{
+"i": 20,
+"p": 13,
+"s": 104.94,
+"e": 111.66,
+"t": "For this test, I\u2019m going to use a short professional article about how AI tools are changing the way small businesses create content."
+},
+{
+"i": 21,
+"p": 14,
+"s": 112.05,
+"e": 122.06,
+"t": "I\u2019m choosing a normal work-related example because this is the kind of writing where AI can be genuinely useful: marketing copy, newsletters, website content, and creative projects."
+},
+{
+"i": 22,
+"p": 15,
+"s": 122.5,
+"e": 123.57,
+"t": "Here\u2019s the prompt I\u2019m using."
+},
+{
+"i": 23,
+"p": 16,
+"s": 124.03,
+"e": 125.17,
+"t": "Now we have the first draft."
+},
+{
+"i": 24,
+"p": 16,
+"s": 125.65,
+"e": 129.85,
+"t": "I\u2019m going to save this original version so we can compare it with the output from SUPER."
+},
+{
+"i": 25,
+"p": 17,
+"s": 130.28,
+"e": 137.95,
+"t": "The important thing here is that we\u2019re starting with actual AI-generated text, not a paragraph written specifically to manipulate a detector."
+},
+{
+"i": 26,
+"p": 18,
+"s": 138.45,
+"e": 141.89,
+"t": "Now I\u2019m taking that exact draft and putting it into StealthGPT SUPER."
+},
+{
+"i": 27,
+"p": 19,
+"s": 142.35,
+"e": 145.73,
+"t": "The thing I\u2019m interested in isn\u2019t just whether the wording changes."
+},
+{
+"i": 28,
+"p": 19,
+"s": 146.16,
+"e": 154.53,
+"t": "I want to see whether the output still communicates the same ideas, whether it reads naturally, and whether it remains useful for its original purpose."
+},
+{
+"i": 29,
+"p": 20,
+"s": 155.02,
+"e": 155.4,
+"t": "Let\u2019s run it."
+},
+{
+"i": 30,
+"p": 21,
+"s": 155.79,
+"e": 156.63,
+"t": "Here\u2019s the result."
+},
+{
+"i": 31,
+"p": 22,
+"s": 156.88,
+"e": 159.3,
+"t": "We can compare the two versions side by side."
+},
+{
+"i": 32,
+"p": 22,
+"s": 159.72,
+"e": 166.19,
+"t": "I\u2019m looking at the opening, the sentence structure, the transitions, and whether any of the practical information has been lost."
+},
+{
+"i": 33,
+"p": 23,
+"s": 166.44,
+"e": 168.31,
+"t": "For professional writing, that matters."
+},
+{
+"i": 34,
+"p": 23,
+"s": 168.75,
+"e": 173.25,
+"t": "If a tool changes the wording but makes the text confusing, that\u2019s not an improvement."
+},
+{
+"i": 35,
+"p": 24,
+"s": 173.71,
+"e": 178.85,
+"t": "Now, looking at both versions, you can see how SUPER approaches the same piece of writing differently."
+},
+{
+"i": 36,
+"p": 24,
+"s": 179.28,
+"e": 184.52,
+"t": "The goal here is to make the text easier to read while keeping the original ideas and information intact."
+},
+{
+"i": 37,
+"p": 25,
+"s": 184.89,
+"e": 187.53,
+"t": "And that's exactly what we're going to put to the test next."
+},
+{
+"i": 38,
+"p": 26,
+"s": 187.76,
+"e": 191.11,
+"t": "Now for the part everyone wants to see: the detector test."
+},
+{
+"i": 39,
+"p": 27,
+"s": 191.59,
+"e": 194.14,
+"t": "I\u2019m using HumanizeReval for this demonstration."
+},
+{
+"i": 40,
+"p": 27,
+"s": 194.51,
+"e": 198.3,
+"t": "I\u2019m going to submit the processed text and show the result directly on screen."
+},
+{
+"i": 41,
+"p": 28,
+"s": 198.75,
+"e": 203.97,
+"t": "One important thing to remember is that AI detectors are not definitive proof of who wrote something."
+},
+{
+"i": 42,
+"p": 28,
+"s": 204.47,
+"e": 210.0,
+"t": "Different tools can produce different results, so one scan shouldn\u2019t be treated as a universal verdict."
+},
+{
+"i": 43,
+"p": 29,
+"s": 210.53,
+"e": 212.09,
+"t": "Let\u2019s see what this particular test reports."
+},
+{
+"i": 44,
+"p": 30,
+"s": 212.57,
+"e": 213.47,
+"t": "And there we have it."
+},
+{
+"i": 45,
+"p": 30,
+"s": 213.91,
+"e": 215.96,
+"t": "We've got the result from the scan right here."
+},
+{
+"i": 46,
+"p": 31,
+"s": 216.37,
+"e": 221.8,
+"t": "What's interesting is that we can now look at the detector's assessment alongside the actual text we processed."
+},
+{
+"i": 47,
+"p": 32,
+"s": 222.12,
+"e": 225.8,
+"t": "Of course, this is just one detector, testing one sample of writing."
+},
+{
+"i": 48,
+"p": 32,
+"s": 226.25,
+"e": 230.57,
+"t": "So it's worth treating the result as one data point rather than a universal verdict."
+},
+{
+"i": 49,
+"p": 33,
+"s": 230.94,
+"e": 235.2,
+"t": "StealthGPT also provided a demonstration of its product, so let\u2019s take a look at that."
+},
+{
+"i": 50,
+"p": 34,
+"s": 235.64,
+"e": 238.24,
+"t": "That gives you another look at the product in action."
+},
+{
+"i": 51,
+"p": 34,
+"s": 238.73,
+"e": 244.97,
+"t": "As always, I recommend trying the workflow yourself and evaluating the results on the type of writing you actually create."
+},
+{
+"i": 52,
+"p": 35,
+"s": 245.32,
+"e": 248.22,
+"t": "So, where could a tool like this fit into a real workflow?"
+},
+{
+"i": 53,
+"p": 36,
+"s": 248.72,
+"e": 255.16,
+"t": "If you\u2019re a content creator, you could use AI to help develop an initial script and then refine the writing before recording."
+},
+{
+"i": 54,
+"p": 37,
+"s": 255.39,
+"e": 263.83,
+"t": "If you work in marketing, you could start with an AI-assisted campaign draft and review the final copy for clarity, tone, and consistency with your brand."
+},
+{
+"i": 55,
+"p": 38,
+"s": 264.53,
+"e": 270.6,
+"t": "And if you write newsletters or professional emails, a tool like SUPER could be another step in your editing process."
+},
+{
+"i": 56,
+"p": 39,
+"s": 271.08,
+"e": 274.52,
+"t": "But I wouldn\u2019t recommend publishing anything without reviewing it yourself."
+},
+{
+"i": 57,
+"p": 39,
+"s": 274.96,
+"e": 281.32,
+"t": "Check the facts, make sure the tone fits your audience, and confirm that the final version says what you actually mean."
+},
+{
+"i": 58,
+"p": 40,
+"s": 281.91,
+"e": 285.56,
+"t": "The tool can help with the workflow, but your judgment still matters."
+},
+{
+"i": 59,
+"p": 41,
+"s": 286.01,
+"e": 293.95,
+"t": "My main takeaway is that AI writing tools are becoming more useful, but generating a draft is only one part of creating good content."
+},
+{
+"i": 60,
+"p": 42,
+"s": 294.19,
+"e": 303.07,
+"t": "What matters is how the writing reads, whether the meaning survives the editing process, and whether the final result is appropriate for its intended audience."
+},
+{
+"i": 61,
+"p": 43,
+"s": 303.56,
+"e": 309.63,
+"t": "In this test, we looked at the original draft, processed it with SUPER, and checked the result with a live detector."
+},
+{
+"i": 62,
+"p": 43,
+"s": 310.08,
+"e": 314.73,
+"t": "You\u2019ve seen the actual output and the actual scan, so you can judge the demonstration for yourself."
+},
+{
+"i": 63,
+"p": 44,
+"s": 315.25,
+"e": 321.36,
+"t": "If you regularly work with AI-assisted writing, SUPER is worth exploring as part of your own editing workflow."
+},
+{
+"i": 64,
+"p": 44,
+"s": 321.82,
+"e": 327.85,
+"t": "Just remember that detector results vary, and no single scan can guarantee how every other tool will respond."
+},
+{
+"i": 65,
+"p": 45,
+"s": 328.33,
+"e": 334.85,
+"t": "If you want to explore StealthGPT SUPER for yourself, check it out using the link in the description at stealthgpt.ai."
+},
+{
+"i": 66,
+"p": 46,
+"s": 335.17,
+"e": 343.63,
+"t": "And if you enjoyed this kind of real-world AI tool test, subscribe to AIDEN AI for more walkthroughs, experiments, and practical AI workflows."
+},
+{
+"i": 67,
+"p": 47,
+"s": 344.11,
+"e": 346.0,
+"t": "Thanks for watching, and I\u2019ll see you in the next one."
+}
+]

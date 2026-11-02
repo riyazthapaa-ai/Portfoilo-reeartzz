@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AIDEN AI x StealthGPT SUPER</title>
+<style>
+@font-face{font-family:Inter;font-weight:400;src:url(inter-latin-400-normal.woff2)}
+@font-face{font-family:Inter;font-weight:600;src:url(inter-latin-600-normal.woff2)}
+@font-face{font-family:Inter;font-weight:800;src:url(inter-latin-800-normal.woff2)}
+@font-face{font-family:Inter;font-weight:900;src:url(inter-latin-900-normal.woff2)}
+@font-face{font-family:Grotesk;font-weight:500;src:url(space-grotesk-latin-500-normal.woff2)}
+@font-face{font-family:Grotesk;font-weight:700;src:url(space-grotesk-latin-700-normal.woff2)}
+@font-face{font-family:Mono;font-weight:500;src:url(jetbrains-mono-latin-500-normal.woff2)}
+:root{--bg:#07060f;--v:#8b6cff;--c:#22d3ee;--p:#ff4d8d;--g:#34d399;--a:#fbbf24;--t:#f5f3ff;--m:#a3a1c4;--card:rgba(255,255,255,.055);--line:rgba(255,255,255,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+body{font-family:Inter,sans-serif;color:var(--t)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:radial-gradient(1200px 800px at 50% 40%,#140f2e 0%,#07060f 70%)}
+#fx{position:absolute;inset:0}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.scene{position:absolute;width:1920px;height:1080px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.abs{position:absolute}
+.a{will-change:transform,opacity}
+.grad{background:linear-gradient(90deg,#b9a6ff,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gradp{background:linear-gradient(90deg,#ff4d8d,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h0{font:900 190px/0.95 Inter;letter-spacing:-8px}
+.h1{font:900 120px/1 Inter;letter-spacing:-5px}
+.h2{font:800 84px/1.05 Inter;letter-spacing:-3px}
+.h3{font:800 56px/1.1 Inter;letter-spacing:-1.5px}
+.h4{font:700 38px/1.2 Grotesk}
+.lbl{font:500 26px/1 Mono;letter-spacing:4px;text-transform:uppercase;color:var(--c)}
+.mut{color:var(--m)}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:32px;box-shadow:0 40px 120px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.1);backdrop-filter:none}
+.pill{display:inline-flex;align-items:center;gap:16px;padding:18px 34px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font:600 34px Inter}
+.dot{width:16px;height:16px;border-radius:50%;background:var(--c);box-shadow:0 0 20px var(--c)}
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.doc{width:560px;padding:44px;border-radius:28px;background:#f6f5ff;color:#111;box-shadow:0 40px 120px rgba(0,0,0,.6)}
+.doc .ln{height:16px;border-radius:8px;background:#d9d6ea;margin:16px 0}
+.doc .tt{font:800 30px/1.15 Inter;color:#14112b;letter-spacing:-.5px}
+.icon{width:120px;height:120px;border-radius:32px;display:flex;align-items:center;justify-content:center;font:800 54px Inter}
+.win{border-radius:24px;overflow:hidden;background:#0f0d1f;border:1px solid var(--line);box-shadow:0 50px 140px rgba(0,0,0,.65)}
+.bar{height:56px;background:#17142c;display:flex;align-items:center;padding:0 22px;gap:10px;border-bottom:1px solid var(--line)}
+.bar i{width:14px;height:14px;border-radius:50%;display:block}
+.url{margin-left:24px;flex:1;height:34px;border-radius:10px;background:#0b0a17;font:500 18px/34px Mono;color:var(--m);padding-left:18px}
+.mono{font-family:Mono}
+.check{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 36px Inter;color:#07060f;background:var(--g);flex:none}
+.strike{position:absolute;left:-10px;top:52%;height:10px;background:var(--p);border-radius:6px;box-shadow:0 0 30px var(--p)}
+.hl{position:absolute;border-radius:8px}
+.caret{display:inline-block;width:4px;height:1em;background:var(--c);vertical-align:-0.12em;margin-left:4px}
+.num{font:900 64px Inter}
+.glow{filter:drop-shadow(0 0 40px rgba(139,108,255,.6))}
+#hud{position:absolute;inset:0;pointer-events:none}
+#chap{position:absolute;right:60px;top:52px;font:500 22px Mono;letter-spacing:4px;color:var(--m);text-transform:uppercase;display:flex;align-items:center;gap:14px}
+#brand{position:absolute;left:60px;top:46px;display:flex;align-items:center;gap:14px;font:800 26px Inter;letter-spacing:1px}
+#brand b{width:38px;height:38px;border-radius:11px;background:conic-gradient(from 200deg,#8b6cff,#22d3ee,#ff4d8d,#8b6cff);display:block}
+#prog{position:absolute;left:0;bottom:0;height:5px;background:linear-gradient(90deg,#8b6cff,#22d3ee)}
+#wave{position:absolute;left:60px;bottom:40px;display:flex;align-items:center;gap:5px;height:50px}
+#wave i{display:block;width:5px;border-radius:3px;background:rgba(255,255,255,.55)}
+#vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.65) 100%)}
+#flash{position:absolute;inset:0;background:#fff;opacity:0}
+#sub{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);font:700 34px Inter;color:#fff;text-shadow:0 2px 20px #000;white-space:nowrap}
+</style></head>
+<body><div id="stage">
+<canvas id="fx" width="1920" height="1080"></canvas>
+<div id="world"></div>
+<div id="vig"></div>
+<div id="hud"><div id="brand"><b></b>AIDEN AI</div><div id="chap"><span class="dot"></span><span id="chapt"></span></div><div id="wave"></div><div id="prog"></div></div>
+<div id="flash"></div>
+</div>
+<script src="rms.js"></script>
+<script src="scenes.js"></script>
+<script src="engine.js"></script>
+</body></html>
