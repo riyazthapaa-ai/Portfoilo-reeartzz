@@ -8,6 +8,14 @@ The source for a 1920×1080, 30 fps motion-graphic video that is timed to the vo
 - `script.txt`, `timing.json`, `align.py`: the VO script, with sentence timings found by aligning the script to the pauses in the audio.
 - `src/rms.js`: the VO loudness per frame. It drives the waveform in the bottom-left HUD.
 
+## v2 — bright "3D glossy" style (`src-v2/`)
+Restyled after a reference ad:
+- **Backgrounds:** bright scenes (white with pastel glows, a blue→pink gradient, solid blue) cut against dark scenes with glows and gold light-rays.
+- **Cards and objects:** glossy, tilted 3D cards stacked in a cascade, with 3D emoji objects. The scene camera dollies in 3D.
+- **Transitions:** whip pans with directional motion blur and rainbow swoosh streaks, a light burst with a white flash, an RGB dot-ring loader, zoom-throughs and 3D flips.
+- **Type:** springy kinetic type, letter-by-letter gradient reveals, and Figma-style selection boxes on key words.
+- **Extras:** a toggle switch, number tiles, and a Subscribe click with a bell.
+
 ## Preview / render
 
 ```bash
