@@ -31,3 +31,9 @@ These scenes are placeholders for your real footage. Overlay your screen recordi
 - 2:35 side-by-side result
 - 3:07–3:50 detector scan and result (the result card has no score, so it never shows a number you didn't actually get)
 - 3:50 StealthGPT's demo (the browser frame at stealthgpt.ai)
+
+## v3 — fast-paced cut (`src-v3/`)
+v2's look with faster pacing, to match the reference:
+- **Camera beats:** the camera snaps with a springy overshoot to frame each new element as it appears, so it moves about every 1–1.5 s. Long gaps get extra filler moves.
+- **Faster animation:** transitions are about 40% shorter, and element animations run 1.4× faster.
+- **Movement everywhere:** emoji and objects float and bob continuously, and extra pop-in stickers fill the sparse moments.

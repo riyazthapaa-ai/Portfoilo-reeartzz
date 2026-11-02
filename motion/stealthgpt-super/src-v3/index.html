@@ -1,0 +1,73 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>StealthGPT SUPER v2</title>
+<style>
+@font-face{font-family:Inter;font-weight:400;src:url(inter-latin-400-normal.woff2)}
+@font-face{font-family:Inter;font-weight:600;src:url(inter-latin-600-normal.woff2)}
+@font-face{font-family:Inter;font-weight:800;src:url(inter-latin-800-normal.woff2)}
+@font-face{font-family:Inter;font-weight:900;src:url(inter-latin-900-normal.woff2)}
+@font-face{font-family:Mono;font-weight:500;src:url(jetbrains-mono-latin-500-normal.woff2)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#fff}
+body{font-family:Inter,'Noto Color Emoji',sans-serif}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff}
+.layer{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;perspective:2200px;will-change:transform}
+.bg{position:absolute;inset:-200px}
+.rig{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-style:preserve-3d;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.light{color:#111322}
+.dark{color:#fff}
+.a{transform-style:preserve-3d}
+.abs{position:absolute}
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.fw{left:0;width:1920px;display:flex;justify-content:center}
+.em{font-family:'Noto Color Emoji';line-height:1;display:inline-block}
+/* type */
+.t0{font:900 220px/0.95 Inter;letter-spacing:-9px}
+.t1{font:800 140px/1 Inter;letter-spacing:-6px}
+.t2{font:800 96px/1.04 Inter;letter-spacing:-3.5px}
+.t3{font:800 64px/1.1 Inter;letter-spacing:-2px}
+.t4{font:600 40px/1.25 Inter;letter-spacing:-.5px}
+.sm{font:600 34px/1 Inter;letter-spacing:-.5px}
+.cap{font:600 26px/1 Inter;letter-spacing:6px;text-transform:uppercase;opacity:.6}
+.gO{background:linear-gradient(90deg,#ffb31a,#ff3d9a 60%,#b44dff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gB{background:linear-gradient(90deg,#2b6bff,#8b5cff 55%,#ff4fd8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gG{background:linear-gradient(180deg,#fff6b0,#ffb300 55%,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* glossy 3d card */
+.c3{position:relative;border-radius:46px;padding:44px 52px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));
+ box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -14px 30px rgba(0,0,0,.22),0 16px 0 var(--c3),0 40px 80px rgba(20,10,60,.28),0 80px 140px rgba(20,10,60,.18)}
+.c3t{font:800 50px/1 Inter;letter-spacing:-1.5px;display:flex;align-items:center;gap:14px;text-shadow:0 2px 10px rgba(0,0,0,.15)}
+.c3i{display:flex;gap:18px;margin-top:40px}
+.ic{width:84px;height:84px;border-radius:22px;background:rgba(255,255,255,.2);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),0 8px 18px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font:44px 'Noto Color Emoji'}
+.c3e{position:absolute;right:30px;top:50%;font:200px/1 'Noto Color Emoji';transform:translateY(-50%) rotate(-10deg);filter:drop-shadow(0 26px 22px rgba(0,0,0,.35))}
+/* tiles */
+.tile{width:210px;height:250px;border-radius:44px;display:flex;align-items:center;justify-content:center;font:900 170px/1 Inter;color:#fff;letter-spacing:-6px;
+ background:linear-gradient(140deg,#ffc041,#ff7a00);box-shadow:inset 0 3px 0 rgba(255,255,255,.5),inset 0 -14px 26px rgba(160,60,0,.4),0 14px 0 #c25400,0 40px 80px rgba(255,120,0,.45)}
+.logo{width:420px;height:420px;border-radius:96px;display:flex;align-items:center;justify-content:center;font:900 92px Inter;letter-spacing:-3px;color:#fff;
+ background:linear-gradient(140deg,var(--c1),var(--c2));box-shadow:inset 0 4px 0 rgba(255,255,255,.45),inset 0 -20px 40px rgba(0,0,0,.25),0 22px 0 var(--c3),0 60px 120px rgba(0,0,0,.3)}
+/* UI */
+.ui{border-radius:40px;background:linear-gradient(160deg,#3d7bff,#1d4fe6);color:#fff;box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 18px 0 #1238a8,0 60px 120px rgba(29,79,230,.4);overflow:hidden}
+.uiw{border-radius:36px;background:#fff;color:#14162b;box-shadow:0 2px 0 rgba(255,255,255,.9) inset,0 30px 80px rgba(30,30,80,.18),0 8px 20px rgba(30,30,80,.08);overflow:hidden}
+.dots3{display:flex;gap:12px;padding:26px 30px 0}
+.dots3 i{width:18px;height:18px;border-radius:50%;display:block}
+.ln{height:18px;border-radius:9px;margin:16px 0;background:currentColor;opacity:.16}
+.chk{width:74px;height:74px;border-radius:20px;background:#fff;color:#2b6bff;display:flex;align-items:center;justify-content:center;font:900 46px Inter;box-shadow:0 6px 0 rgba(0,0,0,.12)}
+.pillw{display:inline-flex;align-items:center;gap:16px;padding:22px 38px;border-radius:999px;background:#fff;color:#14162b;font:700 36px Inter;box-shadow:0 20px 50px rgba(30,30,90,.16),inset 0 -4px 0 rgba(0,0,0,.06)}
+.pillw .em{font-size:40px}
+.sel{position:relative;padding:4px 18px;background:rgba(43,107,255,.22);outline:4px solid #2b6bff}
+.sel:before,.sel:after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#2b6bff;box-shadow:0 0 0 4px #fff}
+.sel:before{left:-12px;top:-12px}.sel:after{right:-12px;bottom:-12px}
+.tog{width:230px;height:120px;border-radius:60px;background:#d4d6e2;position:relative;box-shadow:inset 0 6px 14px rgba(0,0,0,.15)}
+.tog i{position:absolute;top:12px;left:12px;width:96px;height:96px;border-radius:50%;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.25);display:block}
+.strike{position:absolute;left:-14px;top:50%;height:14px;border-radius:8px;background:#ff2d55;transform-origin:left center}
+.stamp{border:12px solid #ff2d55;color:#ff2d55;border-radius:30px;padding:24px 46px;font:900 84px/1 Inter;letter-spacing:-3px;text-align:center;background:rgba(255,255,255,.85)}
+/* overlays */
+#layers{position:absolute;inset:0;perspective:1600px}
+#fx{position:absolute;inset:0;pointer-events:none}
+#flash{position:absolute;inset:0;background:#fff;opacity:0}
+</style></head>
+<body><div id="stage"><div id="layers"></div><canvas id="fx" width="1920" height="1080"></canvas><div id="flash"></div></div>
+<svg width="0" height="0" style="position:absolute"><filter id="mbx" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur id="mbxg" stdDeviation="0 0"/></filter></svg>
+<script src="rms.js"></script>
+<script src="scenes.js"></script>
+<script src="engine.js"></script>
+</body></html>
