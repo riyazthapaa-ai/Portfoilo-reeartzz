@@ -28,23 +28,27 @@ The final mix is normalised to -14 LUFS, which is YouTube's loudness target.
 
 ## Title card
 
-`title_card.py` renders "Every Character / KILLED OFF" in the Rick and Morty logo style. The style follows the 3D title pops in the reference reel.
+`title_card.py` renders "Every Character / KILLED OFF / Rick and Morty" in the Rick and Morty logo style. The style follows the 3D title pops in the reference reel.
 
 - **Font:** Get Schwifty (`fonts/get_schwifty.ttf`), a fan-made recreation of the logo lettering. Check its licence before using it on a monetised channel.
 - **Colours:** taken from the logo: cyan face, dark-teal inner line, lime outline and black edge.
 - **3D look:** a deep green extrusion that leans toward the centre, a glossy top bevel and a drop shadow.
-- **Animation:**
-  - The "Every Character" letters flip in one by one, with overshoot.
-  - "KILLED OFF" slams in from 3× scale with a zoom blur, then a white hit, an RGB split and a heavy camera shake.
-  - The whole title sways in 3D perspective while the letters bob.
-  - A handheld shake runs throughout, with a second shake punch on "deaths".
-  - It whips out with a motion blur at the end.
+- **Rick and Morty logo:** your uploaded logo (`assets/rick_and_morty_logo.webp`) is extruded in 3D the same way and sits under the title.
+- **Animation (4.25s):**
+  - 0.00s: white flash and a zoom punch into the portal.
+  - 0.05s: the "Every Character" letters tumble in one at a time, each spinning in 3D from a different direction.
+  - 0.55s: "KILLED OFF" slams in with a zoom blur, an RGB split, speed lines, a spark burst and a big shake.
+  - 1.12s: the Rick and Morty logo spins in from deep space and lands with a bounce, speed lines and sparks.
+  - 1.95s: a light sweep shines across everything.
+  - 3.63s: a hit on "deaths", with a scale pulse, shake, RGB split and sparks.
+  - End: a whip-out with motion blur.
+  - Throughout: 3D camera sway and dolly, a wiggle and bob on each letter, a glow that pulses on every hit, a spinning portal and a handheld shake.
 - **Background:** an animated green portal.
-- **SFX:** letter pops, a riser, an impact boom, a hit on "deaths" and a whip-out whoosh. These are synthesised, so there are no licensing issues.
+- **SFX:** letter whooshes and pops, a riser and boom on the slam, a spinning whoosh and boom for the logo, a shimmer on the light sweep, a hit on "deaths" and a whip-out whoosh. These are synthesised, so there are no licensing issues.
 - **Outputs:**
   - `title_card.mp4` is the full frame with background and SFX. `build_hook.py` drops it in automatically.
   - `title_card_alpha.webm` is the text only, with transparency, for laying over your own footage.
-  - `python3 title_card.py` also writes `title_card_alpha.mov` (ProRes 4444), which is better for Premiere and Resolve. It's about 270 MB, so it isn't committed.
+  - `python3 title_card.py --prores` also writes `title_card_alpha.mov` (ProRes 4444), which is better for Premiere and Resolve. It's about 270 MB, so it isn't committed.
 
 Requirements: `pip install numpy opencv-python-headless pillow`.
 
