@@ -248,8 +248,10 @@ def build_cues(events):
         elif ty == 'grow': add(t, 'whoosh', p=1.6)
         elif ty == 'let': add(t, 'letter', f=float(2000 + 160 * (len([c for c in cues if c['c'] == 'letter']) % 12)))
     # scene-specific moments (match engine.js custom())
-    for t, c, k in [(0.0, 'impact', {'big': 1.3}), (0.02, 'shimmer', {}), (4.9, 'glitch', {}), (93.2, 'toggle', {}), (155.05, 'mouse', {}),
-                    (155.1, 'progress', {}), (210.4, 'scanner', {}), (212.3, 'chime', {}), (214.3, 'chime', {}), (337.75, 'mouse', {}),
+    for t, c, k in [(0.0, 'impact', {'big': 1.3}), (0.02, 'shimmer', {}), (4.9, 'glitch', {}), (93.2, 'toggle', {}),
+                    # screen-recording moments: SUPER 'Humanize' click + progress, ZeroGPT 'Detect' click, result, gauge
+                    (152.6, 'mouse', {}), (152.7, 'progress', {}), (210.6, 'mouse', {}), (210.7, 'scanner', {}),
+                    (212.35, 'chime', {}), (213.9, 'pop', {}), (223.4, 'chime', {}), (337.75, 'mouse', {}),
                     (337.9, 'chime', {}), (338.3, 'bell', {}), (344.1, 'impact', {'big': 1.3}), (344.15, 'shimmer', {})]:
         add(t, c, **k)
     # selection-box wipes (gradient highlight boxes) get a UI click

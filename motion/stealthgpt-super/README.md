@@ -37,3 +37,22 @@ v2's look with faster pacing, to match the reference:
 - **Camera beats:** the camera snaps with a springy overshoot to frame each new element as it appears, so it moves about every 1–1.5 s. Long gaps get extra filler moves.
 - **Faster animation:** transitions are about 40% shorter, and element animations run 1.4× faster.
 - **Movement everywhere:** emoji and objects float and bob continuously, and extra pop-in stickers fill the sparse moments.
+
+## v4 — with the real screen recording (`src-v4/`)
+`recs.js` splices the demo recording into the script. Each clip has a source start time and a playback speed so it fits its voiceover line:
+
+| Video time | Source time in recording | What's on screen |
+|---|---|---|
+| 2:02 | 41.5 s | ChatGPT prompt |
+| 2:05 | 50 s | AI first draft |
+| 2:18 | 63 s | Pasted into SUPER |
+| 2:32 | 67 s | Humanizing |
+| 2:36 | 78 s | Side by side: draft vs. SUPER output |
+| 2:54 | 96 s | Output close-ups |
+| 3:11 | 116 s | ZeroGPT submit |
+| 3:30 | 120 s | Detect |
+| 3:32 | 122 s | Result: 8.6% AI GPT*, "Human written" |
+| 3:36 | 126 s | Highlighted text |
+| 3:50 | 4 s | StealthGPT site tour |
+
+To render it, extract the recording to frames first: `ffmpeg -i demo.mp4 -vf scale=1600:-2 -q:v 4 src-v4/rec/f_%05d.jpg`. Then run `render-with-footage.js`, which waits for each frame image to decode before taking the screenshot.
