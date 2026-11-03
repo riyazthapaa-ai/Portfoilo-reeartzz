@@ -126,6 +126,8 @@ def caption_chunks(edl):
     """Map words onto the output timeline and group into 1-3 word chunks."""
     chunks = []
     for seg in edl:
+        if seg["kind"] == "title":   # the title card carries the screen; no captions over it
+            continue
         vs, ve = VO[seg["vo"]]
         off = seg["vo_at"] - vs
         words = [(t + off, w) for t, w in WORDS if vs - 0.05 <= t < ve - 0.05]
@@ -221,6 +223,11 @@ class Graph:
         self.norm(lab, f"st{idx}n", f",trim=end_frame=1,loop=loop={n}:size=1,setpts=N/{FPS}/TB")
         return f"st{idx}n"
 
+def media_dur(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                          "-of", "csv=p=0", path], capture_output=True, text=True).stdout
+    return float(out.strip() or 0)
+
 def build(args):
     edl, total = build_edl(args.tight)
     work = tempfile.mkdtemp(prefix="hook_")
@@ -283,14 +290,18 @@ def build(args):
                    dt("DEAD?", 230, "(w-text_w)/2", "h/2-90", "0xE53935", f":enable='gte(t,{t_d+0.5:.2f})'"))
 
         elif seg["kind"] == "title":
-            s = g.still(*seg["still"], d, k)
-            g.zoom(s, f"t{k}", d, 1.05, 1.15, ",gblur=sigma=18,eq=brightness=-0.3:saturation=0.6,vignette=PI/3")
-            fade = ":alpha='min(1,t*4)'"
-            g.f.append(f"[t{k}]" +
-                       dt("EVERY CHARACTER", 150, "(w-text_w)/2", "h/2-250", "white", fade) + "," +
-                       dt("KILLED OFF", 210, "(w-text_w)/2", "h/2-90", GREEN, ":alpha='min(1,max(0,(t-0.35)*4))'") + "," +
-                       dt("IN RICK AND MORTY", 70, "(w-text_w)/2", "h/2+150", "0xDDDDDD", ":alpha='min(1,max(0,(t-0.7)*4))'") +
-                       f",fade=t=in:d=0.12:color=white[v{k}]")
+            # animated 3D title card rendered by title_card.py (re-rendered if the length changed)
+            card = os.path.join(HERE, "title_card.mp4")
+            vs, _ = VO[seg["vo"]]
+            deaths_at = 17.9 - vs + (seg["vo_at"] - seg["t"])
+            if args.rerender_title or not os.path.exists(card) or abs(media_dur(card) - d) > 0.05:
+                import title_card
+                title_card.render(d, deaths_at, HERE, alpha_out=False)
+            i = g.add_input(["-i", card])
+            g.f.append(f"[{i}:v]setsar=1,fps={FPS},format=yuv420p,trim=0:{d:.3f}[v{k}]")
+            g.f.append(f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.55,"
+                       f"atrim=0:{d:.3f},adelay={int(seg['t']*1000)}:all=1[ca{k}]")
+            aclips.append(f"ca{k}")
         vsegs.append(f"[v{k}]")
 
     # video: concat + captions
@@ -343,6 +354,7 @@ def main():
     p.add_argument("--music")
     p.add_argument("--placeholder", action="store_true", help="render an animatic without footage")
     p.add_argument("--tight", action="store_true", help="trim clips to their VO lines")
+    p.add_argument("--rerender-title", action="store_true", help="force title_card.py to re-render")
     p.add_argument("--preset", default="medium"); p.add_argument("--crf", type=int, default=18)
     p.add_argument("-o", "--output", default="hook.mp4")
     a = p.parse_args()

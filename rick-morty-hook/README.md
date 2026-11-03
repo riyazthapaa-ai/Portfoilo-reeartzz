@@ -19,12 +19,34 @@ The VO was transcribed word by word, and each line is cut at a measured silence,
 | 0:12.0 – 0:35.0 | S7E5 Unmortricken · 18:45–19:08 | "to important characters dying that changed the show forever." | Punch-in to 1.08×. Episode audio comes up to full after "forever". |
 | 0:35.0 – 0:38.8 | Montage: 6 still frames taken from the three clips | "Rick and Morty has killed off a ridiculous number of characters…" | Alternating zoom in and out, with "KILLED OFF" slammed in red on "killed". |
 | 0:38.8 – 0:42.3 | Desaturated still from S7E5 (19:05) | "But how many of these unlucky souls actually stayed dead?" | Push-in, then "STAYED" and "DEAD?" pop on the words. |
-| 0:42.3 – 0:46.6 | Title card over a blurred still from S3E4 | "Today, we're digging through… character deaths." | "EVERY CHARACTER / KILLED OFF / IN RICK AND MORTY" |
+| 0:42.3 – 0:46.6 | Animated 3D title card (`title_card.mp4`) | "Today, we're digging through… character deaths." | See "Title card" below. No captions over it. |
 | 0:46.6 – 0:53.6 | S1E1 Pilot · 05:50–05:57 | "Starting all the way back in Season One… very first victims." | "SEASON 1 · EPISODE 1 · PILOT" lower-third and a 1.12× push-in, ending on a white flash out of the hook. |
 
 Captions are bold yellow, 1–3 words at a time, and each word lights up as it is spoken. Keywords like "killed", "dead?" and "Season One" are in portal green.
 
 The final mix is normalised to -14 LUFS, which is YouTube's loudness target.
+
+## Title card
+
+`title_card.py` renders "Every Character / KILLED OFF" in the Rick and Morty logo style. The style follows the 3D title pops in the reference reel.
+
+- **Font:** Get Schwifty (`fonts/get_schwifty.ttf`), a fan-made recreation of the logo lettering. Check its licence before using it on a monetised channel.
+- **Colours:** taken from the logo: cyan face, dark-teal inner line, lime outline and black edge.
+- **3D look:** a deep green extrusion that leans toward the centre, a glossy top bevel and a drop shadow.
+- **Animation:**
+  - The "Every Character" letters flip in one by one, with overshoot.
+  - "KILLED OFF" slams in from 3× scale with a zoom blur, then a white hit, an RGB split and a heavy camera shake.
+  - The whole title sways in 3D perspective while the letters bob.
+  - A handheld shake runs throughout, with a second shake punch on "deaths".
+  - It whips out with a motion blur at the end.
+- **Background:** an animated green portal.
+- **SFX:** letter pops, a riser, an impact boom, a hit on "deaths" and a whip-out whoosh. These are synthesised, so there are no licensing issues.
+- **Outputs:**
+  - `title_card.mp4` is the full frame with background and SFX. `build_hook.py` drops it in automatically.
+  - `title_card_alpha.webm` is the text only, with transparency, for laying over your own footage.
+  - `python3 title_card.py` also writes `title_card_alpha.mov` (ProRes 4444), which is better for Premiere and Resolve. It's about 270 MB, so it isn't committed.
+
+Requirements: `pip install numpy opencv-python-headless pillow`.
 
 ## Rendering the real thing
 
