@@ -42,7 +42,7 @@ The final mix is normalised to -14 LUFS, which is YouTube's loudness target.
   - 1.95s: a light sweep shines across everything.
   - 3.63s: a hit on "deaths", with a scale pulse, shake, RGB split and sparks.
   - End: a whip-out with motion blur.
-  - Throughout: 3D camera sway and dolly, a wiggle and bob on each letter, a glow that pulses on every hit, a spinning portal and a handheld shake.
+  - Throughout: 3D camera sway and dolly, a glow that pulses on every hit, a spinning portal and a handheld shake.
 - **Background:** an animated green portal.
 - **SFX:** letter whooshes and pops, a riser and boom on the slam, a spinning whoosh and boom for the logo, a shimmer on the light sweep, a hit on "deaths" and a whip-out whoosh. These are synthesised, so there are no licensing issues.
 - **Outputs:**

@@ -16,7 +16,7 @@ Beats (default 4.25s card):
   1.95  light sweep across everything
   3.63  "deaths" hit: scale pulse, shake, RGB split, sparks
   end   whip-out (zoom + motion blur)
-  throughout: 3D camera sway/dolly, per-letter wiggle, glow pulse, spinning
+  throughout: 3D camera sway/dolly, glow pulse, spinning
   portal, handheld shake, and synthesised SFX for every beat.
 
 Outputs
@@ -375,7 +375,7 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
         t = i / FPS
         layer = np.zeros((H, W, 4), np.float32)
 
-        # --- line 1: letters tumble in with 3D spins, then wiggle
+        # --- line 1: letters tumble in with 3D spins, then hold still
         rise = 150 * (1 - ease_out_back(clamp01((t - T_SLAM0) / 0.3), 1.4))
         rise += 120 * (1 - ease_out_back(clamp01((t - T_LOGO0 - 0.2) / 0.3), 1.4))
         for j, L in enumerate(l1.letters):
@@ -387,8 +387,8 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
             rx, ry, rz, ox, oy = spin[j]
             h_, w_ = L["spr"].shape[:2]
             cx = L["x"] + w_ / 2 + ox * q
-            cy = L["y"] + h_ / 2 + oy * q + rise + math.sin(t * 5 + j * 0.8) * 5
-            wig = 0.05 * math.sin(t * 6.5 + j * 1.3) if lt > 0.35 else 0
+            cy = L["y"] + h_ / 2 + oy * q + rise
+            wig = 0.0   # letters stay locked once landed
             paste3d(layer, L["spr"], cx, cy, rx * q * 3.2, ry * q * 3.2, rz * q * 3 + wig,
                     1 + 1.6 * q, clamp01(lt / 0.05))
 
@@ -403,8 +403,7 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
             g = np.zeros((H, W, 4), np.float32)
             for j, L in enumerate(l2.letters):
                 h_, w_ = L["spr"].shape[:2]
-                wig = 0.04 * math.sin(t * 5.5 + j * 1.7 + 1) if t > T_HIT + 0.25 else 0
-                bob = math.sin(t * 4.4 + j * 0.9 + 2) * 7 if t > T_HIT + 0.25 else 0
+                wig, bob = 0.0, 0.0   # letters stay locked once landed
                 paste3d(g, L["spr"], L["x"] + w_ / 2, L["y"] + h_ / 2 + bob + lift, rz=wig)
             gy = H / 2 - 30 + lift
             if k < 1:
@@ -427,9 +426,9 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
             s = 0.04 + 0.96 * e
             if t >= T_LOGO:
                 s = 1 + 0.06 * math.exp(-(t - T_LOGO) * 10) * math.cos((t - T_LOGO) * 34)
-                rz = 0.035 * math.sin(t * 3.1); rx = 0.0
+                rz = 0.0; rx = 0.0
             s *= 1 + 0.06 * (math.exp(-(t - deaths_at) / 0.15) if t >= deaths_at else 0)
-            cy = logo_cy + math.sin(t * 3.7) * 6
+            cy = logo_cy + math.sin(t * 2.0) * 2
             paste3d(layer, logo, W / 2, cy, rx, 0.0, rz, s, clamp01(k * 4))
             if T_LOGO <= t < T_LOGO + 1 / FPS:
                 sparks.burst(W / 2, logo_cy, 110, 450, 1200)
