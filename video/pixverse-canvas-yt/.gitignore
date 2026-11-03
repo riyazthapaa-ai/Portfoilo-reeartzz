@@ -2,3 +2,4 @@ node_modules/
 dist/
 output/*.mp4.tmp
 output/all-sections-preview.mp4
+output/hp-all-sections-preview.mp4

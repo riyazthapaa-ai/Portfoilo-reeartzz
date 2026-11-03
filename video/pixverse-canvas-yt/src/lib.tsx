@@ -53,6 +53,16 @@ export const H = 1080;
 // Final video shot timestamps (seconds into final.mp4).
 export const SHOT = {wide: 1.2, notice: 5.2, approach: 11.4, reveal: 16.2};
 
+// Media + backdrop settings. A video project can override these (see
+// src/headphones/theme.ts) before its scene runs.
+export const MEDIA = {
+  image: '/reference.jpg',
+  imageAR: 1672 / 941,
+  video: '/final.mp4',
+  videoAR: 1280 / 720,
+  glow: [0.22, 0.2, 0.08],
+};
+
 /** Wait until an absolute time (seconds since the start of the scene). */
 export function* cue(t: number): ThreadGenerator {
   const d = t - useTime();
@@ -73,7 +83,7 @@ export function Backdrop(view: View2D) {
         x={-600}
         y={-250}
         fill={C.violet}
-        opacity={0.22}
+        opacity={MEDIA.glow[0]}
         filters={[blur(220)]}
       />
       <Circle
@@ -82,7 +92,7 @@ export function Backdrop(view: View2D) {
         x={650}
         y={300}
         fill={C.blue}
-        opacity={0.2}
+        opacity={MEDIA.glow[1]}
         filters={[blur(240)]}
       />
       <Circle
@@ -91,7 +101,7 @@ export function Backdrop(view: View2D) {
         x={200}
         y={-380}
         fill={C.amber}
-        opacity={0.08}
+        opacity={MEDIA.glow[2]}
         filters={[blur(200)]}
       />
       <DotGrid opacity={0.35} />
@@ -376,9 +386,9 @@ export function Card({
 
 /** Reference still, cover-fitted into a box. */
 export function RefImg({w, h, imgRef}: {w: number; h: number; imgRef?: Reference<Img>}) {
-  const ar = 1672 / 941;
+  const ar = MEDIA.imageAR;
   const cw = Math.max(w, h * ar);
-  return <Img ref={imgRef} src={'/reference.jpg'} width={cw} height={cw / ar} />;
+  return <Img ref={imgRef} src={MEDIA.image} width={cw} height={cw / ar} />;
 }
 
 /** A frozen frame (or playing clip) from the final video, cover-fitted. */
@@ -395,12 +405,12 @@ export function Clip({
   play?: boolean;
   vidRef?: Reference<Video>;
 }) {
-  const ar = 1280 / 720;
+  const ar = MEDIA.videoAR;
   const cw = Math.max(w, h * ar);
   return (
     <Video
       ref={vidRef}
-      src={'/final.mp4'}
+      src={MEDIA.video}
       time={time}
       play={play}
       loop

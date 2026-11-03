@@ -2,7 +2,7 @@ import {execSync} from 'node:child_process';
 import fs from 'node:fs';
 import {renderVideo} from '@revideo/renderer';
 
-// Usage: node render.mjs [hook|intro|cta ...]
+// Usage: node render.mjs [hook|intro|cta|hp-hook|hp-intro|hp-cta ...]
 //   CHROME_PATH  Chrome/Chromium binary (a chrome-headless-shell works best)
 //   WORKERS      parallel render workers per section (default 3)
 //   DRAFT=1      fast 10fps / half-res preview (outputs *-draft.mp4)

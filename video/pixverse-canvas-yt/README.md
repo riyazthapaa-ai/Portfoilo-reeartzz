@@ -32,6 +32,33 @@ place of those sections. There is no music bed, so you can add your own under th
   **link in the description** button click, the first-concept → final-shot journey, and an end
   card with avatar, handle and a subscribe animation.
 
+## Video 2 — headphones product ad
+
+Same motion-graphic style for the headphone product-ad version of the video (VO
+`Lex-…41705…mp3` / `Lex-…41821…mp3`, result `Video_Editing.mp4`), with a black /
+silver / champagne palette to match the product.
+
+| File | Section | Length | VO source |
+| --- | --- | --- | --- |
+| `output/hp-hook.mp4` | Hook: one product image → finished ad | 31.9s | `…41705…mp3` 0:00.0–0:31.75 |
+| `output/hp-intro.mp4` | The project, the brief, the creative direction | 55.0s | `…41705…mp3` 0:32.0–1:26.8 |
+| `output/hp-cta.mp4` | Final thoughts and CTA | 73.6s | `…41821…mp3` 3:24.5–end |
+
+Code lives in `src/headphones/` (`theme.ts` swaps the palette and media before
+the scenes load) and assets in `public/hp/`: the original product photo, three
+generated stills, the finished ad and the VO cuts. The intro stops just before
+"The next step is deciding how the advertisement should look". In the
+headphones scenes, cue times are written in source-VO seconds and converted
+with `T()`.
+
+`public/hp/final.mp4` has burnt-in subtitles from 4.4–12.6s (including a
+"Default text" placeholder over the close-up), so the cards use the stills and
+only play the video outside that range.
+
+```bash
+CHROME_PATH=/path/to/chrome-headless-shell node render.mjs hp-hook hp-intro hp-cta
+```
+
 ## Editing timings
 
 Every animation is keyed to the voiceover with `cue(seconds)` calls in `src/scenes/*.tsx`,
