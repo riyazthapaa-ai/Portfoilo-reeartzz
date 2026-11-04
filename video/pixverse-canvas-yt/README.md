@@ -68,6 +68,25 @@ only play the video outside that range.
 CHROME_PATH=/path/to/chrome-headless-shell node render.mjs hp-hook hp-intro hp-cta
 ```
 
+### Final ad with sound design
+
+`output/hp-final-ad-sfx.mp4` is the finished headphones ad (`Video_Editing.mp4`)
+with a cinematic sound pass. The original music is kept, 4 dB lower, with two
+synthesized layers on top:
+
+- **slow ambient bed** (`sfx/ambient.wav`): a breathing D-minor drone pad and
+  soft room tone that fades in over 2.5s and out over the final second
+- **cinematic SFX** (`sfx/sfx.wav`):
+  - a sub boom on the opening
+  - a slow air pass and a light glint as the hero shot turns
+  - a reverse swell, riser and hit into each cut (4.4s, 8.2s and the biggest at 12.63s)
+  - a soft swish and mechanical ticks on the close-up
+  - long shimmering tails on the final shot
+
+The mix is normalised to −14 LUFS, −1.3 dBTP. Run
+`python3 sfx/design.py <outdir>` to regenerate the stems; the timings are at the
+bottom of the script.
+
 ### Style samples
 
 `output/style-a.mp4`, `style-b.mp4` and `style-c.mp4` (with the board
