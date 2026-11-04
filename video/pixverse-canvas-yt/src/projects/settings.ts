@@ -29,6 +29,10 @@ export function loadFonts() {
       '400 32px Inter',
       '600 32px Inter',
       '500 32px "JetBrains Mono"',
+      '500 32px Inter',
+      '400 32px "Instrument Serif"',
+      'italic 400 32px "Instrument Serif"',
+      '400 32px Anton',
     ].map(f => document.fonts.load(f)),
   );
 }

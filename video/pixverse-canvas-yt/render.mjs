@@ -77,6 +77,8 @@ async function render() {
         progressCallback: (worker, p) => progress.set(worker, p),
         viteConfig: {define: {__DRAFT__: JSON.stringify(draft)}},
         workers,
+        // RANGE=start,end renders only part of the timeline (used for style samples).
+        ...(process.env.RANGE ? {projectSettings: {range: process.env.RANGE.split(',').map(Number), exporter: {name: '@revideo/core/ffmpeg', options: {format: 'mp4'}}}} : {}),
         viteBasePort: Number(process.env.PORT ?? 9000),
         puppeteer: {
           executablePath: process.env.CHROME_PATH,
