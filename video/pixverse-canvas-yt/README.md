@@ -34,9 +34,18 @@ place of those sections. There is no music bed, so you can add your own under th
 
 ## Video 2 — headphones product ad
 
-Same motion-graphic style for the headphone product-ad version of the video (VO
-`Lex-…41705…mp3` / `Lex-…41821…mp3`, result `Video_Editing.mp4`), with a black /
-silver / champagne palette to match the product.
+The headphone product-ad version of the video (VO `Lex-…41705…mp3` /
+`Lex-…41821…mp3`, result `Video_Editing.mp4`). It has the same elements and
+pacing as video 1 but a deliberately different look, **"bold kinetic"**
+(style option B, picked from the samples in `src/styles/`):
+
+- huge condensed Anton headlines that slam in, with no bounce and no blur
+- black, paper white and one acid-lime accent, with no glows
+- hard cuts and full-screen lime block wipes between beats
+- square-cornered image panels that mask open, with numbered label strips
+- persistent chrome: a label, a shot counter and a lime marquee ticker
+
+The style components live in `src/headphones/kinetic.tsx`.
 
 | File | Section | Length | VO source |
 | --- | --- | --- | --- |
@@ -44,8 +53,8 @@ silver / champagne palette to match the product.
 | `output/hp-intro.mp4` | The project, the brief, the creative direction | 55.0s | `…41705…mp3` 0:32.0–1:26.8 |
 | `output/hp-cta.mp4` | Final thoughts and CTA | 73.6s | `…41821…mp3` 3:24.5–end |
 
-Code lives in `src/headphones/` (`theme.ts` swaps the palette and media before
-the scenes load) and assets in `public/hp/`: the original product photo, three
+Code lives in `src/headphones/` (`theme.ts` swaps the media before the scenes
+load, and `kinetic.tsx` holds the style kit) and assets in `public/hp/`: the original product photo, three
 generated stills, the finished ad and the VO cuts. The intro stops just before
 "The next step is deciding how the advertisement should look". In the
 headphones scenes, cue times are written in source-VO seconds and converted
@@ -58,6 +67,13 @@ only play the video outside that range.
 ```bash
 CHROME_PATH=/path/to/chrome-headless-shell node render.mjs hp-hook hp-intro hp-cta
 ```
+
+### Style samples
+
+`output/style-a.mp4`, `style-b.mp4` and `style-c.mp4` (with the board
+`style-options.png`) are the three looks tried on the first 8.4s of the hook:
+A is studio viewfinder, B is bold kinetic (the one chosen) and C is spec-sheet
+HUD. Re-render them with `RANGE=0,8.4 node render.mjs style-a style-b style-c`.
 
 ## Editing timings
 

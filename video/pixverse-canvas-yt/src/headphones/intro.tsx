@@ -1,396 +1,329 @@
 // HEADPHONES AD · Intro — the project, the brief and the creative direction.
-// public/hp/vo-intro.wav is source VO 0:32.0–1:26.8; cues are written in
-// source-VO seconds and converted with T().
-import {Audio, Circle, Img, Line, makeScene2D, Node, Rect, Txt, blur, brightness, grayscale, hue} from '@revideo/2d';
-import {all, createRef, easeInCubic, easeInOutCubic, easeOutBack, easeOutCubic, easeOutExpo, linear, sequence, spawn, waitFor} from '@revideo/core';
+// Bold kinetic style. public/hp/vo-intro.wav is source VO 0:32.0–1:26.8; cues
+// are written in source-VO seconds and converted with T().
+import {Audio, Line, makeScene2D, Node, Rect, Txt, brightness, grayscale, hue} from '@revideo/2d';
+import {all, createRef, easeInCubic, easeInOutCubic, easeOutExpo, spawn, waitFor} from '@revideo/core';
 import {
-  Arrow,
-  Backdrop,
+  Bar,
   BODY,
-  C,
-  Card,
-  Chip,
+  Big,
+  Chrome,
   Clip,
   cue,
-  DotGrid,
-  draw,
-  Eyebrow,
-  Flash,
+  GREY,
+  Ground,
   H,
-  HEAD,
-  hideWords,
-  KLine,
+  hideAll,
+  INK,
+  KRow,
+  Label,
+  LIME,
   MONO,
-  pop,
-  revealWords,
-  unpop,
-  Vignette,
+  open,
+  Panel,
+  PAPER,
+  rise,
+  slam,
+  slamWords,
+  Still,
+  Tag,
   W,
-} from '../lib';
-import {PLAY, Pic, Product, STILLS} from './media';
+  Wiper,
+} from './kinetic';
+import {PLAY, Product, STILLS} from './media';
 
 const T = (src: number) => src - 32.0;
 const at = (src: number) => cue(T(src));
 
 export default makeScene2D('hp-intro', function* (view) {
-  Backdrop(view);
+  Ground(view);
   view.add(<Audio src={'/hp/vo-intro.wav'} play />);
   const stage = (<Node />) as Node;
   view.add(stage);
-  Vignette(view);
-  const flash = Flash(view);
+  const wipe = Wiper(view);
+  const tick = Chrome(view, 'LEX AI / THE PROJECT', 'ONE PRODUCT  ●  THE BRIEF  ●  PREMIUM  ●  MINIMAL  ●  ');
 
-  // ---------------------------------------------------------- 31.8 a single product image
+  // ------------------------------------------------------- 32.2 the starting point: one product image
   const startTag = createRef<Rect>();
   const prod = createRef<Rect>();
-  const oneChip = createRef<Rect>();
+  const oneA = createRef<Txt>();
+  const oneB = createRef<Txt>();
+  stage.add(<Tag refNode={startTag} text={'THE STARTING POINT'} mono size={26} x={-860} y={-410} align={'left'} solid={false} />);
   stage.add(
-    <Node y={-400}>
-      <Eyebrow refNode={startTag} text={'THE STARTING POINT'} />
-    </Node>,
+    <Panel refNode={prod} x={360} y={-20} w={1080} h={608} fill={'#fff'}>
+      <Product w={1080} h={608} />
+    </Panel>,
   );
-  stage.add(
-    <Card refNode={prod} width={900} height={506} y={-10} glow={C.amber} opacity={0} scale={0.6}>
-      <Product w={900} h={506} />
-    </Card>,
-  );
-  stage.add(
-    <Node y={330}>
-      <Chip refNode={oneChip} icon={'◎'} text={'ONE PRODUCT IMAGE'} size={40} />
-    </Node>,
-  );
+  stage.add(<Big refNode={oneA} text={'ONE'} size={300} x={-860} y={-150} color={LIME} />);
+  stage.add(<Big refNode={oneB} text={'PRODUCT\nIMAGE'} size={150} x={-860} y={160} />);
   yield* at(32.2);
-  yield* startTag().opacity(1, 0.3);
+  tick();
+  yield* startTag().opacity(1, 0.15);
   yield* at(33.75);
-  yield* pop(prod(), 0.55);
+  yield* open(prod(), 608, 0.35);
   yield* at(34.4);
-  yield* pop(oneChip(), 0.45);
+  yield* slam(oneA(), 0.2);
+  yield* rise(oneB(), 0.22);
 
-  // 36.4 the goal isn't simply to animate it
-  const animChip = createRef<Rect>();
-  const animStrike = createRef<Rect>();
-  const notWords: Rect[] = [];
+  // 36.4 not just animating a photo
+  const notRow: Rect[] = [];
+  const animBar = createRef<Rect>();
+  const notNode = createRef<Node>();
   stage.add(
-    <Node x={330} y={-200}>
-      <Chip refNode={animChip} icon={'▶'} text={'JUST ANIMATE IT'} size={40} bg={C.panel2} />
-      <Rect ref={animStrike} width={0} height={8} radius={4} fill={C.red} />
+    <Node ref={notNode} y={380}>
+      <KRow refs={notRow} size={110} words={['NOT', 'JUST', 'ANIMATING', 'A', 'PHOTO']} />
     </Node>,
   );
-  stage.add(
-    <Node y={440}>
-      <KLine refs={notWords} size={64} words={['NOT', 'JUST', 'ANIMATING', 'A', {t: 'PHOTO', hl: C.red}]} />
-    </Node>,
-  );
+  stage.add(<Bar refNode={animBar} x={-185} y={380} h={20} />);
   yield* at(36.4);
-  spawn(unpop(oneChip(), 0.2));
+  hideAll(oneA(), oneB(), startTag());
+  tick();
+  yield* all(prod().position([0, -120], 0.3, easeOutExpo), prod().size([1100, 560], 0.3, easeOutExpo));
   yield* at(37.6);
-  spawn(revealWords(notWords, 0.08));
-  yield* pop(animChip(), 0.4);
+  yield* slamWords(notRow, 0.1);
   yield* at(38.5);
-  yield* animStrike().width(430, 0.35, easeOutExpo);
+  yield* animBar().width(470, 0.25, easeOutExpo);
 
-  // ---------------------------------------------------------- 39.4 a complete advertising concept
-  const conceptWords: Rect[] = [];
+  // ------------------------------------------------------- 39.3 a complete ad concept
+  const acA = createRef<Txt>();
   const checks = ['DIFFERENT SHOTS', 'CONSISTENT VISUAL STYLE', 'A FINAL EDIT'];
-  const checkRows: Rect[] = [];
-  const commercial = createRef<Rect>();
+  const checkRefs = checks.map(() => createRef<Txt>());
+  const nums = checks.map(() => createRef<Txt>());
+  const band = createRef<Rect>();
+  stage.add(<Big refNode={acA} text={'A COMPLETE AD CONCEPT'} size={140} x={-860} y={-370} />);
+  checks.forEach((c, i) => {
+    stage.add(<Big refNode={nums[i]} text={`0${i + 1}`} size={100} x={-100} y={-170 + i * 140} color={LIME} />);
+    stage.add(<Big refNode={checkRefs[i]} text={c} size={82} x={40} y={-170 + i * 140} />);
+  });
   stage.add(
-    <Node y={-400}>
-      <KLine refs={conceptWords} size={84} words={['A', 'COMPLETE', {t: 'AD CONCEPT', hl: C.amber}]} />
-    </Node>,
-  );
-  stage.add(
-    <Node x={0} y={-40}>
-      {checks.map((c, i) => (
-        <Rect ref={r => r && checkRows.push(r)} layout direction={'row'} alignItems={'center'} gap={22} y={(i - 1) * 120} x={40} offset={[-1, 0]} opacity={0}>
-          <Rect size={56} radius={14} fill={C.amber} layout justifyContent={'center'} alignItems={'center'}>
-            <Txt text={'✓'} fontFamily={BODY} fontWeight={600} fontSize={34} fill={C.bg} />
-          </Rect>
-          <Txt text={c} fontFamily={HEAD} fontWeight={900} fontSize={54} letterSpacing={2} fill={C.text} />
-        </Rect>
-      ))}
-    </Node>,
-  );
-  stage.add(
-    <Node y={330}>
-      <Chip refNode={commercial} icon={'★'} text={'FEELS LIKE A REAL PRODUCT COMMERCIAL'} size={40} bg={C.amber} color={C.bg} iconColor={C.bg} stroke={C.amber} />
-    </Node>,
+    <Rect ref={band} y={330} width={W} height={150} fill={LIME} opacity={0}>
+      <Txt text={'FEELS LIKE A REAL PRODUCT COMMERCIAL'} fontFamily={'Anton'} fontSize={100} letterSpacing={3} fill={INK} />
+    </Rect>,
   );
   yield* at(39.3);
-  spawn(hideWords(notWords, 0.2));
-  spawn(all(unpop(animChip(), 0.25), animStrike().opacity(0, 0.2), startTag().opacity(0, 0.2)));
-  yield* all(prod().position([-430, -20], 0.6, easeInOutCubic), prod().size([720, 405], 0.6, easeInOutCubic));
+  yield* wipe(() => {
+    hideAll(...notRow, animBar());
+    prod().position([-520, -30]).size([760, 470]);
+  });
+  tick();
   yield* at(40.3);
-  yield* revealWords(conceptWords, 0.1);
+  yield* slam(acA(), 0.22);
   const checkCues = [41.9, 43.0, 44.8];
   for (let i = 0; i < 3; i++) {
     yield* at(checkCues[i]);
-    yield* all(checkRows[i].opacity(1, 0.3), checkRows[i].x(0, 0.4, easeOutCubic));
+    spawn(slam(nums[i](), 0.18));
+    yield* rise(checkRefs[i](), 0.2, 60);
   }
   yield* at(45.9);
-  yield* pop(commercial(), 0.5);
+  yield* band().opacity(1).height(0).height(150, 0.22, easeOutExpo);
 
-  // ---------------------------------------------------------- 47.9 the brief
-  const brief = createRef<Node>();
-  stage.add(
-    <Node ref={brief} opacity={0}>
-      <Clip w={W} h={H} time={PLAY.wide} play />
-    </Node>,
-  );
+  // ------------------------------------------------------- 47.85 the brief
+  const brief = createRef<Rect>();
   const briefTag = createRef<Rect>();
-  const hpWords: Rect[] = [];
+  const hpA = createRef<Txt>();
+  const hpB = createRef<Txt>();
   stage.add(
-    <Node x={-720} y={-450}>
-      <Eyebrow refNode={briefTag} text={'THE BRIEF'} />
-    </Node>,
+    <Panel refNode={brief} w={W} h={H}>
+      <Node filters={[brightness(0.5)]}>
+        <Clip w={W} h={H} time={PLAY.wide} play />
+      </Node>
+    </Panel>,
   );
-  stage.add(
-    <Node y={360}>
-      <KLine refs={hpWords} size={96} words={['PREMIUM', {t: 'WIRELESS HEADPHONES', hl: C.amber}]} />
-    </Node>,
-  );
+  stage.add(<Tag refNode={briefTag} text={'THE BRIEF'} size={44} x={-860} y={-400} align={'left'} />);
+  stage.add(<Big refNode={hpA} text={'PREMIUM'} size={260} x={-860} y={-80} />);
+  stage.add(<Big refNode={hpB} text={'WIRELESS HEADPHONES'} size={170} x={-860} y={160} color={LIME} />);
   yield* at(47.85);
-  spawn(all(...checkRows.map(r => r.opacity(0, 0.3)), unpop(commercial(), 0.3), hideWords(conceptWords, 0.3), prod().opacity(0, 0.3)));
-  spawn(flash(0.4, 0.35));
-  brief().scale(1.1);
-  spawn(brief().scale(1, 5.5, linear));
-  yield* brief().opacity(1, 0.4);
-  yield* briefTag().opacity(1, 0.3);
+  hideAll(acA(), ...checkRefs.map(r => r()), ...nums.map(r => r()), band(), prod());
+  tick();
+  yield* open(brief(), H, 0.3);
+  yield* slam(briefTag(), 0.18);
   yield* at(51.7);
-  yield* revealWords(hpWords, 0.15, 0.5);
+  yield* slam(hpA(), 0.22);
+  yield* slam(hpB(), 0.22);
 
-  // 53.7 clean · modern · high-end, then the look
-  const moodWords: Rect[] = [];
+  // 53.7 clean · modern · high-end, then the three looks
+  const moodRow: Rect[] = [];
   stage.add(
-    <Node y={-300}>
-      <KLine refs={moodWords} size={110} words={['CLEAN', '·', 'MODERN', '·', {t: 'HIGH-END', hl: C.amber}]} />
+    <Node y={-360}>
+      <KRow refs={moodRow} size={170} gap={60} words={['CLEAN', {t: '/', dim: true}, 'MODERN', {t: '/', dim: true}, {t: 'HIGH-END', hl: true}]} />
     </Node>,
   );
-  const tiles = [
-    {l: 'CINEMATIC LIGHTING', src: STILLS[0].src},
-    {l: 'DETAILED CLOSE-UPS', src: STILLS[1].src},
-    {l: 'INTERESTING ENVIRONMENTS', src: STILLS[2].src},
-  ];
-  const tileRefs: Rect[] = [];
+  const looks = ['CINEMATIC LIGHTING', 'DETAILED CLOSE-UPS', 'INTERESTING ENVIRONMENTS'];
+  const tiles: Rect[] = [];
   stage.add(
-    <Node y={90}>
-      {tiles.map((t, i) => (
-        <Node x={(i - 1) * 580}>
-          <Card refNode={r => r && tileRefs.push(r)} width={540} height={400} glow={C.amber} opacity={0} scale={0.6} y={40}>
-            <Pic src={t.src} w={540} h={400} />
-            <Rect width={540} height={80} y={160} fill={'rgba(3,3,4,0.8)'} />
-            <Txt text={t.l} y={160} fontFamily={HEAD} fontWeight={800} fontSize={32} letterSpacing={3} fill={C.text} />
-          </Card>
-        </Node>
+    <Node y={110}>
+      {looks.map((l, i) => (
+        <Panel refNode={r => r && tiles.push(r)} x={(i - 1) * 620} w={600} h={600}>
+          <Still src={STILLS[i].src} w={600} h={600} />
+          <Label n={`0${i + 1}`} text={l} w={600} h={600} size={32} />
+        </Panel>
       ))}
     </Node>,
   );
   yield* at(53.7);
-  spawn(hideWords(hpWords, 0.25));
-  spawn(briefTag().opacity(0, 0.25));
-  yield* all(brief().filters([blur(0), brightness(1)]).filters.blur(26, 0.5), brief().filters.brightness(0.3, 0.5));
+  hideAll(brief(), briefTag(), hpA(), hpB());
+  tick();
   yield* at(54.95);
-  yield* revealWords(moodWords.slice(0, 2), 0.1);
+  yield* slamWords(moodRow.slice(0, 2), 0.1);
   yield* at(55.65);
-  yield* revealWords(moodWords.slice(2, 4), 0.1);
+  yield* slamWords(moodRow.slice(2, 4), 0.1);
   yield* at(56.1);
-  yield* revealWords(moodWords.slice(4));
+  yield* slamWords(moodRow.slice(4));
   const tileCues = [56.9, 58.0, 59.6];
   for (let i = 0; i < 3; i++) {
     yield* at(tileCues[i]);
-    spawn(all(pop(tileRefs[i], 0.5), tileRefs[i].y(0, 0.5, easeOutCubic)));
+    yield* open(tiles[i], 600, 0.3);
   }
 
-  // ---------------------------------------------------------- 62.1 build it in PixVerse Canvas
-  const win = createRef<Rect>();
+  // ------------------------------------------------------- 62.0 PixVerse Canvas: build around the product
+  const pvA = createRef<Txt>();
+  const nodes = [
+    {t: 'ORIGINAL PRODUCT', el: <Product w={560} h={400} />},
+    {t: 'DEVELOP VISUALS', el: <Still src={STILLS[1].src} w={560} h={400} />},
+    {t: 'BUILD THE VIDEO', el: <Clip w={560} h={400} time={PLAY.wide} play />},
+  ];
   const nodeRefs: Rect[] = [];
   const links = [createRef<Line>(), createRef<Line>()];
-  const aroundTag = createRef<Rect>();
-  const frame = createRef<Rect>();
-  const winTitle: Rect[] = [];
-  const winTitleNode = createRef<Node>();
-  const nodes = [
-    {t: 'Original Product', x: -470, y: -10, c: C.violet, img: 'product'},
-    {t: 'Develop Visuals', x: 0, y: 70, c: C.blue, img: STILLS[1].src},
-    {t: 'Build the Video', x: 470, y: -10, c: C.amber, img: 'video'},
-  ];
+  const aroundBand = createRef<Rect>();
+  stage.add(<Big refNode={pvA} text={'PIXVERSE CANVAS'} size={150} x={-860} y={-370} />);
   stage.add(
-    <Node ref={winTitleNode} y={-470}>
-      <KLine refs={winTitle} size={62} words={['PIXVERSE', {t: 'CANVAS', hl: C.amber}]} />
+    <Node y={40}>
+      <Line ref={links[0]} points={[[-330, 0], [-290, 0]]} stroke={LIME} lineWidth={14} end={0} />
+      <Line ref={links[1]} points={[[290, 0], [330, 0]]} stroke={LIME} lineWidth={14} end={0} />
+      {nodes.map((n, i) => (
+        <Panel refNode={r => r && nodeRefs.push(r)} x={(i - 1) * 620} w={560} h={400} fill={i === 0 ? '#fff' : '#111'}>
+          {n.el}
+          <Label n={`0${i + 1}`} text={n.t} w={560} h={400} size={30} />
+        </Panel>
+      ))}
     </Node>,
   );
   stage.add(
-    <Rect ref={win} width={1560} height={800} y={1100} radius={26} fill={'#07080a'} stroke={'rgba(255,255,255,0.18)'} lineWidth={2} shadowBlur={80} shadowColor={'rgba(216,189,138,0.25)'} clip>
-      <DotGrid opacity={0.22} gap={36} />
-      <Rect width={1560} height={60} y={-370} fill={C.panel2} />
-      <Circle size={16} x={-740} y={-370} fill={C.red} />
-      <Circle size={16} x={-712} y={-370} fill={C.amber} />
-      <Circle size={16} x={-684} y={-370} fill={C.green} />
-      <Rect width={560} height={36} y={-370} radius={18} fill={'rgba(255,255,255,0.06)'} />
-      <Txt text={'PixVerse Canvas  ·  Headphones Ad'} y={-370} fontFamily={BODY} fontWeight={600} fontSize={20} fill={C.dim} />
-      <Rect width={80} height={740} x={-740} y={30} fill={'rgba(12,13,16,0.9)'} />
-      {[0, 1, 2, 3, 4].map(i => (
-        <Rect x={-740} y={-250 + i * 80} size={44} radius={12} fill={i === 1 ? C.amber : 'rgba(255,255,255,0.08)'} />
-      ))}
-      <Node x={40} y={20}>
-        <Line ref={links[0]} points={[[-450, 0], [-20, 70]]} stroke={C.dim} lineWidth={4} lineDash={[12, 10]} end={0} />
-        <Line ref={links[1]} points={[[20, 70], [450, 0]]} stroke={C.dim} lineWidth={4} lineDash={[12, 10]} end={0} />
-        <Rect ref={frame} width={0} height={0} y={30} radius={30} stroke={C.amber} lineWidth={4} lineDash={[20, 14]} opacity={0} />
-        {nodes.map(n => (
-          <Rect ref={r => r && nodeRefs.push(r)} x={n.x} y={n.y} width={380} height={290} radius={20} fill={C.panel} stroke={n.c} lineWidth={3} shadowBlur={40} shadowColor={n.c} clip opacity={0} scale={0.6}>
-            <Rect width={380} height={56} y={-117} fill={C.panel2} />
-            <Circle size={14} x={-160} y={-117} fill={n.c} />
-            <Txt text={n.t} x={-142} y={-117} offset={[-1, 0]} fontFamily={BODY} fontWeight={600} fontSize={22} fill={C.text} />
-            <Rect width={350} height={208} y={22} radius={12} clip fill={'#0a0b0e'}>
-              {n.img === 'product' ? <Product w={350} h={208} /> : null}
-              {n.img === 'video' ? <Clip w={350} h={208} time={PLAY.wide} play /> : null}
-              {n.img !== 'product' && n.img !== 'video' ? <Pic src={n.img} w={350} h={208} /> : null}
-            </Rect>
-          </Rect>
-        ))}
-        <Node y={-250}>
-          <Chip refNode={aroundTag} icon={'◆'} text={'BUILT AROUND THE ORIGINAL PRODUCT'} size={30} bg={C.amber} color={C.bg} iconColor={C.bg} stroke={C.amber} />
-        </Node>
-      </Node>
+    <Rect ref={aroundBand} y={360} width={W} height={130} fill={LIME} opacity={0}>
+      <Txt text={'BUILT AROUND THE ORIGINAL PRODUCT'} fontFamily={'Anton'} fontSize={90} letterSpacing={3} fill={INK} />
     </Rect>,
   );
   yield* at(62.0);
-  spawn(hideWords(moodWords, 0.25));
-  spawn(all(...tileRefs.map(t => unpop(t, 0.3))));
-  yield* all(win().y(60, 0.8, easeOutCubic), brief().opacity(0.4, 0.6));
+  yield* wipe(() => hideAll(...moodRow, ...tiles));
+  tick();
   yield* at(64.5);
-  yield* revealWords(winTitle, 0.12);
-  yield* pop(nodeRefs[0], 0.45);
+  yield* slam(pvA(), 0.2);
+  yield* open(nodeRefs[0], 400, 0.28);
   yield* at(65.6);
-  spawn(draw(links[0](), 0.45));
-  yield* pop(nodeRefs[1], 0.45);
+  spawn(links[0]().end(1, 0.2, easeOutExpo));
+  yield* open(nodeRefs[1], 400, 0.28);
   yield* at(66.7);
-  spawn(draw(links[1](), 0.45));
-  yield* pop(nodeRefs[2], 0.45);
+  spawn(links[1]().end(1, 0.2, easeOutExpo));
+  yield* open(nodeRefs[2], 400, 0.28);
   yield* at(67.6);
-  frame().opacity(1);
-  spawn(frame().size([1420, 500], 0.6, easeOutCubic));
-  yield* waitFor(0.25);
-  yield* pop(aroundTag(), 0.45);
+  yield* aroundBand().opacity(1).height(0).height(130, 0.22, easeOutExpo);
 
-  // ---------------------------------------------------------- 69.4 the image is only a starting point
-  const spCard = createRef<Rect>();
-  const spWords: Rect[] = [];
-  const keyTag = createRef<Rect>();
+  // ------------------------------------------------------- 69.3 the image is just a starting point
+  const empTag = createRef<Rect>();
+  const sp = createRef<Rect>();
+  const spRow: Rect[] = [];
+  stage.add(<Tag refNode={empTag} text={'ONE THING TO EMPHASIZE'} mono size={26} x={-860} y={-410} align={'left'} solid={false} />);
   stage.add(
-    <Node y={-400}>
-      <Eyebrow refNode={keyTag} text={'ONE THING TO EMPHASIZE'} />
-    </Node>,
+    <Panel refNode={sp} x={0} y={-90} w={1000} h={560} fill={'#fff'}>
+      <Product w={1000} h={560} />
+    </Panel>,
   );
   stage.add(
-    <Card refNode={spCard} width={760} height={428} y={-60} glow={C.violet} opacity={0} scale={0.6}>
-      <Product w={760} h={428} />
-    </Card>,
-  );
-  stage.add(
-    <Node y={290}>
-      <KLine refs={spWords} size={80} words={['THE', 'IMAGE', 'IS', 'JUST', {t: 'A STARTING POINT', box: true}]} />
+    <Node y={330}>
+      <KRow refs={spRow} size={104} words={['THE', 'IMAGE', 'IS', 'JUST', {t: 'A STARTING POINT', box: true}]} />
     </Node>,
   );
   yield* at(69.3);
-  yield* all(win().scale(1.2, 0.45, easeInCubic), win().opacity(0, 0.45), hideWords(winTitle, 0.3), brief().opacity(0, 0.45));
-  yield* keyTag().opacity(1, 0.3);
+  yield* wipe(() => hideAll(pvA(), ...nodeRefs, links[0](), links[1](), aroundBand()));
+  tick();
+  yield* empTag().opacity(1, 0.15);
   yield* at(71.4);
-  yield* pop(spCard(), 0.5);
+  yield* open(sp(), 560, 0.3);
   yield* at(72.4);
-  yield* revealWords(spWords, 0.1);
+  yield* slamWords(spRow, 0.12);
 
-  // 74.1 we still need a creative direction
-  const dirWords: Rect[] = [];
-  const opts = [
-    {t: 'FUTURISTIC', c: C.blue},
-    {t: 'BRIGHT LIFESTYLE', c: C.green},
-    {t: 'MINIMALIST PREMIUM', c: C.amber},
-  ];
+  // 74.0 + a creative direction: which kind of ad?
+  const dirA = createRef<Txt>();
+  const what = createRef<Txt>();
+  const opts = ['FUTURISTIC', 'BRIGHT LIFESTYLE', 'MINIMALIST PREMIUM'];
   const optRefs: Rect[] = [];
-  const chosen = createRef<Rect>();
+  const optTxt: Txt[] = [];
+  const ours = createRef<Rect>();
+  stage.add(<Big refNode={dirA} text={'+ A CREATIVE DIRECTION'} size={170} x={-860} y={-330} color={LIME} />);
+  stage.add(<Txt ref={what} text={'what kind of ad do we want?'} x={-860} y={-170} offset={[-1, 0]} fontFamily={MONO} fontSize={40} fill={PAPER} opacity={0} />);
   stage.add(
-    <Node y={-400}>
-      <KLine refs={dirWords} size={80} words={['+', 'A', {t: 'CREATIVE DIRECTION', hl: C.amber}]} />
-    </Node>,
-  );
-  const whatWords: Rect[] = [];
-  stage.add(
-    <Node y={-150}>
-      <KLine refs={whatWords} size={56} weight={600} family={BODY} color={C.dim} words={['what', 'kind', 'of', 'ad', 'do', 'we', 'want?']} gap={16} />
-    </Node>,
-  );
-  stage.add(
-    <Node y={60}>
+    <Node y={110}>
       {opts.map((o, i) => (
-        <Rect ref={r => r && optRefs.push(r)} x={(i - 1) * 560} width={500} height={180} radius={24} fill={C.panel} stroke={o.c} lineWidth={3} shadowBlur={30} shadowColor={o.c} opacity={0} scale={0.6}>
-          <Txt text={`OPTION 0${i + 1}`} y={-40} fontFamily={MONO} fontSize={22} fill={o.c} />
-          <Txt text={o.t} y={20} fontFamily={HEAD} fontWeight={900} fontSize={44} letterSpacing={2} fill={C.text} />
+        <Rect ref={r => r && optRefs.push(r)} x={(i - 1) * 620} width={600} height={300} stroke={PAPER} lineWidth={4} opacity={0}>
+          <Txt text={`OPTION 0${i + 1}`} x={-270} y={-110} offset={[-1, 0]} fontFamily={MONO} fontSize={24} fill={GREY} />
+          <Txt ref={t => t && optTxt.push(t)} text={o} y={20} fontFamily={'Anton'} fontSize={62} letterSpacing={2} fill={PAPER} />
         </Rect>
       ))}
-      <Node x={560} y={150}>
-        <Chip refNode={chosen} icon={'✓'} text={'OUR DIRECTION'} size={30} bg={C.amber} color={C.bg} iconColor={C.bg} stroke={C.amber} />
-      </Node>
     </Node>,
   );
+  stage.add(<Tag refNode={ours} text={'✓ OUR DIRECTION'} mono size={28} x={620} y={300} />);
   yield* at(74.0);
-  yield* all(hideWords(spWords, 0.3), keyTag().opacity(0, 0.3), unpop(spCard(), 0.3));
-  yield* revealWords(dirWords, 0.1);
+  hideAll(empTag(), sp(), ...spRow);
+  tick();
+  yield* slam(dirA(), 0.22);
   yield* at(76.5);
-  spawn(revealWords(whatWords, 0.07));
-  yield* sequence(0.25, ...optRefs.map(o => pop(o, 0.45)));
+  spawn(rise(what(), 0.25, 30));
+  for (const o of optRefs) {
+    spawn(rise(o, 0.2, 100));
+    yield* waitFor(0.25);
+  }
   yield* at(78.4);
-  spawn(all(optRefs[0].opacity(0.35, 0.3), optRefs[1].opacity(0.35, 0.3)));
-  yield* all(optRefs[2].scale(1.08, 0.3, easeOutBack), pop(chosen(), 0.4));
+  optRefs[0].opacity(0.25);
+  optRefs[1].opacity(0.25);
+  optRefs[2].fill(LIME).stroke(LIME);
+  optTxt[2].fill(INK);
+  yield* slam(ours(), 0.18);
 
-  // ---------------------------------------------------------- 79.4 a real creative project, not random images
-  const realWords: Rect[] = [];
-  stage.add(
-    <Node y={-400}>
-      <KLine refs={realWords} size={80} words={['A', 'REAL', {t: 'CREATIVE PROJECT', hl: C.amber}]} />
-    </Node>,
-  );
-  const scatter: Rect[] = [];
+  // ------------------------------------------------------- 79.4 a real creative project, not random images
+  const realA = createRef<Txt>();
+  stage.add(<Big refNode={realA} text={'A REAL CREATIVE PROJECT'} size={150} x={-860} y={-370} />);
   const spots: [number, number, number, string, number][] = [
-    [-700, -120, -8, STILLS[0].src, 0],
-    [-280, -170, 6, STILLS[1].src, 160],
-    [260, -140, -5, STILLS[2].src, 60],
-    [700, -90, 7, STILLS[0].src, 250],
-    [-560, 230, 5, STILLS[2].src, 300],
-    [0, 200, -6, STILLS[1].src, 90],
-    [560, 240, 4, STILLS[0].src, 200],
+    [-640, -90, -7, STILLS[0].src, 0],
+    [-200, -120, 5, STILLS[1].src, 160],
+    [250, -100, -4, STILLS[2].src, 60],
+    [680, -60, 8, STILLS[0].src, 250],
+    [-480, 200, 4, STILLS[2].src, 300],
+    [20, 190, -6, STILLS[1].src, 90],
+    [500, 210, 3, STILLS[0].src, 200],
   ];
+  const scatter: Rect[] = [];
   stage.add(
     <Node>
       {spots.map(([x, y, r, src, h]) => (
-        <Card refNode={c => c && scatter.push(c)} x={x} y={y} rotation={r} width={380} height={214} glow={'rgba(0,0,0,0)'} radius={16} opacity={0} scale={0.5}>
-          <Node filters={[hue(h), brightness(0.9)]}>
-            <Pic src={src} w={380} h={214} />
+        <Panel refNode={c => c && scatter.push(c)} x={x} y={y} rotation={r} w={420} h={236}>
+          <Node filters={[hue(h), brightness(0.95)]}>
+            <Still src={src} w={420} h={236} />
           </Node>
-        </Card>
+        </Panel>
       ))}
     </Node>,
   );
-  const randWords: Rect[] = [];
+  const hopeRow: Rect[] = [];
   stage.add(
-    <Node y={440}>
-      <KLine refs={randWords} size={68} words={['NOT', 'RANDOM', 'IMAGES', '+', {t: 'HOPE', box: true, hl: C.red}]} />
+    <Node y={390}>
+      <KRow refs={hopeRow} size={100} words={['NOT', 'RANDOM', 'IMAGES', '+', {t: 'HOPE', box: true}]} />
     </Node>,
   );
   yield* at(79.4);
-  yield* all(hideWords(dirWords, 0.3), hideWords(whatWords, 0.3), ...optRefs.map(o => unpop(o, 0.3)), unpop(chosen(), 0.3));
+  yield* wipe(() => hideAll(dirA(), what(), ...optRefs, ours()));
+  tick();
   yield* at(81.2);
-  yield* revealWords(realWords, 0.1);
+  yield* slam(realA(), 0.22);
   yield* at(83.2);
-  spawn(revealWords(randWords, 0.1));
-  yield* sequence(0.12, ...scatter.map(c => pop(c, 0.4)));
+  spawn(slamWords(hopeRow, 0.1));
+  for (const c of scatter) {
+    spawn(open(c, 236, 0.22));
+    yield* waitFor(0.11);
+  }
   yield* at(85.0);
-  // "hoping they look good together" — they don't: desaturate and shake
   yield* all(
-    ...scatter.map((c, i) =>
-      all(c.filters([grayscale(0)]).filters.grayscale(1, 0.4), c.rotation(c.rotation() + (i % 2 ? 10 : -10), 0.4, easeInOutCubic)),
-    ),
+    ...scatter.map((c, i) => all(c.filters([grayscale(0)]).filters.grayscale(1, 0.3), c.rotation(c.rotation() + (i % 2 ? 9 : -9), 0.3, easeInOutCubic))),
   );
-  yield* at(86.35);
-  yield* stage.opacity(0, 0.4);
+  yield* at(86.2);
+  yield* wipe(() => hideAll(realA(), ...scatter, ...hopeRow), 0.2, 0.22);
 });
