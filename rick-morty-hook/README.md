@@ -47,8 +47,9 @@ The final mix is normalised to -14 LUFS, which is YouTube's loudness target.
 - **SFX:** letter whooshes and pops, a riser and boom on the slam, a spinning whoosh and boom for the logo, a shimmer on the light sweep, a hit on "deaths" and a whip-out whoosh. These are synthesised, so there are no licensing issues.
 - **Outputs:**
   - `title_card.mp4` is the full frame with background and SFX. `build_hook.py` drops it in automatically.
-  - `title_card_alpha.webm` is the text only, with transparency, for laying over your own footage.
-  - `python3 title_card.py --prores` also writes `title_card_alpha.mov` (ProRes 4444), which is better for Premiere and Resolve. It's about 270 MB, so it isn't committed.
+  - `title_card_overlay.mov` / `title_card_overlay.webm`: a transparent overlay to put on a track above your footage. It has no portal background, but it keeps the text, logo, 3D depth, drop shadow, glow, sparks, speed lines, flashes, shake and SFX.
+    - `.mov` is ProRes 4444 with alpha (124 MB). Use it in Premiere, After Effects, DaVinci Resolve, Final Cut and CapCut desktop. It's too big for git, so run `python3 title_card.py --prores` to make it.
+    - `.webm` is VP9 with alpha (6.5 MB). It's committed, and it works in browsers, OBS and some editors.
 
 Requirements: `pip install numpy opencv-python-headless pillow`.
 

@@ -21,8 +21,9 @@ Beats (default 4.25s card):
 
 Outputs
   title_card.mp4          full frame, animated green portal background + SFX
-  title_card_alpha.webm   transparent text + logo (VP9 alpha) to lay over footage
-  title_card_alpha.mov    ProRes 4444 version, only with --prores (large file)
+  title_card_overlay.mov  transparent overlay (ProRes 4444 + SFX) with --prores:
+                          text, logo, glow, sparks, speed lines, flashes; no portal
+  title_card_overlay.webm same overlay as VP9 with alpha (small file)
 
   python3 title_card.py [--dur 4.25] [--deaths-at 3.63] [--outdir .] [--prores]
 """
@@ -303,17 +304,25 @@ class Sparks:
             setattr(self, a, getattr(self, a)[k])
 
     def draw(self, img):
+        return img + self.render()
+
+    def render(self):
         lay = np.zeros((H, W, 3), np.float32)
         for (x, y), (vx, vy), c, r, a, l in zip(self.p, self.v, self.col, self.r, self.age, self.life):
             f = 1 - a / l
             p0 = (int(x), int(y)); p1 = (int(x - vx * 0.02), int(y - vy * 0.02))
             cv2.line(lay, p0, p1, tuple(float(q) * f for q in c), max(1, int(r * f)), cv2.LINE_AA)
         glow = cv2.GaussianBlur(lay, (0, 0), 6)
-        return img + lay + glow * 1.5
+        return lay + glow * 1.5
 
 def speed_lines(img, strength, seed):
     if strength <= 0.01:
         return img
+    return img + (1 - img) * speed_mask(strength, seed)[..., None]
+
+def speed_mask(strength, seed):
+    if strength <= 0.01:
+        return np.zeros((H, W), np.float32)
     rng = np.random.default_rng(seed)
     lay = np.zeros((H, W), np.float32)
     for _ in range(70):
@@ -321,7 +330,7 @@ def speed_lines(img, strength, seed):
         p0 = (int(W / 2 + math.cos(a) * r0), int(H / 2 + math.sin(a) * r0 * 0.7))
         p1 = (int(W / 2 + math.cos(a) * r1), int(H / 2 + math.sin(a) * r1 * 0.7))
         cv2.line(lay, p0, p1, 1.0, int(rng.integers(2, 7)), cv2.LINE_AA)
-    return img + (1 - img) * (cv2.GaussianBlur(lay, (0, 0), 1.2) * strength * 0.85)[..., None]
+    return cv2.GaussianBlur(lay, (0, 0), 1.2) * strength * 0.85
 
 # ---------------------------------------------------------------- render
 def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
@@ -350,8 +359,8 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
 
     mp4 = os.path.join(outdir, "title_card.mp4")
-    webm = os.path.join(outdir, "title_card_alpha.webm")
-    mov = os.path.join(outdir, "title_card_alpha.mov")
+    webm = os.path.join(outdir, "title_card_overlay.webm")
+    mov = os.path.join(outdir, "title_card_overlay.mov")
     wav = os.path.join(outdir, ".title_sfx.wav")
     write_sfx(wav, dur, T_POP, T_SLAM0, T_HIT, T_LOGO0, T_LOGO, T_SWEEP, deaths_at, T_OUT)
 
@@ -366,7 +375,7 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
                                            "-c:a", "libopus", "-shortest", webm])))
     if prores:
         encs.append(("rgba", pipe("rgba", ["-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le",
-                                           "-c:a", "pcm_s16le", "-shortest", mov])))
+                                           "-qscale:v", "8", "-alpha_bits", "8", "-c:a", "pcm_s16le", "-shortest", mov])))
 
     def hit_env(t, tau):
         return sum(w * math.exp(-(t - h) / tau) for h, w in HITS if t >= h)
@@ -481,21 +490,35 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
         if o:
             bg = cv2.blur(bg, (int(2 + 90 * o) | 1, 1))
         bg = bg + glow[..., None] * LIME * 0.55
-        bg = speed_lines(bg, max(0.0, 1 - (t - T_HIT) / 0.2) if t >= T_HIT else 0, 1)
-        bg = speed_lines(bg, max(0.0, 1 - (t - T_LOGO) / 0.2) * 0.8 if t >= T_LOGO else 0, 2)
+        sl = (speed_mask(max(0.0, 1 - (t - T_HIT) / 0.2) if t >= T_HIT else 0, 1) +
+              speed_mask(max(0.0, 1 - (t - T_LOGO) / 0.2) * 0.8 if t >= T_LOGO else 0, 2))
+        sl = np.clip(sl, 0, 1)
+        bg = bg + (1 - bg) * sl[..., None]
         out = layer[..., :3] + bg * (1 - layer[..., 3:])
         sparks.step(1 / FPS)
-        out = sparks.draw(out)
+        spk = sparks.render()
+        out = out + spk
         flash = max(1 - t / 0.1, 0) if t < 0.1 else 0
         for h_, w_ in HITS[1:]:
             if h_ <= t < h_ + 0.07:
                 flash = max(flash, 0.22 * w_ * (1 - (t - h_) / 0.07))
         out = out + (1 - out) * flash
+
+        if alpha_out or prores:
+            # transparent overlay: glow + speed lines + text + sparks + flashes, no portal
+            ov = np.zeros((H, W, 4), np.float32)
+            ga = np.clip(glow * 0.5, 0, 0.8)
+            ov[..., :3] = LIME * ga[..., None]; ov[..., 3] = ga
+            ov = np.dstack([np.repeat(sl[..., None], 3, -1), sl]) + ov * (1 - sl[..., None])
+            ov = layer + ov * (1 - layer[..., 3:])
+            spk = np.clip(spk, 0, 1); sa = spk.max(-1, keepdims=True)
+            ov = np.concatenate([np.clip(ov[..., :3] + spk, 0, 1), sa + ov[..., 3:] * (1 - sa)], -1)
+            ov = flash * np.ones(4, np.float32) + ov * (1 - flash)
         out += np.random.default_rng(i).uniform(-1.5 / 255, 1.5 / 255, (H, W, 1)).astype(np.float32)  # dither
         frame_rgb = (np.clip(out, 0, 1) * 255).astype(np.uint8).tobytes()
         if alpha_out or prores:
-            al = np.clip(layer[..., 3:], 1e-6, 1)
-            rgba = np.concatenate([np.clip(layer[..., :3] / al, 0, 1), layer[..., 3:]], -1)
+            al = np.clip(ov[..., 3:], 1e-6, 1)
+            rgba = np.concatenate([np.clip(ov[..., :3] / al, 0, 1), ov[..., 3:]], -1)
             frame_rgba = (np.clip(rgba, 0, 1) * 255).astype(np.uint8).tobytes()
         for kind, e in encs:
             e.stdin.write(frame_rgb if kind == "rgb" else frame_rgba)
