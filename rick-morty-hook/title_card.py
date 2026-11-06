@@ -506,14 +506,15 @@ def render(dur=4.25, deaths_at=3.63, outdir=HERE, alpha_out=True, prores=False):
 
         if alpha_out or prores:
             # transparent overlay: glow + speed lines + text + sparks + flashes, no portal
-            ov = np.zeros((H, W, 4), np.float32)
-            ga = np.clip(glow * 0.5, 0, 0.8)
-            ov[..., :3] = LIME * ga[..., None]; ov[..., 3] = ga
-            ov = np.dstack([np.repeat(sl[..., None], 3, -1), sl]) + ov * (1 - sl[..., None])
+            # (no wide glow here: its near-transparent lime pixels show up as green blocks
+            #  in editors that read the alpha as premultiplied)
+            ov = np.dstack([np.repeat(sl[..., None], 3, -1), sl])
             ov = layer + ov * (1 - layer[..., 3:])
             spk = np.clip(spk, 0, 1); sa = spk.max(-1, keepdims=True)
             ov = np.concatenate([np.clip(ov[..., :3] + spk, 0, 1), sa + ov[..., 3:] * (1 - sa)], -1)
-            ov = flash * np.ones(4, np.float32) + ov * (1 - flash)
+            f0 = max(1 - t / 0.1, 0) if t < 0.1 else 0   # opening flash only: faint full-frame hit
+            ov = f0 * np.ones(4, np.float32) + ov * (1 - f0)  # flashes read as solid white in some editors
+            ov[ov[..., 3] < 4 / 255] = 0          # clear near-invisible fringe pixels
         out += np.random.default_rng(i).uniform(-1.5 / 255, 1.5 / 255, (H, W, 1)).astype(np.float32)  # dither
         frame_rgb = (np.clip(out, 0, 1) * 255).astype(np.uint8).tobytes()
         if alpha_out or prores:
