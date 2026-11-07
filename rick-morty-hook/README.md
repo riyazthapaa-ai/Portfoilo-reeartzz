@@ -19,7 +19,7 @@ The VO was transcribed word by word, and each line is cut at a measured silence,
 | 0:12.0 – 0:35.0 | S7E5 Unmortricken · 18:45–19:08 | "to important characters dying that changed the show forever." | Punch-in to 1.08×. Episode audio comes up to full after "forever". |
 | 0:35.0 – 0:38.8 | Montage: 6 still frames taken from the three clips | "Rick and Morty has killed off a ridiculous number of characters…" | Alternating zoom in and out, with "KILLED OFF" slammed in red on "killed". |
 | 0:38.8 – 0:42.3 | Desaturated still from S7E5 (19:05) | "But how many of these unlucky souls actually stayed dead?" | Push-in, then "STAYED" and "DEAD?" pop on the words. |
-| 0:42.3 – 0:46.6 | Evidence board with the 3D title on top, then a dive into the S1E1 photo (`board_intro.mp4`) | "Today, we're digging through… character deaths." | See "Title card" below. No captions over it. |
+| 0:42.3 – 0:46.6 | Evidence board: the camera moves from kill photo to kill photo, then dives into the S1E1 photo (`board_intro.mp4`) | "Today, we're digging through… character deaths." | See "Title card" below. No captions over it. |
 | 0:46.6 – 0:53.6 | S1E1 Pilot · 05:50–05:57 | "Starting all the way back in Season One… very first victims." | "SEASON 1 · EPISODE 1 · PILOT" lower-third and a 1.12× push-in, ending on a white flash out of the hook. |
 
 Captions are bold yellow, 1–3 words at a time, and each word lights up as it is spoken. Keywords like "killed", "dead?" and "Season One" are in portal green.
@@ -59,8 +59,8 @@ Requirements: `pip install numpy opencv-python-headless pillow`.
 
 - **Blurred photos:** the photos on the board are blurred, so the deaths stay a mystery. When the camera dives into one, it sharpens and comes alive as the full-frame scene, and the cut goes straight into the episode clip.
 - **`board_intro.mp4` (5.7s):** used for the title section of the hook.
-  - Over "Today, we're digging through…", the camera drifts across the board while the 3D title plays on top.
-  - On "Starting all the way back in Season One", it dives into the S1E1 Frank photo.
+  - Over "Today, we're digging through…", the camera moves from kill photo to kill photo (#3 → #4 → #5). It whips along the string between them and holds briefly on each. No title text.
+  - On "Starting all the way back in Season One", it pulls back and flies across the board, then dives into the S1E1 Frank photo.
   - The photo turns into the scene, ready to cut to the Pilot clip at 05:50.
 - **`transition_1_to_3.mp4` (2.6s):** a reusable transition between kill sections.
   - The camera pulls back from the scene into its photo.
@@ -69,7 +69,7 @@ Requirements: `pip install numpy opencv-python-headless pillow`.
 - **Sound:** synthesised whooshes, paper rustles, thumps and a camera shutter are included.
 
 ```bash
-python3 evidence_board.py intro                        # rebuild the intro (uses title_card_overlay.webm)
+python3 evidence_board.py intro                        # rebuild the intro (--overlay adds a transparent title on top)
 python3 evidence_board.py transition --from 1 --to 2 \
     --from-img last_frame_of_clip1.png --to-img first_frame_of_clip2.png
 python3 evidence_board.py still                        # full board as a PNG

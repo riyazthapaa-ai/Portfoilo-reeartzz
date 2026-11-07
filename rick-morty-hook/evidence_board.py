@@ -9,7 +9,7 @@ Photos sit on the board blurred (mystery); when the camera dives into one it
 sharpens and "comes alive" into the full-frame scene, so the next cut can go
 straight to the episode clip that starts on that frame.
 
-  python3 evidence_board.py intro       # title section: board + 3D title, then dive into #1
+  python3 evidence_board.py intro       # title section: camera tours kill photos, then dives into #1
   python3 evidence_board.py transition --from 1 --to 3     # kill-to-kill transition
   python3 evidence_board.py still       # PNG of the whole board
 
@@ -491,20 +491,59 @@ def mblur(render, t, dt, n):
 
 # ------------------------------------------------------------------ intro: board + title, dive into #1
 def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
-                 overlay=A("title_card_overlay.webm"), hold=0.0):
+                 overlay=None, tour=(3, 4, 5), move=0.55):
+    """Camera tours the board from kill photo to kill photo (one per stop in `tour`),
+    then dives into `hero`, which sharpens into the real scene. `overlay` (optional)
+    composites a transparent title on top."""
     R = Renderer([hero])
-    dur = title_dur + dive + hold
+    dur = title_dur + dive
     n = int(round(dur * FPS))
-    camA = (2700, 1500, 0.40, 1.5)        # wide, slightly rotated
-    camB = (3050, 1650, 0.47, -1.0)       # slow drift while the title plays
     fill = R.hero_fill(hero)
+
+    def stop_cam(sid):
+        _, ic = slot_points(sid)
+        return (ic[0], ic[1], 0.52 * OUT_W / SLOTS[sid]["w"], -SLOTS[sid]["rot"] * 0.7)
+
+    stops = [stop_cam(s) for s in tour]
+    hold = (title_dur - move * (len(stops) - 1)) / len(stops)
+    sched = []                                  # (start, end, kind, a, b)
+    t0 = 0.0
+    for k_, c in enumerate(stops):
+        sched.append((t0, t0 + hold, "hold", c, None)); t0 += hold
+        if k_ + 1 < len(stops):
+            sched.append((t0, t0 + move, "move", c, stops[k_ + 1])); t0 += move
+
+    def held(c, u):                              # slow push-in + drift while holding on a photo
+        x, y, z, r = c
+        return x + 10 * (u - 0.5), y - 6 * (u - 0.5), z * (1 + 0.07 * u), r + 0.8 * (u - 0.5)
+
+    def cam_at(t):
+        if t >= title_dur:
+            k = (t - title_dur) / dive
+            x, y, z, r = zoom_to(cam_at(title_dur - 1e-6), fill, ease_io5(k), ease_io5(min(1, k * 1.05)))
+            return x, y, z * (1 - 0.5 * math.sin(math.pi * min(1, k * 1.3)) ** 2), r   # pull back mid-flight
+        for s0, s1, kind, c0, c1 in sched:
+            if t < s1 or (s0, s1) == sched[-1][:2]:
+                u = clamp((t - s0) / (s1 - s0))
+                if kind == "hold":
+                    return held(c0, u)
+                a_ = held(c0, 1.0); b_ = held(c1, 0.0); e = ease_io5(u)
+                z = math.exp(math.log(a_[2]) + (math.log(b_[2]) - math.log(a_[2])) * e) * (1 - 0.28 * math.sin(math.pi * e))
+                return (a_[0] + (b_[0] - a_[0]) * e, a_[1] + (b_[1] - a_[1]) * e, z,
+                        a_[3] + (b_[3] - a_[3]) * e + 4 * math.sin(math.pi * e))
+        return held(stops[-1], 1.0)
+
     sfx = Sfx(dur)
+    for s0, s1, kind, _, _ in sched:
+        if kind == "move":
+            sfx.whoosh(s0 - 0.03, s1 - s0 + 0.08, 0.45, 300, 8000, rising=False)
+            sfx.thump(s1 - 0.02, 0.22); sfx.paper(s1 - 0.05, 0.12)
     sfx.whoosh(title_dur - 0.15, dive * 0.8, 0.55)
     sfx.paper(title_dur + dive - 0.35)
     sfx.thump(title_dur + dive - 0.12, 0.5)
     sfx.shutter(title_dur + dive - 0.05)
     wav = out + ".wav"; sfx.write(wav)
-    has_ov = overlay and os.path.exists(overlay)
+    has_ov = bool(overlay) and os.path.exists(overlay)
     ov_audio = None
     if has_ov:
         ov_audio = out + ".ov.wav"
@@ -512,24 +551,14 @@ def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
     enc = encoder(out, wav, ov_audio)
     ovs = overlay_frames(overlay) if has_ov else iter(())
 
-    def cam_at(t):
-        if t < title_dur:
-            e = ease_io(t / title_dur)
-            x = camA[0] + (camB[0] - camA[0]) * e; y = camA[1] + (camB[1] - camA[1]) * e
-            z = camA[2] + (camB[2] - camA[2]) * e; r = camA[3] + (camB[3] - camA[3]) * e
-            return x + 6 * math.sin(t * 1.7), y + 5 * math.sin(t * 1.3 + 1), z, r
-        k = (t - title_dur) / dive
-        return zoom_to(cam_at(title_dur - 1e-6), fill, ease_io5(k), ease_io5(min(1, k * 1.05)))
-
     for i in range(n):
         t = i / FPS
         k = clamp((t - title_dur) / dive)
         sharp = {hero: ease_io(clamp((k - 0.45) / 0.45))}
-        fast = 0.15 < k < 0.9
-        img = mblur(lambda tt: R.view(*cam_at(min(tt, dur)), sharp=sharp), t, 0.5 / FPS, 9 if fast else 1)
+        moving = any(kind == "move" and s0 - 0.02 < t < s1 + 0.02 for s0, s1, kind, _, _ in sched)
+        fast = moving or 0.15 < k < 0.9
+        img = mblur(lambda tt: R.view(*cam_at(min(max(tt, 0), dur)), sharp=sharp), t, 0.5 / FPS, 9 if fast else 1)
         img = finish(img)
-        if t < title_dur:                               # dim the board under the title
-            img *= 0.62 + 0.38 * ease_io((t - (title_dur - 0.3)) / 0.3)
         if k > 0.8:                                     # photo comes alive into the real scene
             a = ease_io((k - 0.8) / 0.2)
             img = img * (1 - a) + alive_frame(R, hero) * a
@@ -615,7 +644,7 @@ if __name__ == "__main__":
     sub = p.add_subparsers(dest="cmd", required=True)
     i = sub.add_parser("intro"); i.add_argument("--title-dur", type=float, default=4.25)
     i.add_argument("--dive", type=float, default=1.45); i.add_argument("--hero", type=int, default=1)
-    i.add_argument("--overlay", default=A("title_card_overlay.webm")); i.add_argument("-o", default=A("board_intro.mp4"))
+    i.add_argument("--overlay", default=None, help="optional transparent title to put on top"); i.add_argument("-o", default=A("board_intro.mp4"))
     tr = sub.add_parser("transition"); tr.add_argument("--from", dest="a", type=int, default=1)
     tr.add_argument("--to", dest="b", type=int, default=3); tr.add_argument("--from-img"); tr.add_argument("--to-img")
     tr.add_argument("--dur", type=float, default=2.6); tr.add_argument("-o")

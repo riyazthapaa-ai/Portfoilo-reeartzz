@@ -137,8 +137,6 @@ def caption_chunks(edl):
     """Map words onto the output timeline and group into 1-3 word chunks."""
     chunks = []
     for seg in edl:
-        if seg["kind"] == "title":   # the title card carries the screen; no captions over it
-            continue
         vs, ve = VO[seg["vo"]]
         off = seg["vo_at"] - vs
         words = [(t + off, w) for t, w in WORDS if vs - 0.05 <= t < ve - 0.05]
@@ -309,18 +307,13 @@ def build(args):
                    dt("DEAD?", 230, "(w-text_w)/2", "h/2-90", "0xE53935", f":enable='gte(t,{t_d+0.5:.2f})'"))
 
         elif seg["kind"] == "title":
-            # evidence board + transparent 3D title, then a dive into photo #1 (evidence_board.py)
+            # evidence board: camera moves from kill photo to kill photo, then dives into #1 (evidence_board.py)
             card = os.path.join(HERE, "board_intro.mp4")
-            ov = os.path.join(HERE, "title_card_overlay.webm")
             td = seg["title_dur"]
             vs, _ = VO[seg["vo"]]
-            deaths_at = 17.9 - vs + (seg["vo_at"] - seg["t"])
-            if args.rerender_title or not os.path.exists(ov) or abs(media_dur(ov) - td) > 0.05:
-                import title_card
-                title_card.render(td, deaths_at, HERE, alpha_out=True)
             if args.rerender_title or not os.path.exists(card) or abs(media_dur(card) - d) > 0.05:
                 import evidence_board
-                evidence_board.render_intro(card, td, BOARD_DIVE, overlay=ov)
+                evidence_board.render_intro(card, td, BOARD_DIVE)
             i = g.add_input(["-i", card])
             g.f.append(f"[{i}:v]setsar=1,fps={FPS},format=yuv420p,trim=0:{d:.3f}[v{k}]")
             g.f.append(f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.55,"
