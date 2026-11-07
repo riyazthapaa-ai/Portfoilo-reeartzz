@@ -93,6 +93,27 @@ Fonts: Permanent Marker (Apache 2.0) and Bangers (OFL). Their licence files are 
 - **Rebuild:** `python3 episode_cards.py`, or `--only S1E3` for one card. Edit the `EPISODES` list to fix or add titles.
 - **Check Season 8:** I'm less sure of the Season 8 titles than Seasons 1–7. Check them before you use them.
 
+## Frank explainer (kill #1 intro)
+
+`frank_explainer.py` builds an explainer-style intro for the line "Remember Frank Palicky? No? Well, he was the bully who apparently thought threatening a fourteen-year-old kid with a knife was a perfectly reasonable way to start the school day." It's timed word for word to VO 0:24.31–0:33.09 (8.8s).
+
+- **Style:** Rick and Morty art style. Flat cartoon school lockers with black outlines, and sticker cut-outs of Frank and Morty (`assets/explainer/`, cut from your frames). Labels are clean Inter Display in the episode-card style, with Noto emoji.
+- **Beats:**
+  - Frank pops in with 🤔. His name plate ("S1E1 · THE BULLY / Frank Palicky") lands on "Frank".
+  - ❓❓❓ pop up on "No?".
+  - A red BULLY stamp slams down with a shake on "bully", and 😠 appears.
+  - Morty slides in with 😰. "AGE 14 / Morty Smith" appears on "fourteen".
+  - On "knife", Frank swaps to his knife pose with 🔪, a red danger flash and a shake, and Morty trembles.
+  - "Perfectly Reasonable ✅" appears, then "...way to start the school day? 🏫". On "day", the ✅ gets slammed with ❌ and Frank gets 🙄.
+- **Sound:** synthesised pops, whooshes, a stamp thud, a knife "shing", a ding and a buzzer.
+- **Files:**
+  - `frank_explainer.mp4` has SFX only, to lay under your VO.
+  - `frank_explainer_with_vo.mp4` is a preview with the VO mixed in.
+
+```bash
+python3 frank_explainer.py --vo "<full VO .mp3>"
+```
+
 ## Rendering the real thing
 
 You need Python 3 and ffmpeg. Use episode files from a legal source, such as your own copies.
