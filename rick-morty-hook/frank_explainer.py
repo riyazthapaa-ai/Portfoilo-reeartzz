@@ -137,6 +137,44 @@ def put(canvas, spr, cx, cy, s=1.0, rot=0.0, alpha=1.0):
         out *= alpha
     canvas[:] = out + canvas * (1 - out[..., 3:])
 
+def put_feet(canvas, spr, fx, fy, sx_, sy_, rot):
+    """Place a sprite by its feet (bottom centre), scale x/y separately, rotate around the feet."""
+    h, w = spr.shape[:2]
+    r = math.radians(rot); c, s_ = math.cos(r), math.sin(r)
+    # sprite px -> screen: scale about bottom-centre, rotate CCW (screen y down), translate to feet
+    M = np.float32([[sx_ * c, sy_ * s_, 0], [-sx_ * s_, sy_ * c, 0]])
+    off = M[:, :2] @ np.array([w / 2, h], np.float32)
+    M[0, 2] = fx - off[0]; M[1, 2] = fy - off[1]
+    out = cv2.warpAffine(spr, M, (W, H), flags=cv2.INTER_LINEAR, borderValue=(0, 0, 0, 0))
+    canvas[:] = out + canvas * (1 - out[..., 3:])
+
+def shadow(canvas, x, y, rx):
+    sh = np.zeros((H, W), np.float32)
+    cv2.ellipse(sh, (int(x), int(y)), (int(rx), int(rx * 0.16)), 0, 0, 360, 0.35, -1)
+    sh = cv2.GaussianBlur(sh, (0, 0), 6)[..., None]
+    canvas[:] = canvas + np.concatenate([np.zeros_like(sh).repeat(3, -1), sh], -1) * (1 - canvas[..., 3:])
+
+def draw_knife():
+    """Clean cartoon kitchen knife (no blood): blade up-right is drawn horizontally, handle left."""
+    im = Image.new("RGBA", (560, 150), (0, 0, 0, 0)); d = ImageDraw.Draw(im); ow = 6
+    d.rounded_rectangle([10, 50, 190, 100], radius=18, fill=(40, 40, 46), outline=INK, width=ow)       # handle
+    for x in (60, 110, 160):
+        d.ellipse([x - 8, 67, x + 8, 83], fill=(190, 190, 196), outline=INK, width=3)
+    d.rectangle([182, 40, 210, 110], fill=(150, 156, 162), outline=INK, width=ow)                  # bolster
+    d.polygon([(210, 42), (470, 42), (545, 72), (470, 108), (210, 108)], fill=(220, 225, 230), outline=INK, width=ow)
+    d.polygon([(214, 84), (488, 90), (470, 104), (214, 104)], fill=(176, 183, 192))
+    d.line([(225, 54), (460, 54)], fill=(255, 255, 255), width=7)
+    return im
+
+def find_hand(pil):
+    """Lowest skin-coloured blob on the right half of the sprite = the hand facing Morty."""
+    a = np.asarray(pil).astype(int); h, w = a.shape[:2]
+    r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
+    skin = (al > 200) & (r > 200) & (g > 160) & (g < 225) & (b > 140) & (b < 215) & (r - b > 15)
+    skin[: int(h * 0.5)] = False; skin[:, : w // 2] = False
+    ys, xs = np.nonzero(skin)
+    return (float(xs.mean()), float(np.percentile(ys, 30))) if len(xs) else (w * 0.75, h * 0.66)
+
 def shake(t, hits, amp=26, tau=0.14):
     x = y = 0.0
     for h, k in hits:
@@ -183,9 +221,11 @@ class Sfx:
 # ------------------------------------------------------------------ render
 def render(out=A("frank_explainer.mp4"), vo=None):
     bg = lockers()
-    frank = to_sprite(Image.open(A("assets", "explainer", "frank_hi.png")))
-    frank_k = to_sprite(Image.open(A("assets", "explainer", "frank_knife.png")))
-    morty = to_sprite(Image.open(A("assets", "explainer", "morty_scared.png")))
+    frank_pil = Image.open(A("assets", "explainer", "frank_full.png")).convert("RGBA")
+    frank = to_sprite(frank_pil)
+    morty = to_sprite(Image.open(A("assets", "explainer", "morty_full.png")))
+    knife = to_sprite(draw_knife())
+    hand = find_hand(frank_pil)                 # Frank's hand on Morty's side (sprite px)
     p_frank = plate("Frank Palicky", "S1E1 · THE BULLY", 66, 30)
     p_morty = plate("Morty Smith", "AGE 14", 58, 30)
     stp = stamp()
@@ -215,41 +255,61 @@ def render(out=A("frank_explainer.mp4"), vo=None):
         img = cv2.warpAffine(bg, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
         lay = np.zeros((H, W, 4), np.float32)
 
-        # --- Frank: pops in centre, slides left when Morty arrives, swaps to knife pose
-        move = ease_io((t - 3.2) / 0.5)
-        fx = 960 - 420 * move + sx; fy = 700 + sy + 6 * math.sin(t * 3)
-        FS = 0.56
-        head = fy - frank.shape[0] * FS / 2              # top of Frank's head
-        lean = -4 * ease_io((t - 3.6) / 0.6)
-        if t < T["knife"]:
-            s = pop(t, 0.0, 0.4) * FS
-            put(lay, frank, fx, fy, s, lean + 3 * (1 - clamp(t / 0.4)))
-        else:
-            k = clamp((t - T["knife"]) / 0.18)
-            put(lay, frank_k, fx + 40, fy + 20, 0.6 * ease_out_back(k), lean + 6 * (1 - k))
-        # --- name plate
-        sp = pop(t, T["frank"], 0.35)
-        put(lay, p_frank, fx, 1005 - 40 * (1 - clamp((t - T["frank"]) / 0.3)), sp * 0.95, -2)
-        # --- BULLY stamp
+        # --- characters (full body, rotate around the feet)
+        SC = 0.80                                         # same scale for both -> Morty is shorter
+        FLOOR = 1010
+        walk_f = ease_io(t / 0.55)                        # Frank walks in from the left
+        fx = -250 + (960 + 250) * walk_f
+        fx += (680 - 960) * ease_io((t - 3.2) / 0.5)      # makes room for Morty
+        hop_f = abs(math.sin(t * 15)) * 22 * (1 - walk_f) + abs(math.sin((t - 3.2) * 15)) * 14 * (0 < t - 3.2 < 0.5)
+        lean_f = -6 * ease_out_back((t - T["knife"]) / 0.3, 1.5) if t >= T["knife"] else 0.0
+        breathe = 1 + 0.012 * math.sin(t * 3.2)
+        squash = 1 + 0.06 * math.exp(-max(0, t - 0.55) * 10) * math.cos(max(0, t - 0.55) * 30) if t > 0.55 else 1
+        shadow(lay, fx + sx, FLOOR + sy, 150)
+        fh = frank.shape[0] * SC
+        put_feet(lay, frank, fx + sx, FLOOR + sy - hop_f, SC * breathe, SC * squash, lean_f)
+
+        mt = clamp((t - 3.35) / 0.55)
+        mx = 2200 - (2200 - 1270) * ease_io(mt)
+        hop_m = abs(math.sin((t - 3.35) * 16)) * 20 * (0 < mt < 1)
+        tremble = 5 * math.sin(t * 70) * clamp((t - T["knife"]) / 0.1) if t > T["knife"] else 0
+        lean_m = 5 * ease_out_back((t - T["knife"] - 0.05) / 0.3, 1.5) if t >= T["knife"] else 0.0
+        if t > 3.3:
+            shadow(lay, mx + sx, FLOOR + sy, 120)
+            put_feet(lay, morty, mx + sx + tremble, FLOOR + sy - hop_m, SC, SC, lean_m)
+        mh = morty.shape[0] * SC
+
+        # --- knife pops into Frank's hand
+        if t >= T["knife"]:
+            hx, hy = hand
+            ox = (hx - frank.shape[1] / 2) * SC; oy = (hy - frank.shape[0]) * SC
+            r = math.radians(lean_f)
+            kx = fx + sx + ox * math.cos(r) + oy * math.sin(r)
+            ky = FLOOR + sy + oy * math.cos(r) - ox * math.sin(r)
+            k = ease_out_back((t - T["knife"]) / 0.25, 2.0)
+            ks = 0.36 * k; kr = 32 + lean_f + 30 * (1 - clamp((t - T["knife"]) / 0.25))
+            rr = math.radians(kr)                         # put the handle (not the sprite centre) in the hand
+            hox = -180 * ks
+            put(lay, knife, kx - hox * math.cos(rr), ky + hox * math.sin(rr), ks, kr)
+
+        # --- name plates float above heads
+        put(lay, p_frank, fx + sx - 360, FLOOR - fh + 150 + 5 * math.sin(t * 3) - 40 * (1 - clamp((t - T["frank"]) / 0.3)),
+            pop(t, T["frank"], 0.35) * 0.9, -3)
+        if t > 3.3:
+            put(lay, p_morty, mx + sx + 330, FLOOR - mh + 150 + 5 * math.sin(t * 3 + 1), pop(t, T["fourteen"], 0.35) * 0.9, 3)
+
+        # --- BULLY stamp on Frank's chest
         if t >= T["bully"] - 0.12:
             k = clamp((t - (T["bully"] - 0.12)) / 0.12)
-            s = 3.0 - 2.0 * k * k
-            fade = 1 - clamp((t - T["knife"] + 0.05) / 0.15)          # clears the way for the knife pose
-            put(lay, stp, fx - 10, fy - 40, s * 0.55, -12, clamp(k * 2) * fade)
-        # --- Morty slides in from the right
-        mk = ease_out_back((t - 3.35) / 0.45, 1.6)
-        mx = 2350 - (2350 - 1440) * mk + sx * 0.8
-        tremble = 4 * math.sin(t * 60) * clamp((t - T["knife"]) / 0.1) if t > T["knife"] else 0
-        if t > 3.3:
-            put(lay, morty, mx + tremble, 700 + sy, 0.62, 2)
-            put(lay, p_morty, mx - 20, 1000, pop(t, T["fourteen"], 0.35) * 0.95, 2)
-        # (no emoji / text pop-ups: the last line plays as a slow push-in on Frank and Morty)
+            st_s = 3.0 - 2.0 * k * k
+            fade = 1 - clamp((t - T["knife"] + 0.05) / 0.2)
+            put(lay, stp, fx + sx, FLOOR + sy - fh * 0.52, st_s * 0.5, -12, clamp(k * 2) * fade)
 
         # composite (+ red danger vignette on the knife beat)
         img = lay[..., :3] + img * (1 - lay[..., 3:])
         pz = 1 + 0.12 * ease_io((t - T["perfectly"]) / 2.0)
         if pz > 1.0001:
-            Mz = np.float32([[pz, 0, (1 - pz) * 1000], [0, pz, (1 - pz) * 1040]])
+            Mz = np.float32([[pz, 0, (1 - pz) * 975], [0, pz, (1 - pz) * 640]])
             img = cv2.warpAffine(img, Mz, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
         if T["knife"] <= t < T["knife"] + 0.5:
             k = 1 - (t - T["knife"]) / 0.5

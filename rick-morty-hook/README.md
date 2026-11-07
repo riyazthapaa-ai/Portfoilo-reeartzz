@@ -97,12 +97,12 @@ Fonts: Permanent Marker (Apache 2.0) and Bangers (OFL). Their licence files are 
 
 `frank_explainer.py` builds an explainer-style intro for the line "Remember Frank Palicky? No? Well, he was the bully who apparently thought threatening a fourteen-year-old kid with a knife was a perfectly reasonable way to start the school day." It's timed word for word to VO 0:24.31–0:33.09 (8.8s).
 
-- **Style:** Rick and Morty art style. Flat cartoon school lockers with black outlines, and sticker cut-outs of Frank and Morty (`assets/explainer/`, cut from your frames). Name plates use clean Inter Display in the episode-card style. There are no emoji or text pop-ups.
+- **Style:** Rick and Morty art style. Full-body Frank and Morty (`assets/explainer/frank_full.png`, `morty_full.png`, from your drawings) stand over flat cartoon school lockers, with floor shadows. The name plates use clean Inter Display. There are no emoji or text pop-ups.
 - **Beats:**
-  - Frank pops in. His name plate ("S1E1 · THE BULLY / Frank Palicky") lands on "Frank".
-  - A red BULLY stamp slams down with a shake on "bully".
-  - Morty slides in. "AGE 14 / Morty Smith" appears on "fourteen".
-  - On "knife", Frank swaps to his knife pose with a red danger flash and a shake, and Morty trembles.
+  - Frank walks in from the left. His name plate ("S1E1 · THE BULLY / Frank Palicky") pops up beside his head on "Frank".
+  - A red BULLY stamp slams onto his chest with a shake on "bully".
+  - Frank steps aside and Morty walks in from the right. "AGE 14 / Morty Smith" pops up on "fourteen". Morty is drawn at the same scale, so he's shorter.
+  - On "knife", a cartoon knife pops into Frank's hand pointing at Morty, with a red danger flash and a shake. Frank leans in, and Morty trembles and leans back.
   - "…perfectly reasonable way to start the school day" plays as a slow push-in on the two of them, with a final hit on "day".
 - **Sound:** synthesised pops, whooshes, a stamp thud and a knife "shing".
 - **Files:**
