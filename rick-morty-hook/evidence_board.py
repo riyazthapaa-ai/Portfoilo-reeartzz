@@ -491,7 +491,7 @@ def mblur(render, t, dt, n):
 
 # ------------------------------------------------------------------ intro: board + title, dive into #1
 def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
-                 overlay=None, tour=(3, 4, 5), move=0.55):
+                 overlay=None, tour=(3, 4, 5), move=0.5, wide_hold=1.05, wide_move=0.7):
     """Camera tours the board from kill photo to kill photo (one per stop in `tour`),
     then dives into `hero`, which sharpens into the real scene. `overlay` (optional)
     composites a transparent title on top."""
@@ -504,17 +504,21 @@ def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
         _, ic = slot_points(sid)
         return (ic[0], ic[1], 0.52 * OUT_W / SLOTS[sid]["w"], -SLOTS[sid]["rot"] * 0.7)
 
+    wide = (2880, 1620, 0.36, 0.0)              # establishing shot: the whole board
     stops = [stop_cam(s) for s in tour]
-    hold = (title_dur - move * (len(stops) - 1)) / len(stops)
-    sched = []                                  # (start, end, kind, a, b)
-    t0 = 0.0
+    hold = (title_dur - wide_hold - wide_move - move * (len(stops) - 1)) / len(stops)
+    sched = [(0.0, wide_hold, "hold", wide, None),
+             (wide_hold, wide_hold + wide_move, "push", wide, stops[0])]   # (start, end, kind, a, b)
+    t0 = wide_hold + wide_move
     for k_, c in enumerate(stops):
         sched.append((t0, t0 + hold, "hold", c, None)); t0 += hold
         if k_ + 1 < len(stops):
             sched.append((t0, t0 + move, "move", c, stops[k_ + 1])); t0 += move
 
-    def held(c, u):                              # slow push-in + drift while holding on a photo
+    def held(c, u):                              # slow push-in + drift while holding
         x, y, z, r = c
+        if c is wide:
+            return x + 40 * u, y + 20 * u, z * (1 + 0.05 * u), r - 0.8 * u
         return x + 10 * (u - 0.5), y - 6 * (u - 0.5), z * (1 + 0.07 * u), r + 0.8 * (u - 0.5)
 
     def cam_at(t):
@@ -527,6 +531,9 @@ def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
                 u = clamp((t - s0) / (s1 - s0))
                 if kind == "hold":
                     return held(c0, u)
+                if kind == "push":                       # zoom from the whole board into the first photo
+                    e = ease_io5(u)
+                    return zoom_to(held(c0, 1.0), held(c1, 0.0), e, e)
                 a_ = held(c0, 1.0); b_ = held(c1, 0.0); e = ease_io5(u)
                 z = math.exp(math.log(a_[2]) + (math.log(b_[2]) - math.log(a_[2])) * e) * (1 - 0.28 * math.sin(math.pi * e))
                 return (a_[0] + (b_[0] - a_[0]) * e, a_[1] + (b_[1] - a_[1]) * e, z,
@@ -535,7 +542,7 @@ def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
 
     sfx = Sfx(dur)
     for s0, s1, kind, _, _ in sched:
-        if kind == "move":
+        if kind in ("move", "push"):
             sfx.whoosh(s0 - 0.03, s1 - s0 + 0.08, 0.45, 300, 8000, rising=False)
             sfx.thump(s1 - 0.02, 0.22); sfx.paper(s1 - 0.05, 0.12)
     sfx.whoosh(title_dur - 0.15, dive * 0.8, 0.55)
@@ -555,7 +562,7 @@ def render_intro(out=A("board_intro.mp4"), title_dur=4.25, dive=1.45, hero=1,
         t = i / FPS
         k = clamp((t - title_dur) / dive)
         sharp = {hero: ease_io(clamp((k - 0.45) / 0.45))}
-        moving = any(kind == "move" and s0 - 0.02 < t < s1 + 0.02 for s0, s1, kind, _, _ in sched)
+        moving = any(kind in ("move", "push") and s0 - 0.02 < t < s1 + 0.02 for s0, s1, kind, _, _ in sched)
         fast = moving or 0.15 < k < 0.9
         img = mblur(lambda tt: R.view(*cam_at(min(max(tt, 0), dur)), sharp=sharp), t, 0.5 / FPS, 9 if fast else 1)
         img = finish(img)
