@@ -188,22 +188,15 @@ def render(out=A("frank_explainer.mp4"), vo=None):
     morty = to_sprite(Image.open(A("assets", "explainer", "morty_scared.png")))
     p_frank = plate("Frank Palicky", "S1E1 · THE BULLY", 66, 30)
     p_morty = plate("Morty Smith", "AGE 14", 58, 30)
-    p_reason = plate("Perfectly Reasonable", None, 78)
-    p_school = plate("...way to start the school day?", None, 54)
     stp = stamp()
-    E = {k: emoji(c, s) for k, c, s in [("think", "\U0001F914", 190), ("q", "❓", 140), ("angry", "\U0001F620", 190),
-                                         ("sweat", "\U0001F630", 180), ("knife", "\U0001F52A", 210), ("check", "✅", 150),
-                                         ("x", "❌", 200), ("eyes", "\U0001F644", 190), ("school", "\U0001F3EB", 170)]}
 
     sfx = Sfx(DUR)
-    sfx.whoosh(0.0, 0.3); sfx.pop(0.08, 520, 0.35); sfx.pop(0.25, 900); sfx.whoosh(T["frank"] - 0.05, 0.3, 0.25)
-    for k in range(3): sfx.pop(T["no"] + k * 0.08, 1000 + k * 150, 0.22)
+    sfx.whoosh(0.0, 0.3); sfx.pop(0.08, 520, 0.35); sfx.whoosh(T["frank"] - 0.05, 0.3, 0.25)
     sfx.whoosh(T["bully"] - 0.18, 0.2, 0.3); sfx.thud(T["bully"])
-    sfx.whoosh(3.35, 0.4); sfx.pop(3.75, 800); sfx.pop(T["fourteen"], 950)
+    sfx.whoosh(3.35, 0.4); sfx.pop(T["fourteen"], 950)
     sfx.whoosh(T["knife"] - 0.1, 0.2, 0.3); sfx.shing(T["knife"]); sfx.thud(T["knife"] + 0.02, 0.45)
-    sfx.pop(T["perfectly"], 700); sfx.ding(T["reasonable"] + 0.05)
-    sfx.whoosh(T["school"] - 0.15, 0.3, 0.25); sfx.pop(T["school"], 850)
-    sfx.thud(T["day"] + 0.05, 0.5); sfx.buzz(T["day"] + 0.05); sfx.pop(T["day"] + 0.2, 600)
+    sfx.whoosh(T["perfectly"] - 0.1, 0.9, 0.15)             # slow push-in
+    sfx.thud(T["day"] + 0.05, 0.5)
     sfx.whoosh(DUR - 0.3, 0.3, 0.3)
     wav = out + ".wav"; sfx.write(wav)
 
@@ -237,14 +230,6 @@ def render(out=A("frank_explainer.mp4"), vo=None):
         # --- name plate
         sp = pop(t, T["frank"], 0.35)
         put(lay, p_frank, fx, 1005 - 40 * (1 - clamp((t - T["frank"]) / 0.3)), sp * 0.95, -2)
-        # --- thinking / question marks / angry
-        if t < T["bully"]:
-            put(lay, E["think"], fx + 300, head + 110 + 8 * math.sin(t * 5), pop(t, 0.22) * (1 - clamp((t - T["bully"] + 0.12) / 0.12)))
-        for k, (dx, dy, r) in enumerate([(-290, 90, -15), (-180, -20, 8), (190, -10, 12)]):
-            qa = 1 - clamp((t - T["bully"] + 0.25) / 0.2)
-            put(lay, E["q"], fx + dx, head + dy + 6 * math.sin(t * 6 + k), pop(t, T["no"] + k * 0.08, 0.25), r + 6 * math.sin(t * 7 + k), qa)
-        if t >= T["bully"] - 0.05 and t < T["knife"]:
-            put(lay, E["angry"], fx + 300, head + 110 + 5 * math.sin(t * 6), pop(t, T["bully"] + 0.05))
         # --- BULLY stamp
         if t >= T["bully"] - 0.12:
             k = clamp((t - (T["bully"] - 0.12)) / 0.12)
@@ -257,25 +242,15 @@ def render(out=A("frank_explainer.mp4"), vo=None):
         tremble = 4 * math.sin(t * 60) * clamp((t - T["knife"]) / 0.1) if t > T["knife"] else 0
         if t > 3.3:
             put(lay, morty, mx + tremble, 700 + sy, 0.62, 2)
-            put(lay, E["sweat"], mx - 220, 470 + 6 * math.sin(t * 7), pop(t, 3.75))
             put(lay, p_morty, mx - 20, 1000, pop(t, T["fourteen"], 0.35) * 0.95, 2)
-        # --- knife emoji + danger flash
-        if t >= T["knife"]:
-            put(lay, E["knife"], fx + 330 + sx, 560 + sy, pop(t, T["knife"], 0.3), -35 + 10 * math.sin(t * 8))
-        # --- "Perfectly Reasonable" sign, then "...to start the school day?" and the cross-out
-        rk = pop(t, T["perfectly"], 0.35)
-        put(lay, p_reason, 960, 105 + 30 * (1 - clamp((t - T["perfectly"]) / 0.3)), rk, -2)
-        cx_check = 960 + p_reason.shape[1] * 0.5 - 10
-        put(lay, E["check"], cx_check + 30, 100, pop(t, T["reasonable"] + 0.05, 0.3), 8)
-        put(lay, p_school, 960, 228, pop(t, T["school"], 0.3) * 0.95, 1)
-        put(lay, E["school"], 960 + p_school.shape[1] * 0.5 + 40, 228, pop(t, T["school"] + 0.08, 0.3), 8)
-        if t >= T["day"] + 0.05:
-            k = clamp((t - (T["day"] + 0.05)) / 0.12)
-            put(lay, E["x"], cx_check + 30, 100, (2.2 - 1.2 * k * k) * 0.9, 0, clamp(k * 2))
-            put(lay, E["eyes"], fx + 330, head + 200, pop(t, T["day"] + 0.2))
+        # (no emoji / text pop-ups: the last line plays as a slow push-in on Frank and Morty)
 
         # composite (+ red danger vignette on the knife beat)
         img = lay[..., :3] + img * (1 - lay[..., 3:])
+        pz = 1 + 0.12 * ease_io((t - T["perfectly"]) / 2.0)
+        if pz > 1.0001:
+            Mz = np.float32([[pz, 0, (1 - pz) * 1000], [0, pz, (1 - pz) * 1040]])
+            img = cv2.warpAffine(img, Mz, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
         if T["knife"] <= t < T["knife"] + 0.5:
             k = 1 - (t - T["knife"]) / 0.5
             yy, xx = np.ogrid[:H, :W]

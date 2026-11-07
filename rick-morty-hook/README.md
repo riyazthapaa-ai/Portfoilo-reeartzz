@@ -97,15 +97,14 @@ Fonts: Permanent Marker (Apache 2.0) and Bangers (OFL). Their licence files are 
 
 `frank_explainer.py` builds an explainer-style intro for the line "Remember Frank Palicky? No? Well, he was the bully who apparently thought threatening a fourteen-year-old kid with a knife was a perfectly reasonable way to start the school day." It's timed word for word to VO 0:24.31–0:33.09 (8.8s).
 
-- **Style:** Rick and Morty art style. Flat cartoon school lockers with black outlines, and sticker cut-outs of Frank and Morty (`assets/explainer/`, cut from your frames). Labels are clean Inter Display in the episode-card style, with Noto emoji.
+- **Style:** Rick and Morty art style. Flat cartoon school lockers with black outlines, and sticker cut-outs of Frank and Morty (`assets/explainer/`, cut from your frames). Name plates use clean Inter Display in the episode-card style. There are no emoji or text pop-ups.
 - **Beats:**
-  - Frank pops in with 🤔. His name plate ("S1E1 · THE BULLY / Frank Palicky") lands on "Frank".
-  - ❓❓❓ pop up on "No?".
-  - A red BULLY stamp slams down with a shake on "bully", and 😠 appears.
-  - Morty slides in with 😰. "AGE 14 / Morty Smith" appears on "fourteen".
-  - On "knife", Frank swaps to his knife pose with 🔪, a red danger flash and a shake, and Morty trembles.
-  - "Perfectly Reasonable ✅" appears, then "...way to start the school day? 🏫". On "day", the ✅ gets slammed with ❌ and Frank gets 🙄.
-- **Sound:** synthesised pops, whooshes, a stamp thud, a knife "shing", a ding and a buzzer.
+  - Frank pops in. His name plate ("S1E1 · THE BULLY / Frank Palicky") lands on "Frank".
+  - A red BULLY stamp slams down with a shake on "bully".
+  - Morty slides in. "AGE 14 / Morty Smith" appears on "fourteen".
+  - On "knife", Frank swaps to his knife pose with a red danger flash and a shake, and Morty trembles.
+  - "…perfectly reasonable way to start the school day" plays as a slow push-in on the two of them, with a final hit on "day".
+- **Sound:** synthesised pops, whooshes, a stamp thud and a knife "shing".
 - **Files:**
   - `frank_explainer.mp4` has SFX only, to lay under your VO.
   - `frank_explainer_with_vo.mp4` is a preview with the VO mixed in.
