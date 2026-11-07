@@ -69,9 +69,8 @@ Requirements: `pip install numpy opencv-python-headless pillow`.
 - **Sound:** synthesised whooshes, paper rustles, thumps and a camera shutter are included.
 - **`transition_1_to_2.mp4` (2.6s):** the real transition out of kill #1.
   - It starts on the last frame of the Frank section, from the "So, congratulations, Frank" part (`assets/board/s1e1_frank_end.webp`).
-  - It whips to #2 (S1E3, Anatomy Park).
-  - #2 has no real frame yet, so it stays blurred and lands on a "PLACEHOLDER" card. Send the first frame of the S1E3 clip and re-run:
-    `python3 evidence_board.py transition --from 1 --to 2 --from-img assets/board/s1e1_frank_end.webp --to-img <S1E3 first frame>`
+  - It whips to #2 (S1E3, Anatomy Park) and dives in.
+  - It lands on the first frame of the S1E3 clip, Reuben on the table (`assets/board/s1e3_reuben.png`), so you can cut straight into the Anatomy Park clip.
 
 ```bash
 python3 evidence_board.py intro                        # rebuild the intro (--overlay adds a transparent title on top)

@@ -49,8 +49,7 @@ RED_DK = (140, 18, 22)
 # img: source image; variant: crop/tint for placeholder blur photos
 SLOTS = {
     1: dict(c=(1350, 1330), w=760, rot=-4, cap="S1E1  FRANK", img="assets/board/s1e1_frank.webp"),
-    2: dict(c=(2700, 1200), w=560, rot=5, cap="S1E3  ???", img="assets/board/s1e1_frank.webp",
-            variant=dict(flip=True, crop=(0.35, 0.0, 1.0, 0.8), tint=(1.1, 0.75, 0.75))),
+    2: dict(c=(2700, 1200), w=560, rot=5, cap="S1E3  REUBEN", img="assets/board/s1e3_reuben.png"),
     3: dict(c=(4400, 1050), w=680, rot=-6, cap="S7E5", img="assets/board/rick_bloody.webp"),
     4: dict(c=(4650, 2280), w=640, rot=4, cap="S7E5  ???", img="assets/board/rick_dead.png"),
     5: dict(c=(2550, 2300), w=540, rot=-7, cap="S?E?", img="assets/board/rick_dead.png",
