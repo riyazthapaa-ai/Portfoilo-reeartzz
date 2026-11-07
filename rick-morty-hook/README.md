@@ -19,7 +19,7 @@ The VO was transcribed word by word, and each line is cut at a measured silence,
 | 0:12.0 – 0:35.0 | S7E5 Unmortricken · 18:45–19:08 | "to important characters dying that changed the show forever." | Punch-in to 1.08×. Episode audio comes up to full after "forever". |
 | 0:35.0 – 0:38.8 | Montage: 6 still frames taken from the three clips | "Rick and Morty has killed off a ridiculous number of characters…" | Alternating zoom in and out, with "KILLED OFF" slammed in red on "killed". |
 | 0:38.8 – 0:42.3 | Desaturated still from S7E5 (19:05) | "But how many of these unlucky souls actually stayed dead?" | Push-in, then "STAYED" and "DEAD?" pop on the words. |
-| 0:42.3 – 0:46.6 | Animated 3D title card (`title_card.mp4`) | "Today, we're digging through… character deaths." | See "Title card" below. No captions over it. |
+| 0:42.3 – 0:46.6 | Evidence board with the 3D title on top, then a dive into the S1E1 photo (`board_intro.mp4`) | "Today, we're digging through… character deaths." | See "Title card" below. No captions over it. |
 | 0:46.6 – 0:53.6 | S1E1 Pilot · 05:50–05:57 | "Starting all the way back in Season One… very first victims." | "SEASON 1 · EPISODE 1 · PILOT" lower-third and a 1.12× push-in, ending on a white flash out of the hook. |
 
 Captions are bold yellow, 1–3 words at a time, and each word lights up as it is spoken. Keywords like "killed", "dead?" and "Season One" are in portal green.
@@ -52,6 +52,32 @@ The final mix is normalised to -14 LUFS, which is YouTube's loudness target.
     - `.webm` is VP9 with alpha (6.5 MB). It's committed, and it works in browsers, OBS and some editors.
 
 Requirements: `pip install numpy opencv-python-headless pillow`.
+
+## Evidence board, intro dive and kill-to-kill transition
+
+`evidence_board.py` draws a detective-style evidence board in Rick and Morty art style: flat colours with thick black outlines. It has a cork board with a wooden frame, polaroids of kill scenes, red string, pushpins, sticky notes ("#1", "CLONE?", "STILL DEAD??"), a bloody knife, a pistol, a portal gun, a "TEEN FROZEN SOLID" newspaper clipping and a "CASE FILE: WHO STAYED DEAD?" header.
+
+- **Blurred photos:** the photos on the board are blurred, so the deaths stay a mystery. When the camera dives into one, it sharpens and comes alive as the full-frame scene, and the cut goes straight into the episode clip.
+- **`board_intro.mp4` (5.7s):** used for the title section of the hook.
+  - Over "Today, we're digging through…", the camera drifts across the board while the 3D title plays on top.
+  - On "Starting all the way back in Season One", it dives into the S1E1 Frank photo.
+  - The photo turns into the scene, ready to cut to the Pilot clip at 05:50.
+- **`transition_1_to_3.mp4` (2.6s):** a reusable transition between kill sections.
+  - The camera pulls back from the scene into its photo.
+  - It whips along the red string to the next photo.
+  - It dives in, and that photo comes alive as the next scene.
+- **Sound:** synthesised whooshes, paper rustles, thumps and a camera shutter are included.
+
+```bash
+python3 evidence_board.py intro                        # rebuild the intro (uses title_card_overlay.webm)
+python3 evidence_board.py transition --from 1 --to 2 \
+    --from-img last_frame_of_clip1.png --to-img first_frame_of_clip2.png
+python3 evidence_board.py still                        # full board as a PNG
+```
+
+The photo slots, their positions, captions and images are in `SLOTS` at the top of `evidence_board.py`. Slots without a real frame yet use blurred placeholder crops of the frames in `assets/board/`. For a seamless cut, give each slot a screenshot of the first frame of its clip (`--to-img`), and give `--from-img` the last frame of the previous clip.
+
+Fonts: Permanent Marker (Apache 2.0) and Bangers (OFL). Their licence files are in `fonts/`.
 
 ## Rendering the real thing
 

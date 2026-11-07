@@ -82,6 +82,9 @@ CLIPS = {
     "s1e1": dict(label="S1E1  PILOT", color="0x1f4a5c"),
 }
 
+BOARD_DIVE = 1.45     # seconds of the dive into the S1E1 photo (evidence_board.py)
+STILLS = {"s1e1": "assets/board/s1e1_frank.webp"}   # placeholder stills that match the board photos
+
 def build_edl(tight):
     edl = [
         dict(kind="clip", src="s3e4", a="11:17", b="11:29", vo="L1", zoom=(1.0, 1.10)),
@@ -95,6 +98,7 @@ def build_edl(tight):
              lower_third=("SEASON 1", "EPISODE 1  ·  PILOT"), flash_out=True),
     ]
     t = 0.0
+    early_vo = None
     for seg in edl:
         vs, ve = VO[seg["vo"]]
         vlen = ve - vs
@@ -102,11 +106,18 @@ def build_edl(tight):
             clen = ts(seg["b"]) - ts(seg["a"])
             if tight and not seg.get("flash_out"):
                 clen = min(clen, vlen + 0.35)
-            seg["dur"] = max(clen, vlen + 0.1)
-            seg["vo_at"] = t + (0.0 if seg is edl[0] else 0.05)
+            seg["vo_at"] = early_vo if early_vo is not None else t + (0.0 if seg is edl[0] else 0.05)
+            seg["dur"] = max(clen, seg["vo_at"] - t + vlen + 0.1)
+            early_vo = None
         else:
             seg["dur"] = vlen + 0.05
             seg["vo_at"] = t
+            if seg["kind"] == "title":
+                # board intro: the title plays over the evidence board, then the camera dives
+                # into photo #1; the next VO line starts as the dive begins
+                seg["title_dur"] = seg["dur"]
+                seg["dur"] += BOARD_DIVE
+                early_vo = t + seg["title_dur"]
         seg["t"] = t
         t += seg["dur"]
     return edl, t
@@ -191,6 +202,14 @@ class Graph:
 
     def video_in(self, src, at, dur):
         """Video stream label for `dur` seconds of `src` starting at episode time `at`."""
+        if self.args.placeholder and src in STILLS:
+            i = self.add_input(["-loop", "1", "-framerate", str(FPS), "-t", f"{dur:.3f}", "-i",
+                                os.path.join(HERE, STILLS[src])])
+            lab = f"ph{len(self.f)}"
+            self.f.append(f"[{i}:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}," +
+                          dt("PLACEHOLDER STILL - replace with episode footage", 34, "w-text_w-40", "h-60", "0xFFFFFF") +
+                          f"[{lab}]")
+            return lab, None
         if self.args.placeholder:
             c = CLIPS[src]
             i = self.add_input(["-f", "lavfi", "-t", f"{dur:.3f}", "-i",
@@ -290,13 +309,18 @@ def build(args):
                    dt("DEAD?", 230, "(w-text_w)/2", "h/2-90", "0xE53935", f":enable='gte(t,{t_d+0.5:.2f})'"))
 
         elif seg["kind"] == "title":
-            # animated 3D title card rendered by title_card.py (re-rendered if the length changed)
-            card = os.path.join(HERE, "title_card.mp4")
+            # evidence board + transparent 3D title, then a dive into photo #1 (evidence_board.py)
+            card = os.path.join(HERE, "board_intro.mp4")
+            ov = os.path.join(HERE, "title_card_overlay.webm")
+            td = seg["title_dur"]
             vs, _ = VO[seg["vo"]]
             deaths_at = 17.9 - vs + (seg["vo_at"] - seg["t"])
-            if args.rerender_title or not os.path.exists(card) or abs(media_dur(card) - d) > 0.05:
+            if args.rerender_title or not os.path.exists(ov) or abs(media_dur(ov) - td) > 0.05:
                 import title_card
-                title_card.render(d, deaths_at, HERE, alpha_out=False)
+                title_card.render(td, deaths_at, HERE, alpha_out=True)
+            if args.rerender_title or not os.path.exists(card) or abs(media_dur(card) - d) > 0.05:
+                import evidence_board
+                evidence_board.render_intro(card, td, BOARD_DIVE, overlay=ov)
             i = g.add_input(["-i", card])
             g.f.append(f"[{i}:v]setsar=1,fps={FPS},format=yuv420p,trim=0:{d:.3f}[v{k}]")
             g.f.append(f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,volume=0.55,"
