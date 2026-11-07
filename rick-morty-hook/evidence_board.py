@@ -105,6 +105,21 @@ def slot_image(sid):
             a = np.asarray(im, np.float32) * np.array(v["tint"]); im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
     return cover_169(im, 1920, 1080)
 
+def alive_image(sid):
+    """Full-frame scene a dive lands on. Slots that only have a placeholder variant land on a
+    blurred, labelled card so it is obvious the real first frame still has to go in."""
+    im = slot_image(sid)
+    if not SLOTS[sid].get("variant"):
+        return im
+    im = im.filter(ImageFilter.GaussianBlur(28))
+    d = ImageDraw.Draw(im)
+    cap = SLOTS[sid]["cap"].replace("?", "").strip() or "NEXT KILL"
+    d.text((960, 470), "PLACEHOLDER", font=font(F_BANG, 150), fill=(255, 255, 255), anchor="mm",
+           stroke_width=8, stroke_fill=INK)
+    d.text((960, 610), f"first frame of the {cap} clip goes here", font=font(F_MARK, 60),
+           fill=(255, 255, 255), anchor="mm", stroke_width=5, stroke_fill=INK)
+    return im
+
 def print_look(im, blur_frac):
     """Faded photo-print look (+ optional blur as a fraction of width)."""
     a = np.asarray(im, np.float32) / 255
@@ -336,7 +351,7 @@ class Renderer:
         self.heroes = {}
         for sid in hero_ids:   # high-res sprite pairs (blurred print, sharp print)
             pb, cb = draw_polaroid(sid, SS, blur=True)
-            ps, _ = draw_polaroid(sid, SS, blur=False)
+            ps, _ = draw_polaroid(sid, SS, blur=bool(SLOTS[sid].get("variant")))   # placeholders stay blurred
             pair = []
             for p in (pb, ps):
                 a = np.asarray(p).astype(np.float32) / 255
@@ -347,7 +362,7 @@ class Renderer:
                     lv.append((s, x))
                 pair.append(lv)
             self.heroes[sid] = (pair, np.array(cb))
-        self.alive = {sid: np.asarray(slot_image(sid), np.float32) / 255 for sid in hero_ids}
+        self.alive = {sid: np.asarray(alive_image(sid), np.float32) / 255 for sid in hero_ids}
 
     @staticmethod
     def _pick(levels, need):
