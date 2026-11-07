@@ -83,6 +83,16 @@ The photo slots, their positions, captions and images are in `SLOTS` at the top 
 
 Fonts: Permanent Marker (Apache 2.0) and Bangers (OFL). Their licence files are in `fonts/`.
 
+## Episode title cards
+
+`episode_cards/` has one transparent PNG per episode, Season 1 to Season 8 (81 cards). They're drawn in Rick and Morty art style: flat colours, thick black outlines, a flat drop shadow, a portal-green season badge, a cyan "SEASON · EPISODE" tab and a cream title plate. The lettering is clean Inter Display, not the wiggly font.
+
+- **Size:** cards are rendered at 2× (about 250–470 px tall) and tightly cropped, so you can scale them down and place them anywhere.
+- **Long titles** wrap onto two lines.
+- **Overview:** `episode_cards_preview.png` shows all of them.
+- **Rebuild:** `python3 episode_cards.py`, or `--only S1E3` for one card. Edit the `EPISODES` list to fix or add titles.
+- **Check Season 8:** I'm less sure of the Season 8 titles than Seasons 1–7. Check them before you use them.
+
 ## Rendering the real thing
 
 You need Python 3 and ffmpeg. Use episode files from a legal source, such as your own copies.
