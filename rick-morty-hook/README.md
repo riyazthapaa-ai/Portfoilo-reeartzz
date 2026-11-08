@@ -113,6 +113,20 @@ Fonts: Permanent Marker (Apache 2.0) and Bangers (OFL). Their licence files are 
 python3 frank_explainer.py --vo "<full VO .mp3>"
 ```
 
+## Music (original, copyright-free)
+
+`music.py` composes an original sci-fi track in a Rick-and-Morty-ish mood, synthesised from scratch with no samples and no existing melodies, so nothing can be Content-ID claimed. It's in D minor at 120 BPM, with chords Dm – Bb – Gm – A. Instruments: a wobbly theremin-style lead (glide and vibrato), square-wave arpeggios, a saw bass, a detuned pad, drums and portal "zaps".
+
+| File | Use |
+|---|---|
+| `music/rm_theme_full.mp3` (72s, loops) | Full track with the lead melody, for parts without VO (intro, montages). |
+| `music/rm_theme_bed.mp3` (72s, loops) | No lead and much quieter (−24 LUFS), so it sits under the VO. |
+| `music/rm_sting.mp3` (3s) | Portal zap and chord hit for transitions, e.g. under the evidence-board dives. |
+
+Structure: intro (4 bars) → beat comes in (8) → theremin melody (8) → breakdown (4) → full (8) → outro (4). It loops cleanly.
+
+To put the bed under the hook: `python3 build_hook.py --vo hook_vo.mp3 ... --music music/rm_theme_bed.mp3`. The bed ducks automatically under the VO.
+
 ## Rendering the real thing
 
 You need Python 3 and ffmpeg. Use episode files from a legal source, such as your own copies.
