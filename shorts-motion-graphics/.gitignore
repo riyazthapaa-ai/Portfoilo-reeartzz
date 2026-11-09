@@ -1,0 +1,3 @@
+out/*.mov
+out/stills_*/
+node_modules/

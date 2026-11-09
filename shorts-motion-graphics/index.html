@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shorts Motion Graphics</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="stage"></div>
+<script src="engine.js"></script>
+<script src="shorts.js"></script>
+<script>
+/*
+  URL params
+    short=01|02|03|04
+    layer=all | graphics | captions      (what gets drawn)
+    bg=1                                  (placeholder footage behind, for previews)
+    guides=1                              (show Shorts safe zone)
+    play=1                                (real-time playback in a browser, with scrub bar)
+*/
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const id = q.get('short') || '01';
+  const layer = q.get('layer') || 'all';
+  const S = SHORTS[id];
+  const ch = CHANNELS[S.channel];
+  const stage = document.getElementById('stage');
+  stage.className = ch.theme;
+  document.title = `Short ${id} — ${S.title}`;
+
+  if (q.get('bg') === '1') MG.put('<div class="fake-footage"></div>');
+
+  let overrides = null;
+  try { const r = await fetch(`timings/short${id}.json`); if (r.ok) overrides = await r.json(); } catch (e) {}
+
+  const words = MG.buildWords(S.script, 3.05, overrides);
+  const cue = MG.cueFactory(words);
+  const endHold = 3.4;
+  const duration = words.total + endHold;
+
+  if (layer !== 'captions') {
+    MG.bug(ch, .2, words.total + .1);
+    S.build(cue, words);
+    MG.endCard(ch, words.total + .35, duration);
+  }
+  if (layer !== 'graphics') MG.captions(words);
+  if (q.get('guides') === '1') MG.put('<div class="safe-guides"></div>');
+
+  window.DURATION = duration;
+  window.WORDS = words.map((w) => ({ w: w.text, start: +w.start.toFixed(3), end: +w.end.toFixed(3) }));
+  await document.fonts.ready;
+  MG.seek(0);
+  window.READY = true;
+
+  if (q.get('play') === '1') {
+    document.body.classList.add('preview-bg');
+    const bar = document.createElement('input');
+    Object.assign(bar, { type: 'range', min: 0, max: duration, step: 1 / 30, value: 0 });
+    Object.assign(bar.style, { position: 'fixed', left: '20px', right: '20px', bottom: '20px', zIndex: 99, width: '1040px' });
+    document.body.appendChild(bar);
+    let t0 = performance.now(), playing = true;
+    bar.oninput = () => { playing = false; MG.seek(+bar.value); };
+    bar.onchange = () => { t0 = performance.now() - bar.value * 1000; playing = true; };
+    (function loop() {
+      if (playing) { const t = ((performance.now() - t0) / 1000) % duration; bar.value = t; MG.seek(t); }
+      requestAnimationFrame(loop);
+    })();
+  }
+})();
+</script>
+</body>
+</html>

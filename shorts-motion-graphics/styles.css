@@ -1,0 +1,213 @@
+/* ============================================================
+   AI Shorts — Motion Graphics Kit
+   1080 x 1920 (9:16). Every element is driven by engine.js.
+   ============================================================ */
+
+@font-face { font-family: "MG Display"; src: url(fonts/InterDisplay-Black.otf); font-weight: 900; font-style: normal; }
+@font-face { font-family: "MG Display"; src: url(fonts/InterDisplay-BlackItalic.otf); font-weight: 900; font-style: italic; }
+@font-face { font-family: "MG Display"; src: url(fonts/InterDisplay-ExtraBold.otf); font-weight: 800; font-style: normal; }
+@font-face { font-family: "MG Display"; src: url(fonts/InterDisplay-ExtraBoldItalic.otf); font-weight: 800; font-style: italic; }
+@font-face { font-family: "MG Display"; src: url(fonts/InterDisplay-SemiBold.otf); font-weight: 600; font-style: normal; }
+@font-face { font-family: "MG Display"; src: url(fonts/InterDisplay-Medium.otf); font-weight: 500; font-style: normal; }
+@font-face { font-family: "MG Mono"; src: url(fonts/DejaVuSansMono.ttf); }
+
+/* ---------- Channel themes ---------- */
+.theme-aiden {
+  /* Pulled from the Aiden AI banner: royal blue wordmark, white, deep navy */
+  --brand: #2358F5;
+  --brand-2: #5B8DFF;
+  --brand-glow: rgba(43, 98, 255, .55);
+  --deep: #061231;
+  --panel: rgba(6, 18, 49, .78);
+  --accent: #FFFFFF;
+  --hl-text: #FFFFFF;
+  --good: #3BE38A;
+  --bad: #FF4D5E;
+}
+.theme-eren {
+  /* Sister channel: same system, violet + cyan so the two never get confused */
+  --brand: #7C4DFF;
+  --brand-2: #22D3EE;
+  --brand-glow: rgba(124, 77, 255, .55);
+  --deep: #0D0720;
+  --panel: rgba(13, 7, 32, .80);
+  --accent: #22D3EE;
+  --hl-text: #FFFFFF;
+  --good: #3BE38A;
+  --bad: #FF4D5E;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+body.preview-bg { background: #111; }
+
+#stage {
+  position: relative; width: 1080px; height: 1920px; overflow: hidden;
+  font-family: "MG Display", "Inter Display", "Inter", system-ui, sans-serif;
+  color: #fff; -webkit-font-smoothing: antialiased;
+}
+#stage > * { position: absolute; }
+
+/* Placeholder "footage" so previews read like the real thing */
+.fake-footage {
+  inset: 0;
+  background:
+    radial-gradient(1200px 900px at 30% 25%, #2a3346 0%, transparent 60%),
+    radial-gradient(900px 900px at 80% 80%, #1d2433 0%, transparent 60%),
+    linear-gradient(160deg, #1a1f2b, #0d1017);
+}
+.fake-footage::after {
+  content: "SCREEN RECORDING / FACECAM"; position: absolute; left: 0; right: 0; top: 47%;
+  text-align: center; font: 600 34px "MG Display"; letter-spacing: 8px; color: rgba(255,255,255,.12);
+}
+.safe-guides { inset: 0; pointer-events: none; }
+.safe-guides::before { content: ""; position: absolute; left: 60px; top: 220px; width: 880px; height: 1280px; border: 2px dashed rgba(255,80,80,.5); }
+
+/* ---------- Building blocks ---------- */
+.center-x { left: 0; right: 0; margin-left: auto; margin-right: auto; width: fit-content; }
+
+.headline {
+  font-weight: 900; font-style: italic; text-transform: uppercase;
+  font-size: 128px; line-height: .92; letter-spacing: -3px; text-align: center;
+  text-shadow: 0 8px 0 rgba(0,0,0,.35), 0 20px 60px rgba(0,0,0,.55);
+}
+.headline .line { display: block; }
+.headline .sm { font-size: .55em; letter-spacing: 0; }
+.hl {
+  display: inline-block; background: var(--brand); color: var(--hl-text);
+  padding: 4px 26px 10px; transform: skewX(-8deg); border-radius: 10px;
+  box-shadow: 0 14px 40px var(--brand-glow); text-shadow: none;
+}
+.hl > span { display: inline-block; transform: skewX(8deg); }
+.outline { color: transparent; -webkit-text-stroke: 4px #fff; text-shadow: none; }
+.grad { background: linear-gradient(100deg, #fff 0%, var(--brand-2) 55%, var(--brand) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 10px 30px var(--brand-glow)); }
+.bad { color: var(--bad); }
+.good { color: var(--good); }
+
+.card {
+  background: var(--panel); border: 2px solid rgba(255,255,255,.14);
+  border-radius: 34px; box-shadow: 0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+}
+.label {
+  display: inline-flex; align-items: center; gap: 12px;
+  font: 800 30px "MG Display"; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--brand-2);
+}
+.label .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--brand-2); box-shadow: 0 0 18px var(--brand-2); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 16px; white-space: nowrap;
+  padding: 18px 30px; border-radius: 999px; font: 800 40px "MG Display";
+  background: var(--panel); border: 2px solid rgba(255,255,255,.18);
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+}
+.pill.brand { background: var(--brand); border-color: rgba(255,255,255,.35); box-shadow: 0 16px 50px var(--brand-glow); }
+.pill svg { width: 44px; height: 44px; flex: none; }
+
+.icon-circle { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; flex: none; }
+.icon-circle.ok { background: var(--good); color: #062; }
+.icon-circle.no { background: var(--bad); color: #fff; }
+.icon-circle.brand { background: var(--brand); color: #fff; }
+.icon-circle svg { width: 38px; height: 38px; }
+
+/* Prompt box */
+.prompt { width: 880px; left: 100px; padding: 36px 40px 40px; }
+.prompt .text { margin-top: 22px; font: 600 50px/1.25 "MG Display"; min-height: 130px; color: #fff; }
+.prompt .caret { display: inline-block; width: 5px; height: 52px; background: var(--brand-2); vertical-align: -8px; margin-left: 4px; }
+.prompt .bar { margin-top: 26px; display: flex; justify-content: flex-end; }
+.btn { display: inline-flex; align-items: center; gap: 14px; padding: 18px 34px; border-radius: 20px; background: var(--brand); font: 800 36px "MG Display"; box-shadow: 0 12px 30px var(--brand-glow); }
+.btn svg { width: 34px; height: 34px; }
+
+/* Cursor */
+.cursor { width: 70px; height: 70px; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+
+/* Strike line */
+.strike { position: relative; display: inline-block; }
+.strike i { position: absolute; left: -4%; top: 52%; height: 12px; width: 108%; background: var(--bad); border-radius: 8px; transform-origin: left center; box-shadow: 0 4px 20px rgba(255,77,94,.6); }
+
+/* Grid tiles */
+.tile { padding: 26px; border-radius: 28px; }
+.tile .k { font: 800 24px "MG Display"; letter-spacing: 3px; color: var(--brand-2); text-transform: uppercase; }
+.tile .v { margin-top: 10px; font: 900 italic 54px/1 "MG Display"; }
+
+/* Flash + light sweep transitions */
+.flash { inset: 0; background: #fff; opacity: 0; mix-blend-mode: normal; }
+.sweep { top: -200px; left: -600px; width: 360px; height: 2400px; transform: rotate(18deg); background: linear-gradient(90deg, transparent, rgba(255,255,255,.0) 10%, var(--brand-2) 45%, #fff 50%, var(--brand-2) 55%, transparent 90%); opacity: .0; filter: blur(6px); }
+
+/* Corner focus brackets (use to "zoom" attention to a UI area) */
+.brackets { border: none; }
+.brackets::before, .brackets::after, .brackets > i::before, .brackets > i::after {
+  content: ""; position: absolute; width: 70px; height: 70px; border: 8px solid var(--brand-2);
+}
+.brackets::before { left: 0; top: 0; border-right: 0; border-bottom: 0; border-radius: 18px 0 0 0; }
+.brackets::after { right: 0; top: 0; border-left: 0; border-bottom: 0; border-radius: 0 18px 0 0; }
+.brackets > i::before { left: 0; bottom: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 18px; }
+.brackets > i::after { right: 0; bottom: 0; border-left: 0; border-top: 0; border-radius: 0 0 18px 0; }
+
+/* Channel bug */
+.bug { left: 56px; top: 232px; display: flex; align-items: center; gap: 14px; padding: 12px 22px 12px 14px; border-radius: 999px; background: rgba(0,0,0,.45); border: 2px solid rgba(255,255,255,.16); }
+.bug .mark { width: 50px; height: 50px; border-radius: 14px; background: var(--brand); display: grid; place-items: center; font: 900 italic 26px "MG Display"; box-shadow: 0 0 24px var(--brand-glow); }
+.bug .name { font: 900 italic 32px "MG Display"; letter-spacing: 1px; }
+
+/* Wordmark (end card) */
+.wordmark { text-align: center; }
+.wordmark .big { font: 900 italic 190px/0.9 "MG Display"; letter-spacing: -6px; color: var(--brand); -webkit-text-stroke: 5px #fff; paint-order: stroke fill; filter: drop-shadow(0 16px 50px var(--brand-glow)); }
+.wordmark .tag { margin-top: 18px; font: 600 30px "MG Display"; letter-spacing: 14px; text-transform: uppercase; color: #fff; opacity: .9; }
+
+/* CTA */
+.cta { display: flex; align-items: center; gap: 22px; padding: 20px 40px 20px 22px; border-radius: 999px; background: #fff; color: #0b0b0b; font: 900 44px "MG Display"; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.cta .av { width: 80px; height: 80px; border-radius: 50%; background: var(--brand); display: grid; place-items: center; color: #fff; font: 900 italic 34px "MG Display"; }
+.cta .sub { background: #ff0033; color: #fff; padding: 10px 24px; border-radius: 999px; font-size: 32px; }
+
+/* ---------- Captions ---------- */
+#captions { left: 60px; width: 880px; top: 1240px; height: 260px; }
+.cap-chunk { position: absolute; left: 0; right: 0; top: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 20px; text-align: center; }
+.cap-word {
+  display: inline-block; font: 900 92px/1.05 "MG Display"; text-transform: uppercase; letter-spacing: -1px;
+  color: #fff; -webkit-text-stroke: 14px #000; paint-order: stroke fill;
+  text-shadow: 0 10px 24px rgba(0,0,0,.6);
+}
+.theme-aiden .cap-word { font-style: italic; }
+.cap-word.em { color: var(--brand-2); font-size: 108px; }
+.theme-aiden .cap-word.em { color: #fff; background: var(--brand); -webkit-text-stroke: 0; padding: 0 18px 6px; border-radius: 12px; text-shadow: none; box-shadow: 0 10px 30px var(--brand-glow); }
+.theme-eren .cap-word.em { color: var(--brand-2); }
+
+/* ---------- Mini UI pieces (Short 03 app build) ---------- */
+.app { left: 110px; top: 330px; width: 860px; height: 820px; overflow: hidden; padding: 0; }
+.app .top { position: absolute; left: 0; right: 0; top: 0; height: 70px; background: rgba(255,255,255,.06); border-bottom: 2px solid rgba(255,255,255,.08); }
+.app .top b { position: absolute; top: 25px; width: 20px; height: 20px; border-radius: 50%; }
+.app .side { position: absolute; left: 0; top: 70px; bottom: 0; width: 190px; background: rgba(255,255,255,.05); padding: 30px 22px; }
+.app .side i { display: block; height: 22px; border-radius: 8px; background: rgba(255,255,255,.18); margin-bottom: 30px; }
+.app .side i:first-child { background: var(--brand); }
+.app .main { position: absolute; left: 220px; right: 30px; top: 100px; bottom: 30px; }
+.app .stat { position: absolute; top: 0; width: 186px; height: 150px; border-radius: 20px; background: rgba(255,255,255,.08); padding: 20px; }
+.app .stat s { display: block; height: 16px; width: 70%; border-radius: 6px; background: rgba(255,255,255,.25); }
+.app .stat u { display: block; margin-top: 22px; font: 900 48px "MG Display"; text-decoration: none; }
+.app .chart { position: absolute; left: 0; right: 0; top: 180px; height: 320px; border-radius: 20px; background: rgba(255,255,255,.06); padding: 30px; display: flex; align-items: flex-end; gap: 22px; }
+.app .chart span { flex: 1; border-radius: 10px 10px 4px 4px; background: linear-gradient(var(--brand-2), var(--brand)); transform-origin: bottom; }
+.app .rows { position: absolute; left: 0; right: 0; top: 530px; }
+.app .rows i { display: block; height: 34px; border-radius: 10px; background: rgba(255,255,255,.07); margin-bottom: 14px; }
+
+.login { width: 560px; padding: 44px; }
+.login h4 { font: 900 50px "MG Display"; }
+.login .f { margin-top: 26px; height: 78px; border-radius: 18px; background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.12); padding: 0 24px; display: flex; align-items: center; font: 500 30px "MG Display"; color: rgba(255,255,255,.55); }
+.login .go { margin-top: 30px; height: 84px; border-radius: 18px; background: var(--brand); display: grid; place-items: center; font: 800 36px "MG Display"; }
+
+/* Chat bubbles (Short 04) */
+.bubble { max-width: 760px; padding: 28px 36px; border-radius: 34px; font: 600 44px/1.25 "MG Display"; }
+.bubble.me { background: var(--brand); border-bottom-right-radius: 10px; }
+.bubble.ai { background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.16); border-bottom-left-radius: 10px; }
+
+/* Workflow nodes */
+.node { width: 300px; height: 300px; border-radius: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.node svg { width: 96px; height: 96px; color: var(--brand-2); }
+.node b { font: 900 italic 40px "MG Display"; text-transform: uppercase; }
+
+/* Browser tabs (Short 02) */
+.tab { display: flex; align-items: center; gap: 16px; width: 420px; height: 92px; padding: 0 26px; border-radius: 22px 22px 8px 8px; background: #23293a; border: 2px solid rgba(255,255,255,.14); font: 700 34px "MG Display"; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+.tab .fav { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.tab .x { margin-left: auto; opacity: .5; font-weight: 500; }
+
+.frame { width: 260px; height: 400px; border-radius: 26px; overflow: hidden; border: 3px solid rgba(255,255,255,.2); }
+.frame .lbl { position: absolute; left: 16px; bottom: 16px; padding: 6px 16px; border-radius: 10px; background: rgba(0,0,0,.55); font: 800 28px "MG Display"; }
