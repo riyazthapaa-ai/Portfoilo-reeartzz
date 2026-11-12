@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Beyond the Frame</title>
+<style>
+  @font-face { font-family: ID; font-weight: 100; src: url(fonts/InterDisplay-Thin.otf); }
+  @font-face { font-family: ID; font-weight: 200; src: url(fonts/InterDisplay-ExtraLight.otf); }
+  @font-face { font-family: ID; font-weight: 300; src: url(fonts/InterDisplay-Light.otf); }
+  @font-face { font-family: ID; font-weight: 600; src: url(fonts/InterDisplay-SemiBold.otf); }
+  @font-face { font-family: ID; font-weight: 700; src: url(fonts/InterDisplay-Bold.otf); }
+  @font-face { font-family: ID; font-weight: 900; src: url(fonts/InterDisplay-Black.otf); }
+  @font-face { font-family: JBM; font-weight: 400; src: url(fonts/JetBrainsMono-Regular.ttf); }
+  @font-face { font-family: JBM; font-weight: 500; src: url(fonts/JetBrainsMono-Medium.ttf); }
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<canvas id="out" width="1920" height="1080"></canvas>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// "Beyond the Frame" — every frame is a pure function of time t (seconds).
+// No Math.random, no clock, no state between frames.
+// ─────────────────────────────────────────────────────────────────────────────
+const W = 1920, H = 1080, CX = W / 2, CY = H / 2, FPS = 30, DUR = 30;
+
+const C = {
+  bg: '#04050A', ink: '#EEF1F8', dim: '#7C8499',
+  cyan: [91, 231, 255], violet: [142, 107, 255], rose: [255, 95, 168], white: [238, 241, 248],
+};
+const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+const mix = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+
+// ── math ────────────────────────────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eOutExpo = k => k >= 1 ? 1 : 1 - Math.pow(2, -10 * k);
+const eInExpo = k => k <= 0 ? 0 : Math.pow(2, 10 * k - 10);
+const eInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const eOutCubic = k => 1 - Math.pow(1 - k, 3);
+const eInCubic = k => k * k * k;
+const smooth = k => k * k * (3 - 2 * k);
+const fract = x => x - Math.floor(x);
+const hash = i => fract(Math.sin(i * 127.1 + 311.7) * 43758.5453123);
+const TAU = Math.PI * 2;
+// window: 0→1 in [a,a+fi], 1, then 1→0 in [b-fo,b]
+const win = (t, a, b, fi = .5, fo = .5) => Math.min(smooth(seg(t, a, a + fi)), 1 - smooth(seg(t, b - fo, b)));
+
+// ── canvases ────────────────────────────────────────────────────────────────
+const out = document.getElementById('out');
+const O = out.getContext('2d');
+const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const S = mk(W, H), X = S.getContext('2d');               // scene (one sub-frame)
+const T = mk(W, H), TX = T.getContext('2d');              // text layer for sweeps
+const B1 = mk(W / 4, H / 4), BX1 = B1.getContext('2d');   // bloom tight
+const B2 = mk(W / 8, H / 8), BX2 = B2.getContext('2d');   // bloom wide
+
+// ── shared drawing helpers ──────────────────────────────────────────────────
+function ground(c, tint, amt) {
+  c.globalCompositeOperation = 'source-over';
+  c.globalAlpha = 1;
+  c.fillStyle = C.bg; c.fillRect(0, 0, W, H);
+  const g = c.createRadialGradient(CX, CY * 0.95, 0, CX, CY, W * 0.62);
+  g.addColorStop(0, rgba(mix([12, 15, 30], tint, 0.18 * amt), 1));
+  g.addColorStop(1, 'rgba(4,5,10,0)');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+}
+
+function dust(c, t, alpha, n = 240, tint = C.white) {
+  if (alpha <= 0) return;
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {
+    const hx = hash(i * 3.1), hy = hash(i * 7.7), hs = hash(i * 1.3), hp = hash(i * 9.9);
+    const depth = 0.3 + 0.7 * hs;
+    const x = fract(hx + t * 0.006 * depth + 0.02 * Math.sin(t * 0.3 + i)) * (W + 40) - 20;
+    const y = fract(hy - t * 0.004 * depth) * (H + 40) - 20;
+    const tw = 0.55 + 0.45 * Math.sin(t * (0.8 + hp * 1.6) + hp * TAU);
+    const a = alpha * tw * (0.15 + 0.55 * depth * depth);
+    c.fillStyle = rgba(tint, a);
+    const r = 0.5 + 1.5 * depth * depth;
+    c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+  }
+  c.restore();
+}
+
+function glowLine(c, x1, y1, x2, y2, col, a, w = 2) {
+  c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+  c.strokeStyle = rgba(col, a * 0.18); c.lineWidth = w * 7;
+  c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  c.strokeStyle = rgba(col, a); c.lineWidth = w;
+  c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  c.strokeStyle = rgba(C.white, a * 0.8); c.lineWidth = Math.max(0.6, w * 0.35);
+  c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  c.restore();
+}
+
+function glowDot(c, x, y, r, col, a) {
+  c.save(); c.globalCompositeOperation = 'lighter';
+  const g = c.createRadialGradient(x, y, 0, x, y, r * 6);
+  g.addColorStop(0, rgba(C.white, a));
+  g.addColorStop(0.12, rgba(col, a * 0.85));
+  g.addColorStop(0.4, rgba(col, a * 0.18));
+  g.addColorStop(1, rgba(col, 0));
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 6, 0, TAU); c.fill();
+  c.restore();
+}
+
+// Lay out runs of [text, weight] at a size with tracking (px). Returns per-char boxes, centred on 0.
+function layout(c, runs, size, track, family = 'ID') {
+  const chars = []; let x = 0;
+  for (const [s, wgt] of runs) {
+    const font = `${wgt} ${size}px ${family}`; c.font = font;
+    for (const ch of s) {
+      const w = c.measureText(ch).width;
+      chars.push({ ch, x, w, font }); x += w + track;
+    }
+  }
+  const total = x - track;
+  for (const k of chars) k.x -= total / 2;
+  return { chars, width: total };
+}
+
+function monoText(c, s, x, y, size, col, a, align = 'left', track = 0.12) {
+  c.save(); c.font = `400 ${size}px JBM`; c.fillStyle = rgba(col, a);
+  c.textBaseline = 'middle'; c.letterSpacing = `${size * track}px`; c.textAlign = align;
+  c.fillText(s, x, y); c.restore();
+}
+
+// type-on for mono captions with a block cursor
+function typeOn(c, s, x, y, size, col, t, t0, cps = 28, align = 'left', alpha = 1) {
+  const n = Math.floor(clamp((t - t0) * cps, 0, s.length));
+  if (t < t0) return;
+  const shown = s.slice(0, n);
+  monoText(c, shown, x, y, size, col, 0.9 * alpha, align);
+  const typing = n < s.length;
+  const blink = typing || (fract((t - t0) * 1.6) < 0.5 && t - t0 - s.length / cps < 1.6);
+  if (blink) {
+    c.save(); c.font = `400 ${size}px JBM`; c.letterSpacing = `${size * 0.12}px`;
+    const w = c.measureText(shown).width;
+    const full = c.measureText(s).width;
+    const startX = align === 'center' ? x - full / 2 : x;
+    c.fillStyle = rgba(col, 0.85 * alpha);
+    c.fillRect(startX + w + 2, y - size * 0.55, size * 0.55, size * 1.1);
+    c.restore();
+  }
+}
+
+function cornerTicks(c, x, y, w, h, len, col, a, lw = 2) {
+  c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = rgba(col, a); c.lineWidth = lw;
+  const pts = [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]];
+  for (const [px, py, sx, sy] of pts) {
+    c.beginPath(); c.moveTo(px + sx * len, py); c.lineTo(px, py); c.lineTo(px, py + sy * len); c.stroke();
+  }
+  c.restore();
+}
+
+// camera: slow push + sub-degree roll around a point
+function camera(c, t, t0, push = 0.035, roll = 0.004, ox = CX, oy = CY) {
+  const k = t - t0;
+  const s = 1 + push * k / 5;
+  c.translate(ox, oy); c.rotate(Math.sin(k * 0.35) * roll); c.scale(s, s); c.translate(-ox, -oy);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SCENE 1+2 — Void → line → frame → title  (0 – 9.6)
+// ════════════════════════════════════════════════════════════════════════════
+const FR = { w: 1240, h: 520 };
+
+function titleBlock(c, t, extraScale, alpha) {
+  // two-line lockup: BEYOND / THE FRAME
+  const size = 176;
+  const l1 = layout(c, [['BEYOND', 900]], size, 0);
+  const l2 = layout(c, [['THE', 100], [' ', 100], ['FRAME', 900]], size, 0);
+  const trackK = 1 - eOutExpo(seg(t, 3.7, 6.2));
+  const track = size * (0.02 + 0.30 * trackK);
+  const L1 = layout(c, [['BEYOND', 900]], size, track);
+  const L2 = layout(c, [['THE', 100], [' ', 100], ['FRAME', 900]], size, track);
+  const lines = [[L1, -size * 0.52, 3.7], [L2, size * 0.52, 3.95]];
+  c.save();
+  c.translate(CX, CY); c.scale(extraScale, extraScale);
+  c.textBaseline = 'middle';
+  for (const [L, dy, t0] of lines) {
+    // mask: the line's own band, so letters rise from behind an edge
+    c.save();
+    c.beginPath(); c.rect(-W, dy - size * 0.56, W * 2, size * 1.12); c.clip();
+    L.chars.forEach((k, i) => {
+      const kt = eOutExpo(seg(t, t0 + i * 0.055, t0 + i * 0.055 + 1.1));
+      if (kt <= 0) return;
+      c.font = k.font;
+      c.fillStyle = rgba(C.white, alpha * (0.3 + 0.7 * kt));
+      c.fillText(k.ch, k.x, dy + (1 - kt) * size * 1.05);
+    });
+    c.restore();
+  }
+  c.restore();
+  return { halfW: Math.max(l1.width, l2.width) / 2, halfH: size * 1.1 };
+}
+
+function sceneIntro(c, t) {
+  ground(c, C.violet, smooth(seg(t, 2, 6)));
+  c.save();
+  camera(c, t, 0, 0.03, 0.003);
+  dust(c, t, 0.9 * smooth(seg(t, 0.2, 2.2)));
+
+  // 1 — point ignites
+  const ign = eOutExpo(seg(t, 0.35, 1.0));
+  // 1 — horizon line stretches
+  const stretch = eOutCubic(seg(t, 1.2, 3.0));
+  // 2 — the line opens into a frame
+  const open = eInOut(seg(t, 3.0, 4.1));
+  const sides = eOutExpo(seg(t, 3.7, 4.7));
+  // transition (8.5 – 9.6): frame rotates through camera
+  const fly = eInCubic(seg(t, 8.5, 9.6));
+  const flyRot = eInOut(seg(t, 8.3, 9.6)) * Math.PI / 4;
+  const flyS = 1 + fly * 5.2;
+
+  const halfLen = lerp(lerp(0, 940, stretch), FR.w / 2, open);
+  const halfH = lerp(0, FR.h / 2, open);
+
+  if (t < 3.05) {
+    if (ign > 0 && stretch < 1) glowDot(c, CX, CY, lerp(1, 5, ign) * (1 - stretch * 0.6), C.violet, ign);
+    // a faint halo ring breathes out from the ignition
+    const hr = seg(t, 0.45, 1.9);
+    if (hr > 0 && hr < 1) {
+      c.save(); c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = rgba(C.violet, 0.35 * (1 - hr)); c.lineWidth = 1.5;
+      c.beginPath(); c.arc(CX, CY, 8 + eOutCubic(hr) * 220, 0, TAU); c.stroke();
+      c.restore();
+    }
+    if (stretch > 0) {
+      glowLine(c, CX - halfLen, CY, CX + halfLen, CY, C.violet, 0.95, 2.2);
+      glowDot(c, CX - halfLen, CY, 3, C.cyan, 0.8 * (1 - stretch * 0.5));
+      glowDot(c, CX + halfLen, CY, 3, C.rose, 0.8 * (1 - stretch * 0.5));
+      // glints travelling outward along the line keep the void alive
+      for (let g = 0; g < 2; g++) {
+        const gp = fract((t - 1.5) * 0.9 + g * 0.5);
+        const ga = smooth(seg(t, 1.6, 2.0)) * Math.sin(gp * Math.PI);
+        for (const sx of [-1, 1]) glowDot(c, CX + sx * gp * halfLen, CY, 2.2, sx < 0 ? C.cyan : C.rose, 0.75 * ga);
+      }
+    }
+    // a quiet mono timecode under the line
+    monoText(c, 'SIGNAL  00.00', CX, CY + 44, 18, C.white, 0.45 * smooth(seg(t, 1.8, 2.6)) * (1 - smooth(seg(t, 2.6, 3.0))), 'center');
+  } else {
+    // title type (behind the frame strokes)
+    const outgrow = eInOut(seg(t, 6.6, 7.9));
+    const tScale = (1 + 0.42 * outgrow) * (1 + 0.6 * eInCubic(seg(t, 8.25, 8.9)));
+    const tAlpha = 1 - smooth(seg(t, 8.35, 8.85));
+    let tb = { halfW: 0, halfH: 0 };
+    if (tAlpha > 0) tb = titleBlock(c, t, tScale, tAlpha);
+    const gapH = tb.halfH * tScale * 0.9 * smooth(seg(t, 6.4, 7.2)) * tAlpha;
+
+    // frame
+    c.save();
+    c.translate(CX, CY); c.rotate(flyRot); c.scale(flyS, flyS);
+    const lw = 2.2 / Math.sqrt(flyS);
+    const col = mix(C.violet, C.cyan, smooth(seg(t, 3.5, 6)));
+    glowLine(c, -halfLen, -halfH, halfLen, -halfH, col, 0.95, lw);
+    glowLine(c, -halfLen, halfH, halfLen, halfH, col, 0.95, lw);
+    if (sides > 0) {
+      const sh = halfH * sides;
+      for (const sx of [-halfLen, halfLen]) {
+        if (gapH > 1 && gapH < sh) {
+          glowLine(c, sx, -sh, sx, -gapH, col, 0.9, lw);
+          glowLine(c, sx, gapH, sx, sh, col, 0.9, lw);
+        } else if (gapH <= 1) glowLine(c, sx, -sh, sx, sh, col, 0.9, lw);
+      }
+    }
+    // brackets & coordinates
+    const ui = smooth(seg(t, 4.4, 5.2)) * (1 - smooth(seg(t, 8.2, 8.7)));
+    if (ui > 0) {
+      cornerTicks(c, -halfLen - 18, -halfH - 18, halfLen * 2 + 36, halfH * 2 + 36, 26, C.cyan, 0.75 * ui, 2);
+      monoText(c, 'X 0000  Y 0000', -halfLen - 18, -halfH - 44, 16, C.white, 0.45 * ui);
+      monoText(c, '1920 × 1080', halfLen + 18, -halfH - 44, 16, C.white, 0.45 * ui, 'right');
+      monoText(c, 'FRAME / 01', -halfLen - 18, halfH + 44, 16, C.white, 0.45 * ui);
+    }
+    c.restore();
+
+    // caption
+    const capA = 1 - smooth(seg(t, 8.0, 8.5));
+    if (capA > 0) typeOn(c, 'CREATIVITY × TECHNOLOGY', CX, CY + FR.h / 2 + 78, 22, C.cyan, t, 5.0, 30, 'center', capA);
+  }
+  c.restore();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SCENE 4 — Creativity (8.5 – 14.6)
+// ════════════════════════════════════════════════════════════════════════════
+function sceneCreate(c, t) {
+  ground(c, C.rose, 1);
+  c.save();
+  camera(c, t, 8.5, 0.04, 0.004);
+  dust(c, t, 0.5, 140, C.rose);
+
+  // flowing ribbons of particles along a sine field
+  c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+  const flowA = smooth(seg(t, 8.8, 10.2));
+  const N = 520;
+  for (let i = 0; i < N; i++) {
+    const h1 = hash(i + 11), h2 = hash(i * 2.3 + 5), h3 = hash(i * 4.7 + 1);
+    const lane = Math.floor(h1 * 7);
+    const speed = 0.045 + 0.05 * h2;
+    const s = fract(h3 + t * speed);
+    const fade = Math.sin(s * Math.PI);
+    const pos = u => {
+      const x = lerp(-120, W + 120, u);
+      const base = H * 0.5 + (lane - 3) * 74 + (h2 - 0.5) * 30;
+      const y = base + 150 * Math.sin(x * 0.0026 + t * 0.55 + lane * 0.7)
+                     + 60 * Math.sin(x * 0.0061 - t * 0.4 + lane * 1.9);
+      return [x, y];
+    };
+    const col = mix(C.rose, C.violet, h1);
+    const a = flowA * fade * (0.25 + 0.55 * h2);
+    const [x0, y0] = pos(s), [x1, y1] = pos(s - 0.035 - 0.03 * h3);
+    const g = c.createLinearGradient(x1, y1, x0, y0);
+    g.addColorStop(0, rgba(col, 0)); g.addColorStop(1, rgba(col, a));
+    c.strokeStyle = g; c.lineWidth = 0.8 + 1.8 * h3;
+    c.beginPath(); c.moveTo(x1, y1);
+    const [xm, ym] = pos(s - 0.018 - 0.015 * h3);
+    c.quadraticCurveTo(xm, ym, x0, y0); c.stroke();
+  }
+  c.restore();
+
+  // circle drawn by a comet
+  const ox = 1330, oy = 540, R = 270;
+  const draw = eInOut(seg(t, 9.7, 11.7));
+  const a0 = -Math.PI / 2;
+  if (draw > 0) {
+    c.save(); c.globalCompositeOperation = 'lighter';
+    c.strokeStyle = rgba(C.rose, 0.16); c.lineWidth = 16;
+    c.beginPath(); c.arc(ox, oy, R, a0, a0 + draw * TAU); c.stroke();
+    c.strokeStyle = rgba(C.rose, 0.95); c.lineWidth = 2.4;
+    c.beginPath(); c.arc(ox, oy, R, a0, a0 + draw * TAU); c.stroke();
+    c.restore();
+    if (draw < 1) {
+      const ang = a0 + draw * TAU;
+      glowDot(c, ox + Math.cos(ang) * R, oy + Math.sin(ang) * R, 4, C.rose, 1);
+    }
+  }
+  // breathing concentric arcs
+  const arcsA = smooth(seg(t, 11.0, 12.2));
+  if (arcsA > 0) {
+    c.save(); c.globalCompositeOperation = 'lighter';
+    for (let k = 1; k <= 4; k++) {
+      const r = R + k * 34 + 6 * Math.sin(t * 1.1 + k);
+      const st = t * (0.25 + 0.1 * k) * (k % 2 ? 1 : -1) + k;
+      c.strokeStyle = rgba(mix(C.rose, C.violet, k / 4), arcsA * (0.55 - k * 0.09));
+      c.lineWidth = 1.4;
+      c.beginPath(); c.arc(ox, oy, r, st, st + TAU * (0.18 + 0.1 * k)); c.stroke();
+    }
+    c.restore();
+    // inner seed
+    glowDot(c, ox, oy, 3 + Math.sin(t * 2) * 0.6, C.violet, arcsA * 0.9);
+  }
+
+  // type: label / hero / subline
+  const lx = 170;
+  typeOn(c, '01 — IMAGINATION', lx, 410, 20, C.rose, t, 9.9, 26);
+  const hero = layout(c, [['CREATIVITY', 300]], 132, 132 * lerp(0.22, 0.05, eOutExpo(seg(t, 10.2, 12))));
+  c.save(); c.textBaseline = 'middle';
+  hero.chars.forEach((k, i) => {
+    const kt = eOutCubic(seg(t, 10.2 + i * 0.06, 10.2 + i * 0.06 + 0.9));
+    if (kt <= 0) return;
+    c.font = k.font; c.fillStyle = rgba(C.white, kt);
+    c.filter = kt < 1 ? `blur(${(1 - kt) * 10}px)` : 'none';
+    c.fillText(k.ch, lx + hero.width / 2 + k.x, 520 + (1 - kt) * 26);
+  });
+  c.filter = 'none'; c.restore();
+  const subA = smooth(seg(t, 11.6, 12.6));
+  c.save(); c.font = '300 30px ID'; c.fillStyle = rgba(C.white, 0.6 * subA); c.textBaseline = 'middle';
+  c.fillText('Ideas without edges.', lx, 615 + (1 - subA) * 12); c.restore();
+  glowLine(c, lx, 660, lx + 260 * eOutExpo(seg(t, 11.8, 13)), 660, C.rose, 0.7 * subA, 1.2);
+
+  c.restore();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SCENE 5 — Technology (14.0 – 19.8)
+// ════════════════════════════════════════════════════════════════════════════
+const GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#<>/{}[]=+';
+function sceneTech(c, t) {
+  ground(c, C.cyan, 1);
+  c.save();
+  camera(c, t, 14, 0.04, 0.003);
+
+  // perspective grid — floor and a faint ceiling, scrolling toward camera
+  const gA = smooth(seg(t, 14.0, 15.2));
+  const vx = CX, vy = CY;
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (const [dir, amp] of [[1, 1], [-1, 0.35]]) {
+    const hgt = 260 * dir;
+    for (let i = 0; i < 18; i++) {             // depth lines
+      const z = 0.35 + (fract(i / 18 - t * 0.09)) * 9;
+      const yy = vy + (hgt / z);
+      const a = gA * amp * clamp(1.4 / z) * 0.55 * smooth(clamp((z - 0.35) / 0.6));
+      c.strokeStyle = rgba(C.cyan, a); c.lineWidth = 1.2;
+      c.beginPath(); c.moveTo(0, yy); c.lineTo(W, yy); c.stroke();
+    }
+    for (let k = -14; k <= 14; k++) {          // rails to the vanishing point
+      const xb = vx + k * 150 * 3.2;
+      const a = gA * amp * 0.28 * (1 - Math.abs(k) / 15);
+      const g = c.createLinearGradient(0, vy, 0, vy + hgt * 2.6);
+      g.addColorStop(0, rgba(C.cyan, 0)); g.addColorStop(1, rgba(C.cyan, a));
+      c.strokeStyle = g; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(vx, vy); c.lineTo(xb, vy + hgt * 3.2); c.stroke();
+    }
+  }
+  // horizon glow
+  const hz = c.createLinearGradient(0, vy - 40, 0, vy + 40);
+  hz.addColorStop(0, 'rgba(0,0,0,0)'); hz.addColorStop(0.5, rgba(C.cyan, 0.12 * gA)); hz.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = hz; c.fillRect(0, vy - 40, W, 80);
+  c.restore();
+  // mask the grid behind the central architecture so type stays clean
+  const mask = c.createRadialGradient(CX, CY, 0, CX, CY, 620);
+  mask.addColorStop(0, 'rgba(4,5,10,0.92)'); mask.addColorStop(0.55, 'rgba(4,5,10,0.6)'); mask.addColorStop(1, 'rgba(4,5,10,0)');
+  c.fillStyle = mask; c.fillRect(0, 0, W, H);
+
+  // concentric squares that lock into alignment, with pulses on their perimeters
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (let k = 0; k < 5; k++) {
+    const kt = eOutExpo(seg(t, 14.4 + k * 0.14, 15.8 + k * 0.14));
+    if (kt <= 0) continue;
+    const s = 230 + k * 92;
+    const rot = (1 - kt) * (k % 2 ? -0.6 : 0.6) + Math.sin(t * 0.4 + k) * 0.004;
+    c.save(); c.translate(CX, CY); c.rotate(rot);
+    c.strokeStyle = rgba(C.cyan, kt * (0.55 - k * 0.07)); c.lineWidth = 1.3;
+    const hs = s * (0.6 + 0.4 * kt);
+    c.strokeRect(-hs, -hs * 0.56, hs * 2, hs * 1.12);
+    // pulse running the perimeter
+    const per = 4 * hs + 2.24 * hs;
+    const p = fract(t * (0.12 + 0.03 * k) + k * 0.23) * per * 2;
+    const pt = perim(hs, hs * 0.56, p % per);
+    c.restore();
+    const cs = Math.cos(rot), sn = Math.sin(rot);
+    glowDot(c, CX + pt[0] * cs - pt[1] * sn, CY + pt[0] * sn + pt[1] * cs, 2.4, C.cyan, kt * 0.95);
+  }
+  c.restore();
+  // nodes at the outer corners
+  const nA = smooth(seg(t, 15.6, 16.4));
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const hs = 230 + 4 * 92;
+    glowDot(c, CX + sx * hs, CY + sy * hs * 0.56, 3, C.cyan, nA);
+  }
+  cornerTicks(c, CX - 820, CY - 400, 1640, 800, 30, C.cyan, 0.5 * nA, 1.5);
+  monoText(c, 'GRID 24 · LOCK 100%', CX - 820, CY - 430, 16, C.white, 0.45 * nA);
+  monoText(c, `T+${(t - 14).toFixed(2).padStart(5, '0')}`, CX + 820, CY - 430, 16, C.white, 0.45 * nA, 'right');
+
+  // type: label / scrambled hero / subline
+  typeOn(c, '02 — PRECISION', CX, CY - 150, 20, C.cyan, t, 14.7, 26, 'center');
+  const size = 140;
+  const hero = layout(c, [['TECHNOLOGY', 700]], size, size * 0.06);
+  c.save(); c.textBaseline = 'middle';
+  hero.chars.forEach((k, i) => {
+    const t0 = 14.9 + i * 0.05, t1 = 15.5 + i * 0.07;
+    if (t < t0) return;
+    let ch = k.ch;
+    if (t < t1) ch = GLYPHS[Math.floor(hash(i * 13 + Math.floor(t * 24)) * GLYPHS.length)];
+    c.font = k.font;
+    c.fillStyle = t < t1 ? rgba(C.cyan, 0.85) : rgba(C.white, 1);
+    c.textAlign = 'center';
+    c.fillText(ch, CX + k.x + k.w / 2, CY);
+  });
+  c.restore();
+  const subA = smooth(seg(t, 16.4, 17.3));
+  c.save(); c.font = '300 30px ID'; c.fillStyle = rgba(C.white, 0.6 * subA); c.textBaseline = 'middle'; c.textAlign = 'center';
+  c.fillText('Systems that give ideas a shape.', CX, CY + 128 + (1 - subA) * 12); c.restore();
+
+  c.restore();
+}
+function perim(hw, hh, d) {
+  const top = 2 * hw, side = 2 * hh;
+  if (d < top) return [-hw + d, -hh]; d -= top;
+  if (d < side) return [hw, -hh + d]; d -= side;
+  if (d < top) return [hw - d, hh]; d -= top;
+  return [-hw, hh - d];
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SCENE 6 — Convergence (19.0 – 25.6)
+// ════════════════════════════════════════════════════════════════════════════
+function superellipse(c, x, y, r, n, rot) {
+  c.beginPath();
+  for (let i = 0; i <= 160; i++) {
+    const a = i / 160 * TAU;
+    const ca = Math.cos(a), sa = Math.sin(a);
+    const px = r * Math.sign(ca) * Math.pow(Math.abs(ca), 2 / n);
+    const py = r * Math.sign(sa) * Math.pow(Math.abs(sa), 2 / n);
+    const qx = px * Math.cos(rot) - py * Math.sin(rot), qy = px * Math.sin(rot) + py * Math.cos(rot);
+    i ? c.lineTo(x + qx, y + qy) : c.moveTo(x + qx, y + qy);
+  }
+  c.closePath();
+}
+
+function sceneMeet(c, t) {
+  ground(c, C.violet, 1);
+  c.save();
+  // collapse into the centre point at the end
+  const col = eInExpo(seg(t, 24.5, 25.45));
+  const oy = 470;
+  camera(c, t, 19, 0.035, 0.003, CX, oy);
+  c.translate(CX, oy); c.scale(1 - col * 0.995, 1 - col * 0.995); c.rotate(col * 0.8); c.translate(-CX, -oy);
+  dust(c, t, 0.45 * (1 - col), 120, C.violet);
+
+  const mergeK = smooth(seg(t, 19.0, 24.0));
+  // vortex particles: rose and cyan streams becoming violet
+  c.save(); c.globalCompositeOperation = 'lighter';
+  const vA = smooth(seg(t, 19.3, 20.4));
+  for (let i = 0; i < 560; i++) {
+    const h1 = hash(i + 101), h2 = hash(i * 3.7 + 9), h3 = hash(i * 5.3 + 2);
+    const side = i % 2;
+    const r0 = 300 + 520 * h1;
+    const r = r0 * (1 - 0.35 * mergeK) * (1 - 0.06 * Math.sin(t * 0.7 + i));
+    const w = (0.12 + 0.35 * (1 - h1)) * (side ? 1 : 1);
+    const ang = h2 * TAU + t * w;
+    const x = CX + Math.cos(ang) * r * 1.25, y = oy + Math.sin(ang) * r * 0.62;
+    const base = side ? C.rose : C.cyan;
+    const cc = mix(base, C.violet, mergeK * 0.85);
+    const a = vA * (0.2 + 0.6 * h3) * (1 - 0.5 * h1);
+    // short arc trail
+    const ang2 = ang - 0.05 - 0.05 * h3;
+    c.strokeStyle = rgba(cc, a); c.lineWidth = 0.8 + 1.6 * h3; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(CX + Math.cos(ang2) * r * 1.25, oy + Math.sin(ang2) * r * 0.62); c.lineTo(x, y); c.stroke();
+  }
+  c.restore();
+
+  // orbits: dashed ring and a triangle, counter-rotating
+  const oA = smooth(seg(t, 20.6, 21.8));
+  if (oA > 0) {
+    c.save(); c.globalCompositeOperation = 'lighter'; c.translate(CX, oy);
+    c.strokeStyle = rgba(C.violet, 0.5 * oA); c.lineWidth = 1.2; c.setLineDash([2, 12]);
+    c.rotate(t * 0.12); c.beginPath(); c.arc(0, 0, 360, 0, TAU); c.stroke(); c.setLineDash([]);
+    c.restore();
+    c.save(); c.globalCompositeOperation = 'lighter'; c.translate(CX, oy); c.rotate(-t * 0.18);
+    c.strokeStyle = rgba(mix(C.rose, C.cyan, 0.5), 0.42 * oA); c.lineWidth = 1.3;
+    c.beginPath();
+    for (let k = 0; k < 3; k++) { const a = -Math.PI / 2 + k * TAU / 3; k ? c.lineTo(Math.cos(a) * 320, Math.sin(a) * 320) : c.moveTo(Math.cos(a) * 320, Math.sin(a) * 320); }
+    c.closePath(); c.stroke(); c.restore();
+    // satellites
+    for (let k = 0; k < 3; k++) {
+      const a = t * 0.12 + k * TAU / 3;
+      glowDot(c, CX + Math.cos(a) * 360, oy + Math.sin(a) * 360, 2.6, k === 1 ? C.cyan : C.rose, oA);
+    }
+  }
+
+  // circle (creativity) meets square (technology)
+  const R = 190;
+  const slide = eInOut(seg(t, 19.3, 21.2));
+  const fuse = eInOut(seg(t, 21.6, 22.8));
+  const cxL = lerp(CX - 760, CX - 120, slide), cxR = lerp(CX + 760, CX + 120, slide);
+  const xL = lerp(cxL, CX, fuse), xR = lerp(cxR, CX, fuse);
+  const sqRot = lerp(0.6, 0, slide) + 0.15 * Math.sin(t * 0.5);
+  c.save(); c.globalCompositeOperation = 'lighter';
+  if (fuse < 1) {
+    const sa = 1 - fuse;
+    // overlap lens
+    c.save(); c.beginPath(); c.arc(xL, oy, R, 0, TAU); c.clip();
+    superellipse(c, xR, oy, R * 0.92, 40, sqRot);
+    c.fillStyle = rgba(C.violet, 0.12 * slide); c.fill(); c.restore();
+    c.strokeStyle = rgba(C.rose, 0.95 * sa); c.lineWidth = 2.4;
+    c.beginPath(); c.arc(xL, oy, R, 0, TAU); c.stroke();
+    c.strokeStyle = rgba(C.rose, 0.15 * sa); c.lineWidth = 14; c.stroke();
+    superellipse(c, xR, oy, R * 0.92, 40, sqRot);
+    c.strokeStyle = rgba(C.cyan, 0.95 * sa); c.lineWidth = 2.4; c.stroke();
+    c.strokeStyle = rgba(C.cyan, 0.15 * sa); c.lineWidth = 14; c.stroke();
+  }
+  if (fuse > 0) {
+    // one shape breathing between circle and square
+    const n = 2 + 7 * (0.5 - 0.5 * Math.cos((t - 22.4) * 1.7));
+    const rr = R * lerp(0.96, 1.05, 0.5 + 0.5 * Math.sin(t * 1.1));
+    const g = c.createLinearGradient(CX - R, oy - R, CX + R, oy + R);
+    g.addColorStop(0, rgba(C.rose, fuse)); g.addColorStop(0.5, rgba(C.violet, fuse)); g.addColorStop(1, rgba(C.cyan, fuse));
+    superellipse(c, CX, oy, rr, n, t * 0.2);
+    c.fillStyle = rgba(C.violet, 0.10 * fuse); c.fill();
+    c.strokeStyle = g; c.lineWidth = 2.6; c.stroke();
+    c.globalAlpha = 0.15; c.lineWidth = 16; c.stroke(); c.globalAlpha = 1;
+    // nested echo
+    superellipse(c, CX, oy, rr * 0.62, 11 - n, -t * 0.3);
+    c.strokeStyle = rgba(C.white, 0.35 * fuse); c.lineWidth = 1.2; c.stroke();
+    glowDot(c, CX, oy, 4, C.violet, fuse);
+  }
+  c.restore();
+  c.restore();
+
+  // type (outside the collapse transform; fades before the collapse)
+  const ta = 1 - smooth(seg(t, 24.2, 24.7));
+  if (ta > 0) {
+    typeOn(c, '03 — SYNTHESIS', CX, 846, 20, C.violet, t, 21.0, 26, 'center', ta);
+    const hero = layout(c, [['WHERE THEY MEET', 600]], 92, 92 * lerp(0.4, 0.08, eOutExpo(seg(t, 21.6, 23.4))));
+    c.save(); c.textBaseline = 'middle';
+    hero.chars.forEach((k, i) => {
+      // reveal from the centre outward — the two halves meet
+      const d = Math.abs(i - (hero.chars.length - 1) / 2);
+      const kt = eOutCubic(seg(t, 21.6 + d * 0.05, 22.5 + d * 0.05));
+      if (kt <= 0) return;
+      c.font = k.font; c.fillStyle = rgba(C.white, kt * ta);
+      c.fillText(k.ch, CX + k.x, 930 + (1 - kt) * 18);
+    });
+    c.restore();
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SCENE 8 — End card (25.2 – 30)
+// ════════════════════════════════════════════════════════════════════════════
+function sceneEnd(c, t) {
+  ground(c, C.violet, 0.7);
+  c.save();
+  camera(c, t, 25.2, 0.05, 0.002);
+  dust(c, t, 0.7 * smooth(seg(t, 25.6, 27)), 200);
+
+  // point + flash ring from the collapse
+  const pt = 1 - smooth(seg(t, 25.7, 26.3));
+  if (pt > 0) glowDot(c, CX, CY, 5, C.violet, pt);
+  const ring = seg(t, 25.35, 26.4);
+  if (ring > 0 && ring < 1) {
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const rr = eOutExpo(ring) * 900;
+    c.strokeStyle = rgba(C.violet, 0.8 * (1 - ring)); c.lineWidth = 3 + 30 * (1 - ring);
+    c.beginPath(); c.arc(CX, CY, rr, 0, TAU); c.stroke();
+    c.strokeStyle = rgba(C.white, 0.7 * (1 - ring)); c.lineWidth = 1.5;
+    c.beginPath(); c.arc(CX, CY, rr, 0, TAU); c.stroke();
+    c.restore();
+  }
+
+  // title: one line, deliberately wider than its frame
+  const size = 150;
+  const track = size * lerp(0.16, 0.03, eOutExpo(seg(t, 26.1, 28.2)));
+  const L = layout(c, [['BEYOND', 900], [' ', 100], ['THE', 100], [' ', 100], ['FRAME', 900]], size, track);
+  const fw = Math.min(1180, L.width * 0.86), fh = 300;
+
+  // frame from the point: line, then opens
+  const ln = eOutExpo(seg(t, 25.6, 26.5));
+  const op = eInOut(seg(t, 26.0, 26.9));
+  const hl = fw / 2 * ln, hh = fh / 2 * op;
+  const gap = size * 0.62 * smooth(seg(t, 26.4, 27.0));
+  const fcol = mix(C.violet, C.cyan, 0.35);
+  if (ln > 0) {
+    glowLine(c, CX - hl, CY - hh, CX + hl, CY - hh, fcol, 0.9, 2);
+    if (op > 0) glowLine(c, CX - hl, CY + hh, CX + hl, CY + hh, fcol, 0.9, 2);
+    if (hh > gap + 2) for (const sx of [CX - hl, CX + hl]) {
+      glowLine(c, sx, CY - hh, sx, CY - gap, fcol, 0.85, 2);
+      glowLine(c, sx, CY + gap, sx, CY + hh, fcol, 0.85, 2);
+    }
+  }
+  const ui = smooth(seg(t, 27.0, 27.8));
+  cornerTicks(c, CX - hl - 16, CY - hh - 16, hl * 2 + 32, hh * 2 + 32, 22, C.cyan, 0.6 * ui, 1.6);
+
+  // text layer → sweep → composite
+  TX.setTransform(1, 0, 0, 1, 0, 0); TX.clearRect(0, 0, W, H);
+  TX.textBaseline = 'middle';
+  const order = L.chars.map((k, i) => i);
+  const mid = (L.chars.length - 1) / 2;
+  for (const i of order) {
+    const k = L.chars[i]; if (k.ch === ' ') continue;
+    const d = Math.abs(i - mid);
+    const kt = eOutExpo(seg(t, 26.2 + d * 0.06, 27.5 + d * 0.06));
+    if (kt <= 0) continue;
+    const s = lerp(1.7, 1, kt);
+    TX.save();
+    TX.translate(CX + k.x + k.w / 2, CY); TX.scale(s, s);
+    TX.font = k.font; TX.textAlign = 'center';
+    TX.filter = kt < 0.995 ? `blur(${(1 - kt) * 14}px)` : 'none';
+    TX.fillStyle = rgba(C.white, kt);
+    TX.fillText(k.ch, 0, 0);
+    TX.restore();
+  }
+  TX.filter = 'none';
+  // light sweep across the type
+  const sw = seg(t, 28.0, 29.2);
+  if (sw > 0 && sw < 1) {
+    TX.save(); TX.globalCompositeOperation = 'source-atop';
+    const sx = lerp(CX - L.width * 0.7, CX + L.width * 0.7, eInOut(sw));
+    const g = TX.createLinearGradient(sx - 160, 0, sx + 160, 0);
+    g.addColorStop(0, 'rgba(91,231,255,0)'); g.addColorStop(0.45, 'rgba(160,240,255,0.9)');
+    g.addColorStop(0.5, 'rgba(255,255,255,1)'); g.addColorStop(0.55, 'rgba(255,170,215,0.9)'); g.addColorStop(1, 'rgba(255,95,168,0)');
+    TX.translate(sx, CY); TX.transform(1, 0, -0.35, 1, 0, 0); TX.translate(-sx, -CY);
+    TX.fillStyle = g; TX.fillRect(sx - 400, 0, 800, H);
+    TX.restore();
+  }
+  c.drawImage(T, 0, 0);
+
+  typeOn(c, 'CREATIVITY × TECHNOLOGY', CX, CY + fh / 2 + 64, 20, C.cyan, t, 27.6, 30, 'center');
+  c.restore();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Timeline: scenes and the moves between them
+// ════════════════════════════════════════════════════════════════════════════
+function rotRectPath(c, t) {
+  const fly = eInCubic(seg(t, 8.5, 9.6));
+  const rot = eInOut(seg(t, 8.3, 9.6)) * Math.PI / 4;
+  const s = 1 + fly * 5.2;
+  c.save(); c.translate(CX, CY); c.rotate(rot); c.scale(s, s);
+  c.beginPath(); c.rect(-FR.w / 2, -FR.h / 2, FR.w, FR.h); c.restore();
+}
+
+function drawScene(c, t) {
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.filter = 'none';
+  if (t < 8.55) { sceneIntro(c, t); return; }
+  if (t < 9.6) {
+    // frame flies through camera; the next world is already inside it
+    sceneIntro(c, t);
+    c.save(); rotRectPath(c, t); c.clip(); sceneCreate(c, t); c.restore();
+    sceneIntroFrameOnly(c, t);
+    return;
+  }
+  if (t < 14.0) { sceneCreate(c, t); return; }
+  if (t < 14.7) {
+    // vertical light wipe left→right: technology replaces creativity
+    const k = eInOut(seg(t, 14.0, 14.7));
+    const x = lerp(-80, W + 80, k);
+    sceneCreate(c, t);
+    c.save(); c.beginPath(); c.rect(0, 0, x, H); c.clip(); sceneTech(c, t); c.restore();
+    const g = c.createLinearGradient(x - 120, 0, x + 6, 0);
+    g.addColorStop(0, 'rgba(91,231,255,0)'); g.addColorStop(1, 'rgba(91,231,255,0.35)');
+    c.fillStyle = g; c.fillRect(x - 120, 0, 126, H);
+    glowLine(c, x, 0, x, H, C.cyan, 1, 2.5);
+    return;
+  }
+  if (t < 19.1) { sceneTech(c, t); return; }
+  if (t < 19.9) {
+    // iris: a circle opens from the centre — the curve enters the grid
+    const k = eInOut(seg(t, 19.1, 19.9));
+    const r = k * 1180;
+    sceneTech(c, t);
+    c.save(); c.beginPath(); c.arc(CX, CY, r, 0, TAU); c.clip(); sceneMeet(c, t); c.restore();
+    c.save(); c.globalCompositeOperation = 'lighter';
+    c.strokeStyle = rgba(C.violet, 0.25); c.lineWidth = 18; c.beginPath(); c.arc(CX, CY, r, 0, TAU); c.stroke();
+    c.strokeStyle = rgba(C.white, 0.9); c.lineWidth = 2; c.beginPath(); c.arc(CX, CY, r, 0, TAU); c.stroke();
+    c.restore();
+    return;
+  }
+  if (t < 25.4) { sceneMeet(c, t); return; }
+  sceneEnd(c, t);
+}
+
+// only the frame strokes during the fly-through, drawn over the clipped next scene
+function sceneIntroFrameOnly(c, t) {
+  const fly = eInCubic(seg(t, 8.5, 9.6));
+  const rot = eInOut(seg(t, 8.3, 9.6)) * Math.PI / 4;
+  const s = 1 + fly * 5.2;
+  const a = 1 - smooth(seg(t, 9.35, 9.6));
+  c.save(); c.translate(CX, CY); c.rotate(rot); c.scale(s, s);
+  const lw = 2.2 / Math.sqrt(s) * (1 + fly * 2);
+  const hw = FR.w / 2, hh = FR.h / 2;
+  glowLine(c, -hw, -hh, hw, -hh, C.cyan, a, lw);
+  glowLine(c, -hw, hh, hw, hh, C.cyan, a, lw);
+  glowLine(c, -hw, -hh, -hw, hh, C.cyan, a, lw);
+  glowLine(c, hw, -hh, hw, hh, C.cyan, a, lw);
+  c.restore();
+}
+
+// ── frame = sub-frame accumulation (motion blur) + bloom + vignette ─────────
+function renderFrame(t, samples = 3, shutter = 0.5) {
+  O.setTransform(1, 0, 0, 1, 0, 0);
+  O.globalCompositeOperation = 'source-over'; O.filter = 'none';
+  for (let i = 0; i < samples; i++) {
+    const ts = Math.min(DUR - 1e-4, t + (samples > 1 ? (i / (samples - 1) - 0.5) : 0) * shutter / FPS);
+    drawScene(X, Math.max(0, ts));
+    O.globalAlpha = 1 / (i + 1);
+    O.drawImage(S, 0, 0);
+  }
+  O.globalAlpha = 1;
+  // bloom: bright-pass by contrast, two blur radii, added back
+  for (const [BC, BX, blur, amt] of [[B1, BX1, 3, 0.38], [B2, BX2, 6, 0.32]]) {
+    BX.globalCompositeOperation = 'source-over'; BX.filter = 'none';
+    BX.clearRect(0, 0, BC.width, BC.height);
+    BX.filter = `brightness(1.05) contrast(2.4) blur(${blur}px)`;
+    BX.drawImage(out, 0, 0, BC.width, BC.height);
+    BX.filter = 'none';
+    O.globalCompositeOperation = 'lighter'; O.globalAlpha = amt;
+    O.imageSmoothingQuality = 'high';
+    O.drawImage(BC, 0, 0, W, H);
+  }
+  O.globalCompositeOperation = 'source-over'; O.globalAlpha = 1;
+  // vignette
+  const v = O.createRadialGradient(CX, CY, H * 0.55, CX, CY, W * 0.72);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.5)');
+  O.fillStyle = v; O.fillRect(0, 0, W, H);
+}
+
+// ── boot: fonts, then either a still (?t=) or live preview ──────────────────
+window.ready = (async () => {
+  const loads = [100, 200, 300, 600, 700, 900].map(w => document.fonts.load(`${w} 40px ID`))
+    .concat([400, 500].map(w => document.fonts.load(`${w} 20px JBM`)));
+  await Promise.all(loads); await document.fonts.ready;
+  return true;
+})();
+window.renderFrame = renderFrame;
+window.DUR = DUR; window.FPS = FPS;
+
+const qs = new URLSearchParams(location.search);
+window.ready.then(() => {
+  if (qs.has('render')) return;              // renderer drives frames
+  if (qs.has('t')) { renderFrame(parseFloat(qs.get('t'))); return; }
+  const start = performance.now();
+  const loop = () => { renderFrame(((performance.now() - start) / 1000) % DUR, 1); requestAnimationFrame(loop); };
+  loop();
+});
+</script>
+</body>
+</html>
